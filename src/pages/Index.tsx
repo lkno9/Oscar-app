@@ -1,12 +1,17 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { BottomNav } from "@/components/BottomNav";
+import { HomePage } from "@/pages/HomePage";
+import { ServicesPage } from "@/pages/ServicesPage";
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState<"home" | "services">("home");
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="flex flex-col h-screen max-w-md mx-auto bg-background shadow-lg">
+      <main className="flex-1 overflow-hidden">
+        {activeTab === "home" ? <HomePage /> : <ServicesPage />}
+      </main>
+      <BottomNav active={activeTab} onNavigate={setActiveTab} />
     </div>
   );
 };
