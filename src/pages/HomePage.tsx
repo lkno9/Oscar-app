@@ -3,6 +3,7 @@ import { Volume2, VolumeX, Phone, MoreVertical } from "lucide-react";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
+import { CallScreen } from "@/components/CallScreen";
 import { streamChat, Message } from "@/lib/oscarChat";
 import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
@@ -26,6 +27,7 @@ export function HomePage() {
   const [isTyping, setIsTyping] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [isCallOpen, setIsCallOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
 
@@ -194,6 +196,7 @@ export function HomePage() {
             
             {/* Phone button */}
             <button
+              onClick={() => setIsCallOpen(true)}
               className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
               aria-label="Appeler"
             >
@@ -238,6 +241,9 @@ export function HomePage() {
         onVoiceToggle={handleVoiceToggle}
         voiceSupported={voiceSupported}
       />
+
+      {/* Call Screen */}
+      <CallScreen isOpen={isCallOpen} onClose={() => setIsCallOpen(false)} />
     </div>
   );
 }

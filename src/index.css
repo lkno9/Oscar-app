@@ -128,4 +128,14 @@
       transform: scale(1.1);
     }
   }
+
+  /* Mirror video for selfie camera */
+  .mirror {
+    transform: scaleX(-1);
+  }
+
+  /* Oscar navy background */
+  .bg-oscar-navy {
+    background: hsl(var(--oscar-navy));
+  }
 }
