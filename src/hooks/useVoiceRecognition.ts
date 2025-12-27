@@ -66,13 +66,27 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      setError(event.error);
       setIsListening(false);
       
-      if (event.error === "not-allowed") {
-        setError("Accès au microphone refusé. Veuillez autoriser l'accès dans les paramètres du navigateur.");
-      } else if (event.error === "no-speech") {
-        setError("Aucune parole détectée. Veuillez réessayer.");
+      switch (event.error) {
+        case "not-allowed":
+          setError("Accès au microphone refusé. Veuillez autoriser l'accès dans les paramètres du navigateur.");
+          break;
+        case "no-speech":
+          setError("Aucune parole détectée. Veuillez réessayer.");
+          break;
+        case "network":
+          setError("Erreur réseau. La reconnaissance vocale nécessite une connexion internet.");
+          break;
+        case "aborted":
+          // User cancelled, no need to show error
+          setError(null);
+          break;
+        case "audio-capture":
+          setError("Aucun microphone détecté. Veuillez vérifier votre appareil.");
+          break;
+        default:
+          setError(`Erreur de reconnaissance vocale: ${event.error}`);
       }
     };
 
