@@ -1,12 +1,35 @@
+import { Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
+  onSpeak?: (text: string) => void;
+  onStopSpeaking?: () => void;
+  isSpeaking?: boolean;
+  speakingMessageId?: string;
+  messageId?: string;
 }
 
-export function ChatMessage({ role, content }: ChatMessageProps) {
+export function ChatMessage({ 
+  role, 
+  content, 
+  onSpeak, 
+  onStopSpeaking,
+  isSpeaking = false,
+  speakingMessageId,
+  messageId,
+}: ChatMessageProps) {
   const isUser = role === "user";
+  const isThisMessageSpeaking = isSpeaking && speakingMessageId === messageId;
+
+  const handleSpeakClick = () => {
+    if (isThisMessageSpeaking && onStopSpeaking) {
+      onStopSpeaking();
+    } else if (onSpeak) {
+      onSpeak(content);
+    }
+  };
 
   return (
     <div
@@ -23,7 +46,27 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
             : "bg-secondary text-secondary-foreground rounded-bl-md"
         )}
       >
-        {content}
+        <div className="flex items-start gap-2">
+          <span className="flex-1">{content}</span>
+          {!isUser && onSpeak && (
+            <button
+              onClick={handleSpeakClick}
+              className={cn(
+                "flex-shrink-0 p-1 rounded-full transition-colors mt-0.5",
+                isThisMessageSpeaking 
+                  ? "text-primary bg-primary/10" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+              aria-label={isThisMessageSpeaking ? "Arrêter la lecture" : "Écouter"}
+            >
+              {isThisMessageSpeaking ? (
+                <VolumeX className="w-4 h-4" />
+              ) : (
+                <Volume2 className="w-4 h-4" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
