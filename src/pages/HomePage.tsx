@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Phone, MoreVertical } from "lucide-react";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
@@ -164,41 +164,50 @@ export function HomePage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <header className="px-4 py-6 bg-card border-b border-border">
+      <header className="px-4 py-4 bg-card border-b border-border">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <OscarAvatar size="md" />
             <div>
-              <h1 className="text-xl font-bold text-foreground">Oscar</h1>
-              <p className="text-sm text-muted-foreground">Votre compagnon numérique</p>
+              <h1 className="text-lg font-bold text-foreground">Oscar</h1>
+              <p className="text-sm text-primary font-medium">En ligne</p>
             </div>
           </div>
           
-          {/* Voice mode toggle */}
-          {ttsSupported && (
+          {/* Right actions */}
+          <div className="flex items-center gap-1">
+            {/* Voice mode toggle */}
+            {ttsSupported && (
+              <button
+                onClick={() => setVoiceMode(!voiceMode)}
+                className={cn(
+                  "p-2.5 rounded-full transition-all",
+                  voiceMode 
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                )}
+                aria-label={voiceMode ? "Désactiver le mode vocal" : "Activer le mode vocal"}
+              >
+                {voiceMode ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              </button>
+            )}
+            
+            {/* Phone button */}
             <button
-              onClick={() => setVoiceMode(!voiceMode)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all",
-                voiceMode 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-secondary text-muted-foreground hover:text-foreground"
-              )}
-              aria-label={voiceMode ? "Désactiver le mode vocal" : "Activer le mode vocal"}
+              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+              aria-label="Appeler"
             >
-              {voiceMode ? (
-                <>
-                  <Volume2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Vocal actif</span>
-                </>
-              ) : (
-                <>
-                  <VolumeX className="w-4 h-4" />
-                  <span className="hidden sm:inline">Vocal</span>
-                </>
-              )}
+              <Phone className="w-5 h-5" />
             </button>
-          )}
+            
+            {/* Menu button */}
+            <button
+              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+              aria-label="Menu"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
