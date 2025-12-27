@@ -2,21 +2,23 @@ import { useState, useRef, useEffect } from "react";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
+import { streamChat, Message } from "@/lib/oscarChat";
+import { toast } from "sonner";
 
-interface Message {
+interface ChatMessageData {
   id: string;
   role: "user" | "assistant";
   content: string;
 }
 
-const INITIAL_MESSAGE: Message = {
+const INITIAL_MESSAGE: ChatMessageData = {
   id: "welcome",
   role: "assistant",
   content: "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider aujourd'hui ? N'hésitez pas à me poser vos questions, nous ferons cela ensemble. 😊",
 };
 
 export function HomePage() {
-  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
+  const [messages, setMessages] = useState<ChatMessageData[]>([INITIAL_MESSAGE]);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +31,7 @@ export function HomePage() {
   }, [messages, isTyping]);
 
   const handleSend = async (content: string) => {
-    const userMessage: Message = {
+    const userMessage: ChatMessageData = {
       id: Date.now().toString(),
       role: "user",
       content,
@@ -38,24 +40,41 @@ export function HomePage() {
     setMessages((prev) => [...prev, userMessage]);
     setIsTyping(true);
 
-    // Simulate Oscar's response (will be replaced with actual AI integration)
-    setTimeout(() => {
-      const responses = [
-        "Je comprends votre demande. Laissez-moi vous aider étape par étape. Que souhaitez-vous faire exactement ?",
-        "Bien sûr, je suis là pour vous accompagner. Pouvez-vous me donner plus de détails ?",
-        "Pas de souci, nous allons faire cela ensemble. Êtes-vous prêt à commencer ?",
-        "Je vais vous guider. D'abord, assurons-nous de bien comprendre ce que vous voulez faire.",
-      ];
-      
-      const oscarResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
-      };
+    // Build the conversation history for the API (excluding welcome message for cleaner context)
+    const apiMessages: Message[] = messages
+      .filter((m) => m.id !== "welcome")
+      .map((m) => ({ role: m.role, content: m.content }));
+    apiMessages.push({ role: "user", content });
 
-      setIsTyping(false);
-      setMessages((prev) => [...prev, oscarResponse]);
-    }, 1500);
+    let assistantSoFar = "";
+
+    const upsertAssistant = (nextChunk: string) => {
+      assistantSoFar += nextChunk;
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant" && last.id !== "welcome") {
+          return prev.map((m, i) =>
+            i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
+          );
+        }
+        return [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: assistantSoFar }];
+      });
+    };
+
+    await streamChat({
+      messages: apiMessages,
+      onDelta: (chunk) => {
+        setIsTyping(false);
+        upsertAssistant(chunk);
+      },
+      onDone: () => {
+        setIsTyping(false);
+      },
+      onError: (error) => {
+        setIsTyping(false);
+        toast.error(error);
+      },
+    });
   };
 
   return (
