@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Bell, Volume2, Moon, Shield, HelpCircle, LogOut, ChevronRight } from "lucide-react";
+import { ArrowLeft, User, Bell, Volume2, Moon, Shield, HelpCircle, LogOut, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MFAEnrollment } from "@/components/MFAEnrollment";
+import { Factor } from "@supabase/supabase-js";
 
 interface Profile {
   full_name: string | null;
@@ -15,16 +17,20 @@ interface Profile {
 
 export function SettingsPage() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, listFactors, unenrollMFA } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [showMFAEnrollment, setShowMFAEnrollment] = useState(false);
+  const [mfaFactors, setMfaFactors] = useState<Factor[]>([]);
+  const [mfaLoading, setMfaLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
+      fetchMFAFactors();
     }
   }, [user]);
 
@@ -39,6 +45,11 @@ export function SettingsPage() {
     setLoading(false);
   };
 
+  const fetchMFAFactors = async () => {
+    const { totp } = await listFactors();
+    setMfaFactors(totp.filter(f => f.status === 'verified'));
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -48,6 +59,30 @@ export function SettingsPage() {
       toast.error("Erreur lors de la déconnexion");
     }
   };
+
+  const handleDisableMFA = async () => {
+    if (mfaFactors.length === 0) return;
+    
+    setMfaLoading(true);
+    try {
+      const { error } = await unenrollMFA(mfaFactors[0].id);
+      if (error) {
+        toast.error("Erreur lors de la désactivation");
+      } else {
+        toast.success("Double authentification désactivée");
+        await fetchMFAFactors();
+      }
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleMFAEnrollmentSuccess = () => {
+    setShowMFAEnrollment(false);
+    fetchMFAFactors();
+  };
+
+  const isMFAEnabled = mfaFactors.length > 0;
 
   const settingsSections = [
     {
@@ -59,6 +94,21 @@ export function SettingsPage() {
           description: "Modifier vos informations personnelles",
           action: () => navigate("/profile"),
           type: "link" as const,
+        },
+      ],
+    },
+    {
+      title: "Sécurité",
+      items: [
+        {
+          icon: Shield,
+          label: "Double authentification",
+          description: isMFAEnabled 
+            ? "Votre compte est protégé" 
+            : "Protégez votre compte avec un code",
+          status: isMFAEnabled,
+          action: isMFAEnabled ? handleDisableMFA : () => setShowMFAEnrollment(true),
+          type: "security" as const,
         },
       ],
     },
@@ -101,106 +151,131 @@ export function SettingsPage() {
           action: () => navigate("/services/help"),
           type: "link" as const,
         },
-        {
-          icon: Shield,
-          label: "Confidentialité",
-          description: "Politique de confidentialité",
-          action: () => {},
-          type: "link" as const,
-        },
       ],
     },
   ];
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-foreground" />
-        </button>
-        <h1 className="text-lg font-bold text-foreground">Paramètres</h1>
-      </header>
+    <>
+      <div className="flex flex-col h-full bg-background">
+        <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <h1 className="text-lg font-bold text-foreground">Paramètres</h1>
+        </header>
 
-      <div className="flex-1 overflow-y-auto">
-        {/* Profile summary */}
-        <div className="p-4 bg-card border-b border-border">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <User className="w-8 h-8 text-primary" />
-              )}
-            </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-bold text-foreground">
-                {profile?.full_name || "Utilisateur"}
-              </h2>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Settings sections */}
-        <div className="p-4 space-y-6">
-          {settingsSections.map((section, idx) => (
-            <div key={idx} className="space-y-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">
-                {section.title}
-              </h3>
-              <div className="bg-card rounded-xl border border-border overflow-hidden">
-                {section.items.map((item, itemIdx) => (
-                  <div
-                    key={itemIdx}
-                    className={`flex items-center gap-4 p-4 ${
-                      itemIdx !== section.items.length - 1 ? "border-b border-border" : ""
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                      <item.icon className="w-5 h-5 text-foreground" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{item.label}</p>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    </div>
-                    {item.type === "toggle" ? (
-                      <Switch
-                        checked={item.value}
-                        onCheckedChange={item.onChange}
-                      />
-                    ) : (
-                      <button
-                        onClick={item.action}
-                        className="p-2 rounded-full hover:bg-secondary transition-colors"
-                      >
-                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+        <div className="flex-1 overflow-y-auto">
+          {/* Profile summary */}
+          <div className="p-4 bg-card border-b border-border">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  <User className="w-8 h-8 text-primary" />
+                )}
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-foreground">
+                  {profile?.full_name || "Utilisateur"}
+                </h2>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
               </div>
             </div>
-          ))}
+          </div>
 
-          {/* Sign out button */}
-          <Button
-            variant="destructive"
-            className="w-full"
-            onClick={handleSignOut}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Se déconnecter
-          </Button>
+          {/* Settings sections */}
+          <div className="p-4 space-y-6">
+            {settingsSections.map((section, idx) => (
+              <div key={idx} className="space-y-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">
+                  {section.title}
+                </h3>
+                <div className="bg-card rounded-xl border border-border overflow-hidden">
+                  {section.items.map((item, itemIdx) => (
+                    <div
+                      key={itemIdx}
+                      className={`flex items-center gap-4 p-4 ${
+                        itemIdx !== section.items.length - 1 ? "border-b border-border" : ""
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        item.type === 'security' && (item as any).status
+                          ? 'bg-green-500/20'
+                          : 'bg-secondary'
+                      }`}>
+                        <item.icon className={`w-5 h-5 ${
+                          item.type === 'security' && (item as any).status
+                            ? 'text-green-500'
+                            : 'text-foreground'
+                        }`} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground">{item.label}</p>
+                          {item.type === 'security' && (item as any).status && (
+                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{item.description}</p>
+                      </div>
+                      {item.type === "toggle" ? (
+                        <Switch
+                          checked={(item as any).value}
+                          onCheckedChange={(item as any).onChange}
+                        />
+                      ) : item.type === "security" ? (
+                        <Button
+                          variant={(item as any).status ? "outline" : "default"}
+                          size="sm"
+                          onClick={(item as any).action}
+                          disabled={mfaLoading}
+                          className={(item as any).status ? "border-destructive text-destructive hover:bg-destructive/10" : ""}
+                        >
+                          {mfaLoading ? "..." : (item as any).status ? "Désactiver" : "Activer"}
+                        </Button>
+                      ) : (
+                        <button
+                          onClick={(item as any).action}
+                          className="p-2 rounded-full hover:bg-secondary transition-colors"
+                        >
+                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
 
-          {/* App version */}
-          <p className="text-center text-xs text-muted-foreground py-4">
-            Oscar v1.0.0 • Fait avec ❤️ pour vous
-          </p>
+            {/* Sign out button */}
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Se déconnecter
+            </Button>
+
+            {/* App version */}
+            <p className="text-center text-xs text-muted-foreground py-4">
+              Oscar v1.0.0 • Fait avec ❤️ pour vous
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+
+      {showMFAEnrollment && (
+        <MFAEnrollment
+          onSuccess={handleMFAEnrollmentSuccess}
+          onCancel={() => setShowMFAEnrollment(false)}
+        />
+      )}
+    </>
   );
 }
