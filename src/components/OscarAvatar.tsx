@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import oscarImage from "@/assets/oscar-avatar.png";
 
 interface OscarAvatarProps {
   size?: "sm" | "md" | "lg";
@@ -15,19 +16,16 @@ export function OscarAvatar({ size = "md", className }: OscarAvatarProps) {
   return (
     <div
       className={cn(
-        "rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-card",
+        "rounded-full overflow-hidden flex items-center justify-center shadow-card bg-gradient-to-br from-primary/20 to-primary/5",
         sizeClasses[size],
         className
       )}
     >
-      <span className={cn(
-        "text-primary-foreground font-bold",
-        size === "sm" && "text-lg",
-        size === "md" && "text-2xl",
-        size === "lg" && "text-4xl"
-      )}>
-        O
-      </span>
+      <img 
+        src={oscarImage} 
+        alt="Oscar" 
+        className="w-full h-full object-cover"
+      />
     </div>
   );
 }
