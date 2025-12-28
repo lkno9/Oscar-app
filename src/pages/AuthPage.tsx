@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OscarAvatar } from '@/components/OscarAvatar';
+import { MFAVerification } from '@/components/MFAVerification';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export function AuthPage() {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showMFAVerification, setShowMFAVerification] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -24,13 +26,15 @@ export function AuthPage() {
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        const { error, mfaRequired } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
             toast.error('Email ou mot de passe incorrect');
           } else {
             toast.error(error.message);
           }
+        } else if (mfaRequired) {
+          setShowMFAVerification(true);
         } else {
           toast.success('Connexion réussie !');
           navigate('/');
@@ -57,6 +61,21 @@ export function AuthPage() {
       setLoading(false);
     }
   };
+
+  const handleMFASuccess = () => {
+    setShowMFAVerification(false);
+    navigate('/');
+  };
+
+  const handleMFACancel = () => {
+    setShowMFAVerification(false);
+    setEmail('');
+    setPassword('');
+  };
+
+  if (showMFAVerification) {
+    return <MFAVerification onSuccess={handleMFASuccess} onCancel={handleMFACancel} />;
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">

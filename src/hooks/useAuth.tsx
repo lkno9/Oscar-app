@@ -1,14 +1,20 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthMFAEnrollResponse, Factor } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  mfaRequired: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; mfaRequired?: boolean }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  enrollMFA: () => Promise<AuthMFAEnrollResponse>;
+  verifyMFA: (factorId: string, code: string) => Promise<{ error: Error | null }>;
+  unenrollMFA: (factorId: string) => Promise<{ error: Error | null }>;
+  listFactors: () => Promise<{ totp: Factor[]; error: Error | null }>;
+  verifyMFAChallenge: (factorId: string, code: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mfaRequired, setMfaRequired] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -35,8 +42,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    
+    if (error) {
+      return { error };
+    }
+
+    // Check if MFA is required
+    const { data: assuranceLevel } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    
+    if (assuranceLevel?.nextLevel === 'aal2' && assuranceLevel?.currentLevel === 'aal1') {
+      setMfaRequired(true);
+      return { error: null, mfaRequired: true };
+    }
+    
+    setMfaRequired(false);
+    return { error: null, mfaRequired: false };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
@@ -52,11 +73,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    setMfaRequired(false);
     await supabase.auth.signOut();
   };
 
+  const enrollMFA = async () => {
+    return await supabase.auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: 'Oscar TOTP'
+    });
+  };
+
+  const verifyMFA = async (factorId: string, code: string) => {
+    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+    if (challengeError) return { error: challengeError };
+
+    const { error } = await supabase.auth.mfa.verify({
+      factorId,
+      challengeId: challenge.id,
+      code
+    });
+    return { error };
+  };
+
+  const verifyMFAChallenge = async (factorId: string, code: string) => {
+    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+    if (challengeError) return { error: challengeError };
+
+    const { error } = await supabase.auth.mfa.verify({
+      factorId,
+      challengeId: challenge.id,
+      code
+    });
+
+    if (!error) {
+      setMfaRequired(false);
+    }
+    return { error };
+  };
+
+  const unenrollMFA = async (factorId: string) => {
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    return { error };
+  };
+
+  const listFactors = async () => {
+    const { data, error } = await supabase.auth.mfa.listFactors();
+    return { 
+      totp: data?.totp || [], 
+      error 
+    };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      mfaRequired,
+      signIn, 
+      signUp, 
+      signOut,
+      enrollMFA,
+      verifyMFA,
+      unenrollMFA,
+      listFactors,
+      verifyMFAChallenge
+    }}>
       {children}
     </AuthContext.Provider>
   );
