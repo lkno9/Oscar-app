@@ -52,6 +52,45 @@ export type Database = {
           },
         ]
       }
+      daily_wellness: {
+        Row: {
+          activity_goal_minutes: number | null
+          activity_minutes: number | null
+          created_at: string
+          entry_date: string
+          id: string
+          sleep_goal_minutes: number | null
+          sleep_minutes: number | null
+          steps: number | null
+          steps_goal: number | null
+          user_id: string
+        }
+        Insert: {
+          activity_goal_minutes?: number | null
+          activity_minutes?: number | null
+          created_at?: string
+          entry_date?: string
+          id?: string
+          sleep_goal_minutes?: number | null
+          sleep_minutes?: number | null
+          steps?: number | null
+          steps_goal?: number | null
+          user_id: string
+        }
+        Update: {
+          activity_goal_minutes?: number | null
+          activity_minutes?: number | null
+          created_at?: string
+          entry_date?: string
+          id?: string
+          sleep_goal_minutes?: number | null
+          sleep_minutes?: number | null
+          steps?: number | null
+          steps_goal?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           category: string | null
@@ -154,6 +193,36 @@ export type Database = {
         }
         Relationships: []
       }
+      game_sessions: {
+        Row: {
+          duration_seconds: number | null
+          game_type: string
+          id: string
+          played_at: string
+          score: number | null
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          duration_seconds?: number | null
+          game_type: string
+          id?: string
+          played_at?: string
+          score?: number | null
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          duration_seconds?: number | null
+          game_type?: string
+          id?: string
+          played_at?: string
+          score?: number | null
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       health_records: {
         Row: {
           created_at: string
@@ -229,6 +298,33 @@ export type Database = {
         }
         Relationships: []
       }
+      mood_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          id: string
+          mood_level: number
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          mood_level: number
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          mood_level?: number
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -268,9 +364,34 @@ export type Database = {
         }
         Relationships: []
       }
+      photo_albums: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           album: string | null
+          album_id: string | null
           created_at: string
           id: string
           title: string | null
@@ -279,6 +400,7 @@ export type Database = {
         }
         Insert: {
           album?: string | null
+          album_id?: string | null
           created_at?: string
           id?: string
           title?: string | null
@@ -287,13 +409,22 @@ export type Database = {
         }
         Update: {
           album?: string | null
+          album_id?: string | null
           created_at?: string
           id?: string
           title?: string | null
           url?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "photos_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "photo_albums"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

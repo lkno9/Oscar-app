@@ -24,6 +24,7 @@ import { GamesPage } from "./pages/services/GamesPage";
 import { VaultPage } from "./pages/services/VaultPage";
 import { EmergencyPage } from "./pages/services/EmergencyPage";
 import { HelpPage } from "./pages/services/HelpPage";
+import { MemoryGame } from "./pages/services/games/MemoryGame";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/services/music" element={<ProtectedRoute><MusicPage /></ProtectedRoute>} />
             <Route path="/services/library" element={<ProtectedRoute><LibraryPage /></ProtectedRoute>} />
             <Route path="/services/games" element={<ProtectedRoute><GamesPage /></ProtectedRoute>} />
+            <Route path="/services/games/memory" element={<ProtectedRoute><MemoryGame /></ProtectedRoute>} />
             <Route path="/services/vault" element={<ProtectedRoute><VaultPage /></ProtectedRoute>} />
             <Route path="/services/emergency" element={<ProtectedRoute><EmergencyPage /></ProtectedRoute>} />
             <Route path="/services/help" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />

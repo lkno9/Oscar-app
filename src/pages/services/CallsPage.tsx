@@ -1,23 +1,68 @@
-import { ArrowLeft, Phone, Video, PhoneIncoming, PhoneOutgoing, PhoneMissed } from "lucide-react";
+import { ArrowLeft, Phone, Video, PhoneIncoming, PhoneOutgoing, PhoneMissed, Plus, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+
+interface Call {
+  id: string;
+  contact_name: string | null;
+  call_type: string | null;
+  call_date: string;
+  duration: number | null;
+}
 
 export function CallsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [calls, setCalls] = useState<Call[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const calls = [
-    { id: 1, name: "Marie (fille)", type: "incoming", time: "Aujourd'hui, 14:30", duration: "12 min" },
-    { id: 2, name: "Dr. Martin", type: "outgoing", time: "Hier, 10:15", duration: "5 min" },
-    { id: 3, name: "Pierre (fils)", type: "missed", time: "Lun, 18:00", duration: null },
-  ];
+  useEffect(() => {
+    if (user) fetchCalls();
+  }, [user]);
 
-  const getCallIcon = (type: string) => {
+  const fetchCalls = async () => {
+    const { data, error } = await supabase
+      .from('call_history')
+      .select('*')
+      .order('call_date', { ascending: false });
+    
+    if (!error && data) setCalls(data);
+    setLoading(false);
+  };
+
+  const getCallIcon = (type: string | null) => {
     switch (type) {
       case "incoming": return <PhoneIncoming className="w-5 h-5 text-green-500" />;
       case "outgoing": return <PhoneOutgoing className="w-5 h-5 text-blue-500" />;
       case "missed": return <PhoneMissed className="w-5 h-5 text-destructive" />;
       default: return <Phone className="w-5 h-5" />;
     }
+  };
+
+  const formatCallDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return `Aujourd'hui, ${format(date, 'HH:mm')}`;
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return `Hier, ${format(date, 'HH:mm')}`;
+    }
+    return format(date, "EEEE d MMMM, HH:mm", { locale: fr });
+  };
+
+  const formatDuration = (seconds: number | null) => {
+    if (!seconds) return null;
+    const mins = Math.floor(seconds / 60);
+    if (mins < 1) return `${seconds} sec`;
+    return `${mins} min`;
   };
 
   return (
@@ -52,23 +97,40 @@ export function CallsPage() {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Historique
           </h2>
-          {calls.map((call) => (
-            <div
-              key={call.id}
-              className="bg-card rounded-xl p-4 shadow-sm border border-border flex items-center gap-4"
-            >
-              <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
-                {getCallIcon(call.type)}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">{call.name}</h3>
-                <p className="text-sm text-muted-foreground">{call.time}</p>
-              </div>
-              {call.duration && (
-                <span className="text-sm text-muted-foreground">{call.duration}</span>
-              )}
+          
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+          ) : calls.length === 0 ? (
+            <div className="bg-card rounded-xl p-6 text-center border border-border">
+              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+              <h3 className="font-semibold text-foreground mb-2">Aucun appel pour l'instant</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Votre historique d'appels apparaîtra ici
+              </p>
+              <Button onClick={() => navigate('/services/family')} variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter des contacts
+              </Button>
             </div>
-          ))}
+          ) : (
+            calls.map((call) => (
+              <div
+                key={call.id}
+                className="bg-card rounded-xl p-4 shadow-sm border border-border flex items-center gap-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                  {getCallIcon(call.call_type)}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground">{call.contact_name || 'Inconnu'}</h3>
+                  <p className="text-sm text-muted-foreground">{formatCallDate(call.call_date)}</p>
+                </div>
+                {call.duration && (
+                  <span className="text-sm text-muted-foreground">{formatDuration(call.duration)}</span>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
