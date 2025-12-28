@@ -214,8 +214,6 @@ export function HomePage() {
             >
               <Phone className="w-5 h-5" />
             </button>
-
-            {/* Video call button */}
             <button
               onClick={() => {
                 setCallType("video");
