@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-import { Mic, MicOff, Send } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Mic, MicOff, Send, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  onAttach?: (files: FileList) => void;
   disabled?: boolean;
   isListening?: boolean;
   transcript?: string;
@@ -13,6 +14,7 @@ interface ChatInputProps {
 
 export function ChatInput({ 
   onSend, 
+  onAttach,
   disabled, 
   isListening = false,
   transcript = "",
@@ -20,6 +22,7 @@ export function ChatInput({
   voiceSupported = true,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update message when transcript changes
   useEffect(() => {
@@ -42,9 +45,39 @@ export function ChatInput({
     }
   };
 
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0 && onAttach) {
+      onAttach(e.target.files);
+      // Reset input to allow selecting the same file again
+      e.target.value = "";
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="p-4 bg-card border-t border-border">
-      <div className="flex items-center gap-2 bg-secondary rounded-full p-1.5 pl-4">
+      <div className="flex items-center gap-2 bg-secondary rounded-full p-1.5 pl-2">
+        {/* Attach button */}
+        <button
+          type="button"
+          onClick={handleAttachClick}
+          className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all"
+          aria-label="Joindre un fichier"
+        >
+          <Paperclip className="w-5 h-5" />
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,application/pdf,.doc,.docx,.txt"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+
         <input
           type="text"
           value={message}
@@ -54,6 +87,23 @@ export function ChatInput({
           disabled={disabled}
         />
         
+        {/* Voice button */}
+        {voiceSupported && (
+          <button
+            type="button"
+            onClick={handleVoiceClick}
+            className={cn(
+              "p-2 rounded-full transition-all",
+              isListening 
+                ? "bg-destructive text-destructive-foreground animate-pulse" 
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+            )}
+            aria-label={isListening ? "Arrêter l'écoute" : "Parler"}
+          >
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
+        )}
+
         <button
           type="submit"
           disabled={!message.trim() || disabled}
