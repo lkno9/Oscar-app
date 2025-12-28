@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Volume2, VolumeX, Phone, Video, MoreVertical } from "lucide-react";
+import { Phone, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
@@ -9,13 +9,6 @@ import { streamChat, Message } from "@/lib/oscarChat";
 import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface ChatMessageData {
   id: string;
@@ -118,6 +111,11 @@ export function HomePage() {
     setSpeakingMessageId(null);
   };
 
+  const handleAttach = (files: FileList) => {
+    const fileNames = Array.from(files).map(f => f.name).join(", ");
+    toast.info(`Fichier(s) sélectionné(s) : ${fileNames}`);
+  };
+
   const handleSend = async (content: string) => {
     // Stop listening if active
     if (isListening) {
@@ -185,24 +183,8 @@ export function HomePage() {
             </div>
           </div>
           
-          {/* Right actions */}
+{/* Right actions */}
           <div className="flex items-center gap-1">
-            {/* Voice mode toggle */}
-            {ttsSupported && (
-              <button
-                onClick={() => setVoiceMode(!voiceMode)}
-                className={cn(
-                  "p-2.5 rounded-full transition-all",
-                  voiceMode 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
-                aria-label={voiceMode ? "Désactiver le mode vocal" : "Activer le mode vocal"}
-              >
-                {voiceMode ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-              </button>
-            )}
-            
             {/* Audio call button */}
             <button
               onClick={() => {
@@ -214,36 +196,15 @@ export function HomePage() {
             >
               <Phone className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => {
-                setCallType("video");
-                setIsCallOpen(true);
-              }}
-              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
-              aria-label="Appel vidéo"
-            >
-              <Video className="w-5 h-5" />
-            </button>
             
-            {/* Menu button */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
-                  aria-label="Menu"
-                >
-                  <MoreVertical className="w-5 h-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
-                  Paramètres
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/services/help")}>
-                  Aide
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Settings button */}
+            <button
+              onClick={() => navigate("/settings")}
+              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+              aria-label="Paramètres"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </header>
@@ -269,6 +230,7 @@ export function HomePage() {
       {/* Input */}
       <ChatInput 
         onSend={handleSend} 
+        onAttach={handleAttach}
         disabled={isTyping}
         isListening={isListening}
         transcript={transcript}
