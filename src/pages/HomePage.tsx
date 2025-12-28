@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Volume2, VolumeX, Phone, MoreVertical } from "lucide-react";
+import { Volume2, VolumeX, Phone, Video, MoreVertical } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
@@ -9,6 +10,12 @@ import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ChatMessageData {
   id: string;
@@ -23,11 +30,13 @@ const INITIAL_MESSAGE: ChatMessageData = {
 };
 
 export function HomePage() {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessageData[]>([INITIAL_MESSAGE]);
   const [isTyping, setIsTyping] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [isCallOpen, setIsCallOpen] = useState(false);
+  const [callType, setCallType] = useState<"audio" | "video">("audio");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
 
@@ -194,22 +203,49 @@ export function HomePage() {
               </button>
             )}
             
-            {/* Phone button */}
+            {/* Audio call button */}
             <button
-              onClick={() => setIsCallOpen(true)}
+              onClick={() => {
+                setCallType("audio");
+                setIsCallOpen(true);
+              }}
               className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
-              aria-label="Appeler"
+              aria-label="Appel audio"
             >
               <Phone className="w-5 h-5" />
             </button>
+
+            {/* Video call button */}
+            <button
+              onClick={() => {
+                setCallType("video");
+                setIsCallOpen(true);
+              }}
+              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+              aria-label="Appel vidéo"
+            >
+              <Video className="w-5 h-5" />
+            </button>
             
             {/* Menu button */}
-            <button
-              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
-              aria-label="Menu"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+                  aria-label="Menu"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => navigate("/settings")}>
+                  Paramètres
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/services/help")}>
+                  Aide
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -243,7 +279,11 @@ export function HomePage() {
       />
 
       {/* Call Screen */}
-      <CallScreen isOpen={isCallOpen} onClose={() => setIsCallOpen(false)} />
+      <CallScreen 
+        isOpen={isCallOpen} 
+        onClose={() => setIsCallOpen(false)} 
+        initialVideoEnabled={callType === "video"}
+      />
     </div>
   );
 }

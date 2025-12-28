@@ -10,10 +10,11 @@ import { toast } from "sonner";
 interface CallScreenProps {
   isOpen: boolean;
   onClose: () => void;
+  initialVideoEnabled?: boolean;
 }
 
-export function CallScreen({ isOpen, onClose }: CallScreenProps) {
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: CallScreenProps) {
+  const [isVideoEnabled, setIsVideoEnabled] = useState(initialVideoEnabled);
   const [isMuted, setIsMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [isOscarSpeaking, setIsOscarSpeaking] = useState(false);
@@ -159,14 +160,17 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   // Initialize call
   useEffect(() => {
     if (isOpen) {
+      // Reset video state based on initial prop
+      setIsVideoEnabled(initialVideoEnabled);
+      
       // Start call timer
       setCallDuration(0);
       callTimerRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
 
-      // Start camera
-      if (isVideoEnabled) {
+      // Start camera only if video is enabled
+      if (initialVideoEnabled) {
         startCamera();
       }
 
@@ -199,7 +203,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
         clearInterval(callTimerRef.current);
       }
     };
-  }, [isOpen, isVideoEnabled, voiceSupported, isMuted, startCamera, stopCamera, startListening, stopListening, stopSpeaking, speak]);
+  }, [isOpen, initialVideoEnabled, voiceSupported, isMuted, startCamera, stopCamera, startListening, stopListening, stopSpeaking, speak]);
 
   // Format duration
   const formatDuration = (seconds: number) => {
