@@ -80,7 +80,7 @@ export function AuthPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-8">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 flex flex-col items-center">
           <OscarAvatar size="lg" />
           <div>
             <h1 className="text-2xl font-bold text-foreground">
