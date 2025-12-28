@@ -45,31 +45,11 @@ export function ChatInput({
   return (
     <form onSubmit={handleSubmit} className="p-4 bg-card border-t border-border">
       <div className="flex items-center gap-2 bg-secondary rounded-full p-1.5 pl-4">
-        <button
-          type="button"
-          onClick={handleVoiceClick}
-          disabled={!voiceSupported}
-          className={cn(
-            "p-2 transition-all duration-200 rounded-full",
-            isListening 
-              ? "text-destructive animate-pulse-mic bg-destructive/10" 
-              : "text-muted-foreground hover:text-foreground",
-            !voiceSupported && "opacity-50 cursor-not-allowed"
-          )}
-          aria-label={isListening ? "Arrêter l'enregistrement" : "Commencer l'enregistrement"}
-        >
-          {isListening ? (
-            <MicOff className="w-5 h-5" />
-          ) : (
-            <Mic className="w-5 h-5" />
-          )}
-        </button>
-        
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder={isListening ? "Parlez maintenant..." : "Demandez à Oscar..."}
+          placeholder="Demandez à Oscar..."
           className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground text-base"
           disabled={disabled}
         />
