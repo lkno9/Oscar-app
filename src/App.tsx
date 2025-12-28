@@ -28,6 +28,7 @@ import { MemoryGame } from "./pages/services/games/MemoryGame";
 import { SudokuGame } from "./pages/services/games/SudokuGame";
 import { QuizGame } from "./pages/services/games/QuizGame";
 import { Game2048 } from "./pages/services/games/Game2048";
+import { SettingsPage } from "./pages/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/services/vault" element={<ProtectedRoute><VaultPage /></ProtectedRoute>} />
             <Route path="/services/emergency" element={<ProtectedRoute><EmergencyPage /></ProtectedRoute>} />
             <Route path="/services/help" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
