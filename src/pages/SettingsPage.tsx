@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Bell, Volume2, Moon, Shield, HelpCircle, LogOut, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, User, Bell, Volume2, Moon, Shield, HelpCircle, LogOut, ChevronRight, CheckCircle2, XCircle, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -93,6 +93,18 @@ export function SettingsPage() {
           label: "Profil",
           description: "Modifier vos informations personnelles",
           action: () => navigate("/profile"),
+          type: "link" as const,
+        },
+      ],
+    },
+    {
+      title: "Famille",
+      items: [
+        {
+          icon: Users,
+          label: "Accès Famille",
+          description: "Inviter et gérer les membres de votre famille",
+          action: () => navigate("/settings/family-access"),
           type: "link" as const,
         },
       ],
