@@ -8,6 +8,7 @@ import { OscarAvatar } from '@/components/OscarAvatar';
 import { MFAVerification } from '@/components/MFAVerification';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, Users, Heart } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 type AccountType = 'senior' | 'family_member';
 
@@ -20,8 +21,21 @@ export function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showMFAVerification, setShowMFAVerification] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+
+  const redirectBasedOnRole = async (userId: string) => {
+    try {
+      const { data: role } = await supabase.rpc('get_user_role', { _user_id: userId });
+      if (role === 'family_member') {
+        navigate('/family');
+      } else {
+        navigate('/');
+      }
+    } catch {
+      navigate('/');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +43,7 @@ export function AuthPage() {
 
     try {
       if (isLogin) {
-        const { error, mfaRequired } = await signIn(email, password);
+        const { error, mfaRequired, data } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
             toast.error('Email ou mot de passe incorrect');
@@ -40,7 +54,11 @@ export function AuthPage() {
           setShowMFAVerification(true);
         } else {
           toast.success('Connexion réussie !');
-          navigate('/');
+          if (data?.user?.id) {
+            await redirectBasedOnRole(data.user.id);
+          } else {
+            navigate('/');
+          }
         }
       } else {
         if (!fullName.trim()) {
@@ -65,9 +83,14 @@ export function AuthPage() {
     }
   };
 
-  const handleMFASuccess = () => {
+  const handleMFASuccess = async () => {
     setShowMFAVerification(false);
-    navigate('/');
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser?.id) {
+      await redirectBasedOnRole(currentUser.id);
+    } else {
+      navigate('/');
+    }
   };
 
   const handleMFACancel = () => {

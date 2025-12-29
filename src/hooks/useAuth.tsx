@@ -2,12 +2,18 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { User, Session, AuthMFAEnrollResponse, Factor } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+interface SignInResult {
+  error: Error | null;
+  mfaRequired?: boolean;
+  data?: { user: User | null };
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   mfaRequired: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null; mfaRequired?: boolean }>;
+  signIn: (email: string, password: string) => Promise<SignInResult>;
   signUp: (email: string, password: string, fullName: string, role?: 'senior' | 'family_member') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   enrollMFA: () => Promise<AuthMFAEnrollResponse>;
@@ -41,11 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<SignInResult> => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
-      return { error };
+      return { error, data: undefined };
     }
 
     // Check if MFA is required
@@ -53,11 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (assuranceLevel?.nextLevel === 'aal2' && assuranceLevel?.currentLevel === 'aal1') {
       setMfaRequired(true);
-      return { error: null, mfaRequired: true };
+      return { error: null, mfaRequired: true, data: { user: data.user } };
     }
     
     setMfaRequired(false);
-    return { error: null, mfaRequired: false };
+    return { error: null, mfaRequired: false, data: { user: data.user } };
   };
 
   const signUp = async (email: string, password: string, fullName: string, role: 'senior' | 'family_member' = 'senior') => {
