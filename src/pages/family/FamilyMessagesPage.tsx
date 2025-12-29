@@ -76,7 +76,7 @@ export default function FamilyMessagesPage() {
       : link?.senior_profile?.avatar_url;
   };
 
-  const backLink = isSenior ? '/settings' : '/family';
+  const backLink = isSenior ? '/settings/family-access' : '/family';
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
