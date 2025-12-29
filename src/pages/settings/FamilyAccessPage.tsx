@@ -84,7 +84,22 @@ export default function FamilyAccessPage() {
       </header>
 
       <main className="p-4 space-y-6">
-        {/* Create Invitation */}
+        {/* Quick access to messages */}
+        {linkedFamily.length > 0 && (
+          <Link to="/family/messages">
+            <Card className="bg-primary/5 border-primary/20 hover:bg-primary/10 transition-colors cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                  <MessageCircle className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground">Messages famille</p>
+                  <p className="text-sm text-muted-foreground">Discuter avec vos proches</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
