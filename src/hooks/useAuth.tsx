@@ -8,7 +8,7 @@ interface AuthContextType {
   loading: boolean;
   mfaRequired: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null; mfaRequired?: boolean }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, role?: 'senior' | 'family_member') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   enrollMFA: () => Promise<AuthMFAEnrollResponse>;
   verifyMFA: (factorId: string, code: string) => Promise<{ error: Error | null }>;
@@ -60,13 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, mfaRequired: false };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, role: 'senior' | 'family_member' = 'senior') => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { full_name: fullName }
+        data: { full_name: fullName, role }
       }
     });
     return { error };
