@@ -7,13 +7,16 @@ import { Label } from '@/components/ui/label';
 import { OscarAvatar } from '@/components/OscarAvatar';
 import { MFAVerification } from '@/components/MFAVerification';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Users, Heart } from 'lucide-react';
+
+type AccountType = 'senior' | 'family_member';
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [accountType, setAccountType] = useState<AccountType>('senior');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showMFAVerification, setShowMFAVerification] = useState(false);
@@ -45,7 +48,7 @@ export function AuthPage() {
           setLoading(false);
           return;
         }
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await signUp(email, password, fullName, accountType);
         if (error) {
           if (error.message.includes('already registered')) {
             toast.error('Cet email est déjà utilisé');
@@ -54,7 +57,7 @@ export function AuthPage() {
           }
         } else {
           toast.success('Compte créé avec succès !');
-          navigate('/');
+          navigate(accountType === 'family_member' ? '/family' : '/');
         }
       }
     } finally {
@@ -94,20 +97,55 @@ export function AuthPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Votre nom</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Jean Dupont"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="pl-10 h-12 text-base"
-                />
+            <>
+              {/* Account Type Selection */}
+              <div className="space-y-2">
+                <Label>Type de compte</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAccountType('senior')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      accountType === 'senior'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <Heart className={`w-8 h-8 mx-auto mb-2 ${accountType === 'senior' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <p className="font-medium text-sm">Senior</p>
+                    <p className="text-xs text-muted-foreground">Utilisateur principal</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAccountType('family_member')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      accountType === 'family_member'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <Users className={`w-8 h-8 mx-auto mb-2 ${accountType === 'family_member' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <p className="font-medium text-sm">Famille</p>
+                    <p className="text-xs text-muted-foreground">Suivi d'un proche</p>
+                  </button>
+                </div>
               </div>
-            </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Votre nom</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Jean Dupont"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="pl-10 h-12 text-base"
+                  />
+                </div>
+              </div>
+            </>
           )}
 
           <div className="space-y-2">

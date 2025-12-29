@@ -29,6 +29,12 @@ import { SudokuGame } from "./pages/services/games/SudokuGame";
 import { QuizGame } from "./pages/services/games/QuizGame";
 import { Game2048 } from "./pages/services/games/Game2048";
 import { SettingsPage } from "./pages/SettingsPage";
+import FamilyDashboard from "./pages/family/FamilyDashboard";
+import SeniorDetailPage from "./pages/family/SeniorDetailPage";
+import FamilyMessagesPage from "./pages/family/FamilyMessagesPage";
+import FamilyNotificationsPage from "./pages/family/FamilyNotificationsPage";
+import FamilySettingsPage from "./pages/family/FamilySettingsPage";
+import FamilyAccessPage from "./pages/settings/FamilyAccessPage";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +69,13 @@ const App = () => (
             <Route path="/services/emergency" element={<ProtectedRoute><EmergencyPage /></ProtectedRoute>} />
             <Route path="/services/help" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/settings/family-access" element={<ProtectedRoute><FamilyAccessPage /></ProtectedRoute>} />
+            {/* Family Interface Routes */}
+            <Route path="/family" element={<ProtectedRoute><FamilyDashboard /></ProtectedRoute>} />
+            <Route path="/family/senior/:seniorId" element={<ProtectedRoute><SeniorDetailPage /></ProtectedRoute>} />
+            <Route path="/family/messages" element={<ProtectedRoute><FamilyMessagesPage /></ProtectedRoute>} />
+            <Route path="/family/notifications" element={<ProtectedRoute><FamilyNotificationsPage /></ProtectedRoute>} />
+            <Route path="/family/settings" element={<ProtectedRoute><FamilySettingsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
