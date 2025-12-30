@@ -39,7 +39,7 @@ const questions: Question[] = [
 ];
 
 export function QuizGame() {
-  const navigate = useNavigate();
+  const goBack = useBackNavigation();
   const { user } = useAuth();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -139,7 +139,7 @@ export function QuizGame() {
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
