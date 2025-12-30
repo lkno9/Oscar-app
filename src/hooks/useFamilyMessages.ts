@@ -100,6 +100,13 @@ export function useFamilyMessages(contactId?: string) {
   const sendMessage = async (receiverId: string, content: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
+    // Get sender name for email notification
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single();
+
     const { data, error } = await supabase
       .from('family_messages')
       .insert({
@@ -112,6 +119,20 @@ export function useFamilyMessages(contactId?: string) {
 
     if (!error) {
       await fetchMessages();
+      
+      // Send email notification via edge function
+      try {
+        await supabase.functions.invoke('send-family-notification', {
+          body: {
+            type: 'message',
+            recipientId: receiverId,
+            senderName: senderProfile?.full_name || 'Un proche',
+            content: content
+          }
+        });
+      } catch (emailError) {
+        console.log('Email notification failed (non-blocking):', emailError);
+      }
     }
 
     return { data, error };
