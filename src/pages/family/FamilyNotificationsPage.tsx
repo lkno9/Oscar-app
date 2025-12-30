@@ -41,6 +41,27 @@ export default function FamilyNotificationsPage() {
 
   useEffect(() => {
     fetchNotifications();
+
+    // Realtime subscription for new notifications
+    const channel = supabase
+      .channel('notifications-page-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'family_notifications',
+          filter: `user_id=eq.${user?.id}`
+        },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const markAsRead = async (notificationId: string) => {
