@@ -37,19 +37,31 @@ export function useFamilyLinks() {
 
       if (error) throw error;
 
-      // Fetch profiles for linked users
+      // Fetch profiles for both senior and family member
       const linksWithProfiles = await Promise.all(
         (data || []).map(async (link) => {
-          const otherUserId = link.senior_id === user.id ? link.family_member_id : link.senior_id;
-          const { data: profile } = await supabase
+          // Get senior profile
+          const { data: seniorProfile } = await supabase
             .from('profiles')
             .select('full_name, avatar_url')
-            .eq('id', otherUserId)
+            .eq('id', link.senior_id)
             .single();
+
+          // Get family member profile (only if different from senior)
+          let familyProfile = null;
+          if (link.family_member_id !== link.senior_id) {
+            const { data: fProfile } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', link.family_member_id)
+              .single();
+            familyProfile = fProfile;
+          }
 
           return {
             ...link,
-            [link.senior_id === user.id ? 'family_profile' : 'senior_profile']: profile
+            senior_profile: seniorProfile,
+            family_profile: familyProfile
           };
         })
       );
