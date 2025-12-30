@@ -1,6 +1,7 @@
 import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Play, ExternalLink, Puzzle, Grid3X3, Calculator, PenTool, Target, Sparkles, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 
@@ -12,6 +13,7 @@ interface GameStats {
 }
 
 export function GamesPage() {
+  const goBack = useBackNavigation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [stats, setStats] = useState<GameStats>({
@@ -119,7 +121,7 @@ export function GamesPage() {
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
