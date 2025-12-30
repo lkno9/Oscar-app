@@ -1,8 +1,8 @@
 import { ArrowLeft, Music, Radio, Play, ListMusic, ExternalLink, Globe, Headphones, Disc, Mic2, Heart } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 export function MusicPage() {
-  const navigate = useNavigate();
+  const goBack = useBackNavigation();
 
   const radiosFrance = [
     { id: 1, name: "France Inter", genre: "Généraliste", emoji: "📻", url: "https://www.radiofrance.fr/franceinter" },
@@ -61,7 +61,7 @@ export function MusicPage() {
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />

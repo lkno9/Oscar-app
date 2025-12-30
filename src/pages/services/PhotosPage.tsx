@@ -1,8 +1,8 @@
 import { ArrowLeft, Image, Camera, FolderHeart, Grid3X3, Plus, Upload, X, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ interface Photo {
 }
 
 export function PhotosPage() {
-  const navigate = useNavigate();
+  const goBack = useBackNavigation();
   const { user } = useAuth();
   const [albums, setAlbums] = useState<Album[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -135,7 +135,7 @@ export function PhotosPage() {
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />

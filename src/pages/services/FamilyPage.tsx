@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Users, UserPlus, Heart, Trash2, X, Phone, Mail } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { toast } from "sonner";
 
 interface Contact {
@@ -18,7 +18,7 @@ interface Contact {
 }
 
 export function FamilyPage() {
-  const navigate = useNavigate();
+  const goBack = useBackNavigation();
   const { user } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +95,7 @@ export function FamilyPage() {
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />

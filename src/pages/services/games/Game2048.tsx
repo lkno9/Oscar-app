@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, RefreshCw, Trophy, ArrowUp, ArrowDown, ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
