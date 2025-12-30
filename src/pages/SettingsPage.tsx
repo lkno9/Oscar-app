@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Bell, Volume2, Moon, Shield, HelpCircle, LogOut, ChevronRight, CheckCircle2, XCircle, Users } from "lucide-react";
+import { ArrowLeft, User, Bell, Volume2, Moon, Shield, HelpCircle, LogOut, ChevronRight, CheckCircle2, XCircle, Users, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ interface Profile {
   full_name: string | null;
   phone: string | null;
   avatar_url: string | null;
+  phone_number: string | null;
+  sms_notifications_enabled: boolean | null;
 }
 
 export function SettingsPage() {
@@ -22,6 +24,7 @@ export function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [smsNotificationsEnabled, setSmsNotificationsEnabled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showMFAEnrollment, setShowMFAEnrollment] = useState(false);
   const [mfaFactors, setMfaFactors] = useState<Factor[]>([]);
@@ -41,7 +44,10 @@ export function SettingsPage() {
       .eq('id', user?.id)
       .maybeSingle();
     
-    if (data) setProfile(data);
+    if (data) {
+      setProfile(data);
+      setSmsNotificationsEnabled(data.sms_notifications_enabled || false);
+    }
     setLoading(false);
   };
 
@@ -80,6 +86,22 @@ export function SettingsPage() {
   const handleMFAEnrollmentSuccess = () => {
     setShowMFAEnrollment(false);
     fetchMFAFactors();
+  };
+
+  const handleSmsNotificationsChange = async (enabled: boolean) => {
+    setSmsNotificationsEnabled(enabled);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ sms_notifications_enabled: enabled })
+      .eq('id', user?.id);
+    
+    if (error) {
+      toast.error("Erreur lors de la mise à jour");
+      setSmsNotificationsEnabled(!enabled);
+    } else {
+      toast.success(enabled ? "Notifications SMS activées" : "Notifications SMS désactivées");
+    }
   };
 
   const isMFAEnabled = mfaFactors.length > 0;
@@ -142,6 +164,17 @@ export function SettingsPage() {
           value: notificationsEnabled,
           onChange: setNotificationsEnabled,
           type: "toggle" as const,
+        },
+        {
+          icon: MessageSquare,
+          label: "Notifications SMS",
+          description: profile?.phone_number 
+            ? "Recevoir les alertes par SMS" 
+            : "Ajoutez un numéro dans votre profil",
+          value: smsNotificationsEnabled,
+          onChange: handleSmsNotificationsChange,
+          type: "toggle" as const,
+          disabled: !profile?.phone_number,
         },
         {
           icon: Moon,
@@ -239,6 +272,7 @@ export function SettingsPage() {
                         <Switch
                           checked={(item as any).value}
                           onCheckedChange={(item as any).onChange}
+                          disabled={(item as any).disabled}
                         />
                       ) : item.type === "security" ? (
                         <Button
