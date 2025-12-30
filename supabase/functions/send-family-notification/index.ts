@@ -4,6 +4,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Twilio configuration
+const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -18,6 +23,68 @@ interface NotificationRequest {
   moodLevel?: number;
   medicationName?: string;
 }
+
+const getSmsMessage = (notification: NotificationRequest): string => {
+  const { type, senderName, seniorName, content, moodLevel, medicationName } = notification;
+  
+  switch (type) {
+    case "message":
+      return `📬 Oscar: Nouveau message de ${senderName || "un proche"}${content ? `: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"` : ''}`;
+    
+    case "mood":
+      const moodEmoji = moodLevel ? ["😢", "😔", "😐", "🙂", "😄"][moodLevel - 1] : "😊";
+      const moodText = moodLevel ? ["Très mal", "Pas bien", "Neutre", "Bien", "Très bien"][moodLevel - 1] : "Enregistrée";
+      return `${moodEmoji} Oscar: ${seniorName || "Votre proche"} a enregistré son humeur: ${moodText}`;
+    
+    case "medication":
+      return `💊 Oscar: ${seniorName || "Votre proche"} a ajouté un médicament: ${medicationName || "Nouveau médicament"}`;
+    
+    case "alert":
+      return `🚨 ALERTE Oscar: ${content || `Alerte concernant ${seniorName || "votre proche"}`}`;
+    
+    default:
+      return `📢 Oscar: Nouvelle notification concernant ${seniorName || "votre proche"}`;
+  }
+};
+
+const sendSms = async (phoneNumber: string, message: string): Promise<{ success: boolean; sid?: string; error?: string }> => {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    console.log("send-family-notification: Twilio not configured, skipping SMS");
+    return { success: false, error: "Twilio not configured" };
+  }
+
+  try {
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+    
+    const body = new URLSearchParams({
+      To: phoneNumber,
+      From: TWILIO_PHONE_NUMBER,
+      Body: message,
+    });
+
+    const response = await fetch(twilioUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("send-family-notification: Twilio error:", data);
+      return { success: false, error: data.message || "Failed to send SMS" };
+    }
+
+    console.log("send-family-notification: SMS sent successfully:", data.sid);
+    return { success: true, sid: data.sid };
+  } catch (error: any) {
+    console.error("send-family-notification: SMS error:", error);
+    return { success: false, error: error.message };
+  }
+};
 
 const getEmailTemplate = (notification: NotificationRequest): { subject: string; html: string } => {
   const { type, senderName, seniorName, content, moodLevel, medicationName } = notification;
@@ -202,36 +269,58 @@ const handler = async (req: Request): Promise<Response> => {
     const notification: NotificationRequest = await req.json();
     console.log("send-family-notification: Notification data:", notification);
 
-    // Get recipient email from profiles
+    // Get recipient info from profiles
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("email, full_name")
+      .select("email, full_name, phone_number, sms_notifications_enabled")
       .eq("id", notification.recipientId)
       .single();
 
-    if (profileError || !profile?.email) {
-      console.log("send-family-notification: No email found for recipient:", notification.recipientId);
+    if (profileError) {
+      console.log("send-family-notification: Error fetching profile:", profileError);
       return new Response(
-        JSON.stringify({ success: false, message: "No email found for recipient" }),
+        JSON.stringify({ success: false, message: "Profile not found" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("send-family-notification: Sending email to:", profile.email);
+    const results: { email?: any; sms?: any } = {};
 
-    const { subject, html } = getEmailTemplate(notification);
+    // Send email if email exists
+    if (profile?.email) {
+      console.log("send-family-notification: Sending email to:", profile.email);
+      const { subject, html } = getEmailTemplate(notification);
 
-    const emailResponse = await resend.emails.send({
-      from: "Oscar <onboarding@resend.dev>",
-      to: [profile.email],
-      subject,
-      html,
-    });
+      try {
+        const emailResponse = await resend.emails.send({
+          from: "Oscar <onboarding@resend.dev>",
+          to: [profile.email],
+          subject,
+          html,
+        });
+        console.log("send-family-notification: Email sent successfully:", emailResponse);
+        results.email = { success: true, id: emailResponse.data?.id };
+      } catch (emailError: any) {
+        console.error("send-family-notification: Email error:", emailError);
+        results.email = { success: false, error: emailError.message };
+      }
+    } else {
+      console.log("send-family-notification: No email found for recipient");
+    }
 
-    console.log("send-family-notification: Email sent successfully:", emailResponse);
+    // Send SMS if phone number exists and SMS notifications are enabled
+    // For alerts, always send SMS if phone is available
+    if (profile?.phone_number && (profile?.sms_notifications_enabled || notification.type === "alert")) {
+      console.log("send-family-notification: Sending SMS to:", profile.phone_number);
+      const smsMessage = getSmsMessage(notification);
+      const smsResult = await sendSms(profile.phone_number, smsMessage);
+      results.sms = smsResult;
+    } else {
+      console.log("send-family-notification: SMS not sent - no phone or SMS disabled");
+    }
 
     return new Response(
-      JSON.stringify({ success: true, emailId: emailResponse.data?.id }),
+      JSON.stringify({ success: true, results }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
