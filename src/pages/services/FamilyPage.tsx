@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Users, UserPlus, Heart, Trash2, X, Phone, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Users, UserPlus, Heart, Trash2, X, Phone, Mail, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ interface Contact {
 }
 
 export function FamilyPage() {
+  const navigate = useNavigate();
   const goBack = useBackNavigation();
   const { user } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -108,6 +110,17 @@ export function FamilyPage() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Bouton messagerie interne */}
+        <Button 
+          variant="default" 
+          className="w-full gap-2" 
+          size="lg" 
+          onClick={() => navigate("/family/messages")}
+        >
+          <MessageCircle className="w-5 h-5" />
+          Messagerie interne
+        </Button>
+
         {!showForm ? (
           <Button variant="outline" className="w-full gap-2" size="lg" onClick={() => setShowForm(true)}>
             <UserPlus className="w-5 h-5" />
