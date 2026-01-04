@@ -15,17 +15,19 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: "message" | "mood" | "medication" | "event" | "alert";
+  type: "message" | "mood" | "medication" | "event" | "alert" | "document_expiration";
   recipientId: string;
   senderName?: string;
   seniorName?: string;
   content?: string;
   moodLevel?: number;
   medicationName?: string;
+  documentName?: string;
+  daysUntilExpiry?: number;
 }
 
 const getSmsMessage = (notification: NotificationRequest): string => {
-  const { type, senderName, seniorName, content, moodLevel, medicationName } = notification;
+  const { type, senderName, seniorName, content, moodLevel, medicationName, documentName, daysUntilExpiry } = notification;
   
   switch (type) {
     case "message":
@@ -38,6 +40,15 @@ const getSmsMessage = (notification: NotificationRequest): string => {
     
     case "medication":
       return `💊 Oscar: ${seniorName || "Votre proche"} a ajouté un médicament: ${medicationName || "Nouveau médicament"}`;
+    
+    case "document_expiration":
+      if (daysUntilExpiry !== undefined && daysUntilExpiry > 0) {
+        return `📄 Oscar: ${documentName || "Un document"} de ${seniorName || "votre proche"} expire dans ${daysUntilExpiry} jour${daysUntilExpiry > 1 ? 's' : ''}. Pensez à le renouveler.`;
+      } else if (daysUntilExpiry === 0) {
+        return `⚠️ Oscar: ${documentName || "Un document"} de ${seniorName || "votre proche"} expire aujourd'hui !`;
+      } else {
+        return `🚨 Oscar: ${documentName || "Un document"} de ${seniorName || "votre proche"} est expiré. Renouvellement urgent.`;
+      }
     
     case "alert":
       return `🚨 ALERTE Oscar: ${content || `Alerte concernant ${seniorName || "votre proche"}`}`;
@@ -87,7 +98,7 @@ const sendSms = async (phoneNumber: string, message: string): Promise<{ success:
 };
 
 const getEmailTemplate = (notification: NotificationRequest): { subject: string; html: string } => {
-  const { type, senderName, seniorName, content, moodLevel, medicationName } = notification;
+  const { type, senderName, seniorName, content, moodLevel, medicationName, documentName, daysUntilExpiry } = notification;
   
   const baseStyle = `
     <style>
@@ -185,6 +196,56 @@ const getEmailTemplate = (notification: NotificationRequest): { subject: string;
                   <p style="font-size: 18px; font-weight: bold;">${medicationName || "Médicament"}</p>
                 </div>
                 <p>Connectez-vous à l'application pour voir les détails.</p>
+              </div>
+              <div class="footer">
+                <p>Oscar - Votre compagnon au quotidien</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+      };
+
+    case "document_expiration":
+      const isExpired = daysUntilExpiry !== undefined && daysUntilExpiry <= 0;
+      const isUrgent = daysUntilExpiry !== undefined && daysUntilExpiry <= 7;
+      const headerColor = isExpired ? "background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);" : 
+                          isUrgent ? "background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);" : "";
+      const emoji = isExpired ? "🚨" : isUrgent ? "⚠️" : "📄";
+      
+      let expiryMessage = "";
+      if (daysUntilExpiry !== undefined) {
+        if (daysUntilExpiry > 0) {
+          expiryMessage = `expire dans <strong>${daysUntilExpiry} jour${daysUntilExpiry > 1 ? 's' : ''}</strong>`;
+        } else if (daysUntilExpiry === 0) {
+          expiryMessage = `<strong>expire aujourd'hui</strong>`;
+        } else {
+          expiryMessage = `est <strong>expiré depuis ${Math.abs(daysUntilExpiry)} jour${Math.abs(daysUntilExpiry) > 1 ? 's' : ''}</strong>`;
+        }
+      }
+      
+      return {
+        subject: `${emoji} Document à renouveler : ${documentName || "Document"}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>${baseStyle}</head>
+          <body>
+            <div class="container">
+              <div class="header" style="${headerColor}">
+                <div class="emoji">${emoji}</div>
+                <h1>Document à renouveler</h1>
+              </div>
+              <div class="content">
+                <p>Bonjour,</p>
+                <p>Le document <strong>${documentName || "Document"}</strong> de ${seniorName || "votre proche"} ${expiryMessage}.</p>
+                <div style="padding: 20px; background: ${isExpired ? '#fef2f2' : isUrgent ? '#fff7ed' : '#f0fdf4'}; border: 1px solid ${isExpired ? '#fecaca' : isUrgent ? '#fed7aa' : '#bbf7d0'}; border-radius: 8px; margin: 20px 0; text-align: center;">
+                  <p style="font-size: 18px; font-weight: bold; margin: 0;">${documentName || "Document"}</p>
+                  <p style="margin: 10px 0 0 0; color: ${isExpired ? '#dc2626' : isUrgent ? '#ea580c' : '#16a34a'};">
+                    ${isExpired ? '⚠️ Renouvellement urgent' : isUrgent ? '⏰ À renouveler rapidement' : '📅 Pensez à le renouveler'}
+                  </p>
+                </div>
+                <p>Connectez-vous à l'application pour gérer ce document ou demander l'aide d'Oscar.</p>
               </div>
               <div class="footer">
                 <p>Oscar - Votre compagnon au quotidien</p>

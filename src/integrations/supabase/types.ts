@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      administrative_tasks: {
+        Row: {
+          category: string | null
+          created_at: string
+          current_step: number | null
+          description: string | null
+          due_date: string | null
+          id: string
+          status: string | null
+          steps: Json | null
+          template_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          current_step?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          steps?: Json | null
+          template_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          current_step?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          steps?: Json | null
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       call_history: {
         Row: {
           call_date: string
@@ -91,32 +136,82 @@ export type Database = {
         }
         Relationships: []
       }
+      document_reminders: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          id: string
+          is_sent: boolean | null
+          reminder_date: string
+          reminder_type: string
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          is_sent?: boolean | null
+          reminder_date: string
+          reminder_type: string
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          is_sent?: boolean | null
+          reminder_date?: string
+          reminder_type?: string
+          sent_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_reminders_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: string | null
           created_at: string
+          document_type: string | null
+          expiration_date: string | null
           file_size: string | null
           file_url: string | null
           id: string
           name: string
+          reminder_enabled: boolean | null
           user_id: string
         }
         Insert: {
           category?: string | null
           created_at?: string
+          document_type?: string | null
+          expiration_date?: string | null
           file_size?: string | null
           file_url?: string | null
           id?: string
           name: string
+          reminder_enabled?: boolean | null
           user_id: string
         }
         Update: {
           category?: string | null
           created_at?: string
+          document_type?: string | null
+          expiration_date?: string | null
           file_size?: string | null
           file_url?: string | null
           id?: string
           name?: string
+          reminder_enabled?: boolean | null
           user_id?: string
         }
         Relationships: []
