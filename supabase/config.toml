@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.send-family-notification]
 verify_jwt = false
+
+[functions.check-document-reminders]
+verify_jwt = false
