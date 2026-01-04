@@ -24,6 +24,7 @@ import { GamesPage } from "./pages/services/GamesPage";
 import { VaultPage } from "./pages/services/VaultPage";
 import { EmergencyPage } from "./pages/services/EmergencyPage";
 import { HelpPage } from "./pages/services/HelpPage";
+import { PartnersPage } from "./pages/services/PartnersPage";
 import { MemoryGame } from "./pages/services/games/MemoryGame";
 import { SudokuGame } from "./pages/services/games/SudokuGame";
 import { QuizGame } from "./pages/services/games/QuizGame";
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/services/vault" element={<ProtectedRoute><VaultPage /></ProtectedRoute>} />
             <Route path="/services/emergency" element={<ProtectedRoute><EmergencyPage /></ProtectedRoute>} />
             <Route path="/services/help" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+            <Route path="/services/partners" element={<ProtectedRoute><PartnersPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/settings/family-access" element={<ProtectedRoute><FamilyAccessPage /></ProtectedRoute>} />
             {/* Family Interface Routes */}

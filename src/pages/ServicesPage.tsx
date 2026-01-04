@@ -16,6 +16,7 @@ import {
   Lock,
   AlertTriangle,
   HelpCircle,
+  Sparkles,
 } from "lucide-react";
 import { ServiceTile, ServiceSection } from "@/components/ServiceTile";
 
@@ -55,6 +56,10 @@ export function ServicesPage() {
           <ServiceTile icon={<Music className="w-7 h-7" />} label="Musique & radio" onClick={() => navigate("/services/music")} />
           <ServiceTile icon={<BookOpen className="w-7 h-7" />} label="Bibliothèque & podcasts" onClick={() => navigate("/services/library")} />
           <ServiceTile icon={<Gamepad2 className="w-7 h-7" />} label="Jeux & mémoire" onClick={() => navigate("/services/games")} />
+        </ServiceSection>
+
+        <ServiceSection title="Bons plans" emoji="✨">
+          <ServiceTile icon={<Sparkles className="w-7 h-7" />} label="Bons plans seniors" onClick={() => navigate("/services/partners")} />
         </ServiceSection>
 
         <ServiceSection title="Sécurité & assistance" emoji="🛡️">
