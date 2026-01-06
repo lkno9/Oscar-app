@@ -650,6 +650,75 @@ export type Database = {
         }
         Relationships: []
       }
+      scam_alerts: {
+        Row: {
+          category: string
+          created_at: string
+          danger_level: string
+          date_detected: string
+          description: string
+          id: string
+          is_active: boolean
+          source: string | null
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          danger_level: string
+          date_detected?: string
+          description: string
+          id?: string
+          is_active?: boolean
+          source?: string | null
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          danger_level?: string
+          date_detected?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          source?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      scam_checks: {
+        Row: {
+          content_checked: string
+          created_at: string
+          explanation: string
+          id: string
+          recommendation: string | null
+          red_flags: string[] | null
+          risk_level: string
+          user_id: string
+        }
+        Insert: {
+          content_checked: string
+          created_at?: string
+          explanation: string
+          id?: string
+          recommendation?: string | null
+          red_flags?: string[] | null
+          risk_level: string
+          user_id: string
+        }
+        Update: {
+          content_checked?: string
+          created_at?: string
+          explanation?: string
+          id?: string
+          recommendation?: string | null
+          red_flags?: string[] | null
+          risk_level?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       secure_notes: {
         Row: {
           category: string | null
@@ -679,6 +748,30 @@ export type Database = {
           is_pinned?: boolean | null
           title?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      security_quiz_scores: {
+        Row: {
+          completed_at: string
+          id: string
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          score: number
+          total_questions?: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          score?: number
+          total_questions?: number
           user_id?: string
         }
         Relationships: []
