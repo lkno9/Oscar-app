@@ -10,4 +10,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.analyze-scam]
+
+[functions.fetch-scam-alerts]
 verify_jwt = false

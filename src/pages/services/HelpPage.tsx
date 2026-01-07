@@ -84,9 +84,11 @@ export function HelpPage() {
         {/* Support info */}
         <div className="bg-accent rounded-xl p-4 text-center">
           <p className="text-sm text-muted-foreground">
-            Support disponible du lundi au vendredi, 9h-18h
+            Pour toute question, parlez directement à Oscar !
           </p>
-          <p className="font-semibold text-foreground mt-1">📞 01 23 45 67 89</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Il est disponible 24h/24 pour vous aider.
+          </p>
         </div>
       </div>
     </div>

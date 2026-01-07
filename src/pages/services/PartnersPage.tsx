@@ -1,28 +1,50 @@
-import { useState } from "react";
-import { ArrowLeft, Sparkles, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Sparkles, Shield, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PartnerServiceCard } from "@/components/partners/PartnerServiceCard";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  partnerServices,
   categoryLabels,
   getAllCategories,
-  getServicesByCategory,
   type PartnerCategory,
+  type PartnerService,
 } from "@/components/partners/PartnersData";
 
 export function PartnersPage() {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<PartnerCategory | "all">("all");
+  const [services, setServices] = useState<PartnerService[]>([]);
+  const [loading, setLoading] = useState(true);
   const categories = getAllCategories();
 
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    const { data, error } = await supabase
+      .from('partner_services')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
+
+    if (data) {
+      setServices(data as PartnerService[]);
+    }
+    setLoading(false);
+  };
+
   const filteredServices = selectedCategory === "all" 
-    ? partnerServices 
-    : getServicesByCategory(selectedCategory);
+    ? services 
+    : services.filter(s => s.category === selectedCategory);
+
+  const getServicesByCategory = (category: PartnerCategory) => {
+    return services.filter(s => s.category === category);
+  };
 
   const handleAffiliateClick = (serviceId: string) => {
-    // On pourrait tracker les clics ici si besoin
     console.log("Affiliate click:", serviceId);
   };
 
@@ -74,11 +96,26 @@ export function PartnersPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-8">
-        {selectedCategory === "all" ? (
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">
+            Chargement...
+          </div>
+        ) : services.length === 0 ? (
+          <div className="text-center py-12">
+            <Inbox className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="font-semibold text-foreground text-lg mb-2">
+              Aucun partenaire pour le moment
+            </h3>
+            <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+              Nous sélectionnons soigneusement nos partenaires. 
+              De nouvelles offres seront bientôt disponibles !
+            </p>
+          </div>
+        ) : selectedCategory === "all" ? (
           // Vue par catégories
           categories.map((category) => {
-            const services = getServicesByCategory(category);
-            if (services.length === 0) return null;
+            const categoryServices = getServicesByCategory(category);
+            if (categoryServices.length === 0) return null;
             
             return (
               <section key={category}>
@@ -94,7 +131,7 @@ export function PartnersPage() {
                   </div>
                 </div>
                 <div className="grid gap-3">
-                  {services.map((service) => (
+                  {categoryServices.map((service) => (
                     <PartnerServiceCard
                       key={service.id}
                       service={service}
@@ -118,22 +155,24 @@ export function PartnersPage() {
           </div>
         )}
 
-        {/* Message de transparence */}
-        <div className="bg-muted/50 rounded-xl p-4 mt-6">
-          <div className="flex items-start gap-3">
-            <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">Notre engagement</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Oscar sélectionne ces services pour leur qualité et leur utilité. 
-                Certains sont des partenaires qui nous versent une commission — 
-                c'est indiqué clairement. Cela ne change jamais le prix pour vous 
-                et nous permet de rester gratuit. Nous recommandons aussi des services 
-                publics et gratuits sans aucune contrepartie.
-              </p>
+        {/* Message de transparence - seulement si on a des partenaires */}
+        {services.length > 0 && (
+          <div className="bg-muted/50 rounded-xl p-4 mt-6">
+            <div className="flex items-start gap-3">
+              <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">Notre engagement</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Oscar sélectionne ces services pour leur qualité et leur utilité. 
+                  Certains sont des partenaires qui nous versent une commission — 
+                  c'est indiqué clairement. Cela ne change jamais le prix pour vous 
+                  et nous permet de rester gratuit. Nous recommandons aussi des services 
+                  publics et gratuits sans aucune contrepartie.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
