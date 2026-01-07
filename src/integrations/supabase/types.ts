@@ -513,6 +513,60 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_services: {
+        Row: {
+          affiliate_url: string
+          category: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          info_url: string | null
+          is_active: boolean
+          is_partner: boolean
+          name: string
+          promo_code: string | null
+          promo_value: string | null
+          tags: string[] | null
+          updated_at: string
+          why_we_recommend: string
+        }
+        Insert: {
+          affiliate_url: string
+          category: string
+          created_at?: string
+          description: string
+          icon?: string
+          id?: string
+          info_url?: string | null
+          is_active?: boolean
+          is_partner?: boolean
+          name: string
+          promo_code?: string | null
+          promo_value?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          why_we_recommend: string
+        }
+        Update: {
+          affiliate_url?: string
+          category?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          info_url?: string | null
+          is_active?: boolean
+          is_partner?: boolean
+          name?: string
+          promo_code?: string | null
+          promo_value?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          why_we_recommend?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number

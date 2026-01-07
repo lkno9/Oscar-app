@@ -20,7 +20,7 @@ interface PartnerServiceCardProps {
 export function PartnerServiceCard({ service, onClickAffiliate }: PartnerServiceCardProps) {
   const handleClick = () => {
     onClickAffiliate?.(service.id);
-    window.open(service.affiliateUrl, "_blank", "noopener,noreferrer");
+    window.open(service.affiliate_url, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -36,24 +36,24 @@ export function PartnerServiceCard({ service, onClickAffiliate }: PartnerService
               <h3 className="font-semibold text-foreground text-lg leading-tight">
                 {service.name}
               </h3>
-              {service.isPartner && (
+              {service.is_partner && (
                 <Badge variant="outline" className="text-xs bg-primary/5 text-primary border-primary/20">
                   Partenaire
                 </Badge>
               )}
             </div>
             {/* Promo badge */}
-            {service.promoValue && (
+            {service.promo_value && (
               <div className="flex items-center gap-1 mt-1">
                 <Gift className="w-3.5 h-3.5 text-emerald-600" />
                 <span className="text-sm font-medium text-emerald-600">
-                  {service.promoValue}
-                  {service.promoCode && (
+                  {service.promo_value}
+                  {service.promo_code && (
                     <span className="text-muted-foreground font-normal"> — code : </span>
                   )}
-                  {service.promoCode && (
+                  {service.promo_code && (
                     <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">
-                      {service.promoCode}
+                      {service.promo_code}
                     </span>
                   )}
                 </span>
@@ -108,15 +108,15 @@ export function PartnerServiceCard({ service, onClickAffiliate }: PartnerService
               <DialogDescription asChild>
                 <div className="space-y-4 pt-2">
                   <p className="text-sm text-foreground leading-relaxed">
-                    {service.whyWeRecommend}
+                    {service.why_we_recommend}
                   </p>
-                  {service.isPartner && (
+                  {service.is_partner && (
                     <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
                       💡 Oscar perçoit une petite commission si vous souscrivez via ce lien. 
                       Cela ne change pas le prix pour vous et nous aide à rester gratuit.
                     </p>
                   )}
-                  {!service.isPartner && (
+                  {!service.is_partner && (
                     <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
                       ✨ Ce service est recommandé sans aucune contrepartie commerciale. 
                       On le trouve simplement utile !
