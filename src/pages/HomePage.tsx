@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Phone, Settings, AlertTriangle, FileText } from "lucide-react";
+import { Phone, Settings, Pill } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
@@ -8,8 +8,8 @@ import { CallScreen } from "@/components/CallScreen";
 import { streamChat, Message } from "@/lib/oscarChat";
 import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
-import { useDocuments } from "@/hooks/useDocuments";
-import { useAdminTasks } from "@/hooks/useAdminTasks";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 interface ChatMessageData {
@@ -36,12 +36,34 @@ export function HomePage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
   
-  const { getUrgentDocuments } = useDocuments();
-  const { getInProgressTasks } = useAdminTasks();
-  
-  const urgentDocs = getUrgentDocuments();
-  const inProgressTasks = getInProgressTasks().filter(t => t.due_date && new Date(t.due_date) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
-  const hasReminders = urgentDocs.length > 0 || inProgressTasks.length > 0;
+  const { user } = useAuth();
+
+  // Check medication reminders on load
+  useEffect(() => {
+    if (!user) return;
+    const checkMedReminders = async () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const { data: meds } = await supabase
+        .from('medications')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+      if (!meds || meds.length === 0) return;
+      const morningWindow = hour >= 7 && hour < 10;
+      const noonWindow = hour >= 12 && hour < 14;
+      const eveningWindow = hour >= 18 && hour < 21;
+      if (morningWindow || noonWindow || eveningWindow) {
+        const label = morningWindow ? 'matin' : noonWindow ? 'midi' : 'soir';
+        toast(`💊 Rappel médicaments du ${label}`, {
+          description: `N'oubliez pas de prendre vos ${meds.length} médicament${meds.length > 1 ? 's' : ''}.`,
+          duration: 8000,
+          action: { label: 'Voir', onClick: () => navigate('/services/health') },
+        });
+      }
+    };
+    checkMedReminders();
+  }, [user]);
 
   const { 
     isListening, 
@@ -219,24 +241,6 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* Reminder Banner */}
-      {hasReminders && (
-        <div 
-          onClick={() => navigate('/services/documents')}
-          className="mx-4 mt-2 p-3 bg-accent border border-border rounded-lg flex items-center gap-3 cursor-pointer hover:bg-accent/70 transition-colors"
-        >
-          <AlertTriangle className="w-5 h-5 text-accent-foreground flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-accent-foreground text-sm">À ne pas oublier</p>
-            <p className="text-xs text-muted-foreground truncate">
-              {urgentDocs.length > 0 && `${urgentDocs.length} document${urgentDocs.length > 1 ? 's' : ''} à renouveler`}
-              {urgentDocs.length > 0 && inProgressTasks.length > 0 && ' • '}
-              {inProgressTasks.length > 0 && `${inProgressTasks.length} démarche${inProgressTasks.length > 1 ? 's' : ''} en cours`}
-            </p>
-          </div>
-          <FileText className="w-4 h-4 text-muted-foreground" />
-        </div>
-      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
