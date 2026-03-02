@@ -1,74 +1,118 @@
 import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
-  FileText,
-  CreditCard,
   Cloud,
-  Users,
-  Phone,
   Image,
-  Pill,
-  FileHeart,
-  Heart,
   Music,
-  BookOpen,
   Gamepad2,
-  Lock,
-  AlertTriangle,
-  HelpCircle,
   Sparkles,
   ShieldAlert,
+  FileText,
+  Pill,
+  Lock,
 } from "lucide-react";
-import { ServiceTile, ServiceSection } from "@/components/ServiceTile";
+import { ServiceTile } from "@/components/ServiceTile";
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-xl font-bold text-foreground mb-4">{children}</h2>
+  );
+}
+
+function SecondaryTile({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-4 w-full bg-card rounded-xl px-4 py-4 border border-border hover:border-primary/40 hover:bg-accent/30 transition-all duration-200 text-left min-h-[56px]"
+    >
+      <span className="text-primary flex-shrink-0">{icon}</span>
+      <span className="text-base font-semibold text-foreground leading-tight">{label}</span>
+    </button>
+  );
+}
 
 export function ServicesPage() {
   const navigate = useNavigate();
 
   return (
     <div className="flex flex-col h-full overflow-y-auto scrollbar-hide">
-      <header className="px-4 py-6 bg-card border-b border-border sticky top-0 z-10">
+      <header className="px-4 py-5 bg-card border-b border-border sticky top-0 z-10">
         <h1 className="text-2xl font-bold text-foreground">Services</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gérez votre quotidien en toute simplicité
-        </p>
+        <p className="text-sm text-muted-foreground mt-0.5">Gérez votre quotidien</p>
       </header>
 
-      <div className="flex-1 p-4 space-y-6 pb-8">
-        <ServiceSection title="Vie quotidienne" emoji="📁">
-          <ServiceTile icon={<CalendarDays className="w-7 h-7" />} label="Agenda & rendez-vous" onClick={() => navigate("/services/agenda")} />
-          <ServiceTile icon={<FileText className="w-7 h-7" />} label="Documents & démarches" onClick={() => navigate("/services/documents")} />
-          <ServiceTile icon={<CreditCard className="w-7 h-7" />} label="Paiements & factures" onClick={() => navigate("/services/payments")} />
-          <ServiceTile icon={<Cloud className="w-7 h-7" />} label="Stockage & fichiers" onClick={() => navigate("/services/storage")} />
-        </ServiceSection>
+      <div className="flex-1 p-4 pb-8 space-y-8">
+        {/* PRIMARY SECTION */}
+        <section>
+          <SectionTitle>Mes Services</SectionTitle>
+          <div className="grid grid-cols-2 gap-3">
+            <ServiceTile
+              icon={<CalendarDays className="w-8 h-8" />}
+              label="Agenda & rendez-vous"
+              onClick={() => navigate("/services/agenda")}
+            />
+            <ServiceTile
+              icon={<Cloud className="w-8 h-8" />}
+              label="Stockage & fichiers"
+              onClick={() => navigate("/services/storage")}
+            />
+            <ServiceTile
+              icon={<Image className="w-8 h-8" />}
+              label="Photos & souvenirs"
+              onClick={() => navigate("/services/photos")}
+            />
+            <ServiceTile
+              icon={<Music className="w-8 h-8" />}
+              label="Musique & radio"
+              onClick={() => navigate("/services/music")}
+            />
+            <ServiceTile
+              icon={<Gamepad2 className="w-8 h-8" />}
+              label="Jeux & mémoire"
+              onClick={() => navigate("/services/games")}
+            />
+            <ServiceTile
+              icon={<Sparkles className="w-8 h-8" />}
+              label="Bons plans seniors"
+              onClick={() => navigate("/services/partners")}
+            />
+            <ServiceTile
+              icon={<ShieldAlert className="w-8 h-8" />}
+              label="Protection Arnaques"
+              onClick={() => navigate("/services/scam-protection")}
+            />
+          </div>
+        </section>
 
-        <ServiceSection title="Communication" emoji="💬">
-          <ServiceTile icon={<Users className="w-7 h-7" />} label="Famille & messages" onClick={() => navigate("/services/family")} />
-          <ServiceTile icon={<Phone className="w-7 h-7" />} label="Appels & visios" onClick={() => navigate("/services/calls")} />
-          <ServiceTile icon={<Image className="w-7 h-7" />} label="Photos & souvenirs" onClick={() => navigate("/services/photos")} />
-        </ServiceSection>
-
-        <ServiceSection title="Santé & bien-être" emoji="🩺">
-          <ServiceTile icon={<Pill className="w-7 h-7" />} label="Santé & médicaments" onClick={() => navigate("/services/health")} />
-          <ServiceTile icon={<FileHeart className="w-7 h-7" />} label="Ordonnances & remboursements" onClick={() => navigate("/services/prescriptions")} />
-          <ServiceTile icon={<Heart className="w-7 h-7" />} label="Bien-être" onClick={() => navigate("/services/wellness")} />
-        </ServiceSection>
-
-        <ServiceSection title="Loisirs & culture" emoji="🎵">
-          <ServiceTile icon={<Music className="w-7 h-7" />} label="Musique & radio" onClick={() => navigate("/services/music")} />
-          <ServiceTile icon={<BookOpen className="w-7 h-7" />} label="Bibliothèque & podcasts" onClick={() => navigate("/services/library")} />
-          <ServiceTile icon={<Gamepad2 className="w-7 h-7" />} label="Jeux & mémoire" onClick={() => navigate("/services/games")} />
-        </ServiceSection>
-
-        <ServiceSection title="Bons plans" emoji="✨">
-          <ServiceTile icon={<Sparkles className="w-7 h-7" />} label="Bons plans seniors" onClick={() => navigate("/services/partners")} />
-        </ServiceSection>
-
-        <ServiceSection title="Sécurité & assistance" emoji="🛡️">
-          <ServiceTile icon={<Lock className="w-7 h-7" />} label="Coffre-fort numérique" onClick={() => navigate("/services/vault")} />
-          <ServiceTile icon={<ShieldAlert className="w-7 h-7" />} label="Protection Arnaques" onClick={() => navigate("/services/scam-protection")} />
-          <ServiceTile icon={<AlertTriangle className="w-7 h-7" />} label="Urgence / SOS" intent="danger" onClick={() => navigate("/services/emergency")} />
-          <ServiceTile icon={<HelpCircle className="w-7 h-7" />} label="Aide & support" onClick={() => navigate("/services/help")} />
-        </ServiceSection>
+        {/* SECONDARY SECTION */}
+        <section>
+          <SectionTitle>Aller plus loin</SectionTitle>
+          <div className="flex flex-col gap-2">
+            <SecondaryTile
+              icon={<FileText className="w-6 h-6" />}
+              label="Documents & démarches"
+              onClick={() => navigate("/services/documents")}
+            />
+            <SecondaryTile
+              icon={<Pill className="w-6 h-6" />}
+              label="Santé & médicaments"
+              onClick={() => navigate("/services/health")}
+            />
+            <SecondaryTile
+              icon={<Lock className="w-6 h-6" />}
+              label="Coffre-fort numérique"
+              onClick={() => navigate("/services/vault")}
+            />
+          </div>
+        </section>
       </div>
     </div>
   );

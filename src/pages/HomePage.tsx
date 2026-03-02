@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Phone, Settings, AlertTriangle, FileText } from "lucide-react";
+import { HelpButton } from "@/components/HelpDrawer";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
@@ -207,6 +208,9 @@ export function HomePage() {
               <Phone className="w-5 h-5" />
             </button>
             
+            {/* Help button */}
+            <HelpButton />
+
             {/* Settings button */}
             <button
               onClick={() => navigate("/settings")}
@@ -223,18 +227,18 @@ export function HomePage() {
       {hasReminders && (
         <div 
           onClick={() => navigate('/services/documents')}
-          className="mx-4 mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-orange-100 transition-colors"
+          className="mx-4 mt-2 p-3 bg-accent border border-border rounded-lg flex items-center gap-3 cursor-pointer hover:bg-accent/70 transition-colors"
         >
-          <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0" />
+          <AlertTriangle className="w-5 h-5 text-accent-foreground flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-orange-800 text-sm">À ne pas oublier</p>
-            <p className="text-xs text-orange-600 truncate">
+            <p className="font-medium text-accent-foreground text-sm">À ne pas oublier</p>
+            <p className="text-xs text-muted-foreground truncate">
               {urgentDocs.length > 0 && `${urgentDocs.length} document${urgentDocs.length > 1 ? 's' : ''} à renouveler`}
               {urgentDocs.length > 0 && inProgressTasks.length > 0 && ' • '}
               {inProgressTasks.length > 0 && `${inProgressTasks.length} démarche${inProgressTasks.length > 1 ? 's' : ''} en cours`}
             </p>
           </div>
-          <FileText className="w-4 h-4 text-orange-400" />
+          <FileText className="w-4 h-4 text-muted-foreground" />
         </div>
       )}
 
