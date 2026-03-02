@@ -39,6 +39,7 @@ import FamilyNotificationsPage from "./pages/family/FamilyNotificationsPage";
 import FamilySettingsPage from "./pages/family/FamilySettingsPage";
 import FamilyAccessPage from "./pages/settings/FamilyAccessPage";
 import { SubPageLayout } from "./components/SubPageLayout";
+import { OscarAcademyPage } from "./pages/services/OscarAcademyPage";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/services/partners" element={<ProtectedRoute><SubPageLayout><PartnersPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/scam-protection" element={<ProtectedRoute><SubPageLayout><ScamProtectionPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/communication" element={<ProtectedRoute><SubPageLayout><CommunicationPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/oscar-academy" element={<ProtectedRoute><SubPageLayout><OscarAcademyPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SubPageLayout><SettingsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/settings/family-access" element={<ProtectedRoute><SubPageLayout><FamilyAccessPage /></SubPageLayout></ProtectedRoute>} />
             {/* Family Interface Routes */}
