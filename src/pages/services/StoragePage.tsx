@@ -1,4 +1,4 @@
-import { ArrowLeft, Cloud, HardDrive, Image, FileText, FolderOpen } from "lucide-react";
+import { ArrowLeft, Cloud, HardDrive, Image, FileText, FolderOpen, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
@@ -94,7 +94,7 @@ export function StoragePage() {
       label: "Photos", 
       size: formatSize(stats.photosSize), 
       count: stats.photoCount,
-      color: "text-blue-500",
+      colorClass: "text-primary",
       path: "/services/photos"
     },
     { 
@@ -102,8 +102,16 @@ export function StoragePage() {
       label: "Documents", 
       size: formatSize(stats.documentsSize), 
       count: stats.documentCount,
-      color: "text-green-500",
+      colorClass: "text-primary",
       path: "/services/documents"
+    },
+    {
+      icon: Lock,
+      label: "Coffre-fort numérique",
+      size: "—",
+      count: null,
+      colorClass: "text-primary",
+      path: "/services/vault"
     },
   ];
 
@@ -167,11 +175,11 @@ export function StoragePage() {
               className="w-full bg-card rounded-xl p-4 shadow-sm border border-border flex items-center gap-4 hover:border-primary transition-colors"
             >
               <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center">
-                <cat.icon className={`w-6 h-6 ${cat.color}`} />
+                <cat.icon className={`w-6 h-6 ${cat.colorClass}`} />
               </div>
               <div className="flex-1 text-left">
                 <h3 className="font-semibold text-foreground">{cat.label}</h3>
-                <p className="text-sm text-muted-foreground">{cat.count} fichier(s)</p>
+                <p className="text-sm text-muted-foreground">{cat.count !== null ? `${cat.count} fichier(s)` : 'Accès sécurisé'}</p>
               </div>
               <span className="text-muted-foreground font-medium">{cat.size}</span>
             </button>
