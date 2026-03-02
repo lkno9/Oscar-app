@@ -37,6 +37,7 @@ import FamilyMessagesPage from "./pages/family/FamilyMessagesPage";
 import FamilyNotificationsPage from "./pages/family/FamilyNotificationsPage";
 import FamilySettingsPage from "./pages/family/FamilySettingsPage";
 import FamilyAccessPage from "./pages/settings/FamilyAccessPage";
+import { SubPageLayout } from "./components/SubPageLayout";
 
 const queryClient = new QueryClient();
 
@@ -50,36 +51,36 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/services/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
-            <Route path="/services/documents" element={<ProtectedRoute><DocumentsPage /></ProtectedRoute>} />
-            <Route path="/services/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
-            <Route path="/services/storage" element={<ProtectedRoute><StoragePage /></ProtectedRoute>} />
-            <Route path="/services/family" element={<ProtectedRoute><FamilyPage /></ProtectedRoute>} />
-            <Route path="/services/calls" element={<ProtectedRoute><CallsPage /></ProtectedRoute>} />
-            <Route path="/services/photos" element={<ProtectedRoute><PhotosPage /></ProtectedRoute>} />
-            <Route path="/services/health" element={<ProtectedRoute><HealthPage /></ProtectedRoute>} />
-            <Route path="/services/prescriptions" element={<ProtectedRoute><PrescriptionsPage /></ProtectedRoute>} />
-            <Route path="/services/wellness" element={<ProtectedRoute><WellnessPage /></ProtectedRoute>} />
-            <Route path="/services/music" element={<ProtectedRoute><MusicPage /></ProtectedRoute>} />
-            <Route path="/services/library" element={<ProtectedRoute><LibraryPage /></ProtectedRoute>} />
-            <Route path="/services/games" element={<ProtectedRoute><GamesPage /></ProtectedRoute>} />
-            <Route path="/services/games/memory" element={<ProtectedRoute><MemoryGame /></ProtectedRoute>} />
-            <Route path="/services/games/sudoku" element={<ProtectedRoute><SudokuGame /></ProtectedRoute>} />
-            <Route path="/services/games/quiz" element={<ProtectedRoute><QuizGame /></ProtectedRoute>} />
-            <Route path="/services/games/2048" element={<ProtectedRoute><Game2048 /></ProtectedRoute>} />
-            <Route path="/services/vault" element={<ProtectedRoute><VaultPage /></ProtectedRoute>} />
-            <Route path="/services/emergency" element={<ProtectedRoute><EmergencyPage /></ProtectedRoute>} />
-            <Route path="/services/help" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
-            <Route path="/services/partners" element={<ProtectedRoute><PartnersPage /></ProtectedRoute>} />
-            <Route path="/services/scam-protection" element={<ProtectedRoute><ScamProtectionPage /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-            <Route path="/settings/family-access" element={<ProtectedRoute><FamilyAccessPage /></ProtectedRoute>} />
+            <Route path="/services/agenda" element={<ProtectedRoute><SubPageLayout><AgendaPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/documents" element={<ProtectedRoute><SubPageLayout><DocumentsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/payments" element={<ProtectedRoute><SubPageLayout><PaymentsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/storage" element={<ProtectedRoute><SubPageLayout><StoragePage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/family" element={<ProtectedRoute><SubPageLayout><FamilyPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/calls" element={<ProtectedRoute><SubPageLayout><CallsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/photos" element={<ProtectedRoute><SubPageLayout><PhotosPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/health" element={<ProtectedRoute><SubPageLayout><HealthPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/prescriptions" element={<ProtectedRoute><SubPageLayout><PrescriptionsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/wellness" element={<ProtectedRoute><SubPageLayout><WellnessPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/music" element={<ProtectedRoute><SubPageLayout><MusicPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/library" element={<ProtectedRoute><SubPageLayout><LibraryPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games" element={<ProtectedRoute><SubPageLayout><GamesPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/memory" element={<ProtectedRoute><SubPageLayout><MemoryGame /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/sudoku" element={<ProtectedRoute><SubPageLayout><SudokuGame /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/quiz" element={<ProtectedRoute><SubPageLayout><QuizGame /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/2048" element={<ProtectedRoute><SubPageLayout><Game2048 /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/vault" element={<ProtectedRoute><SubPageLayout><VaultPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/emergency" element={<ProtectedRoute><SubPageLayout><EmergencyPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/help" element={<ProtectedRoute><SubPageLayout><HelpPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/partners" element={<ProtectedRoute><SubPageLayout><PartnersPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/scam-protection" element={<ProtectedRoute><SubPageLayout><ScamProtectionPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SubPageLayout><SettingsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/settings/family-access" element={<ProtectedRoute><SubPageLayout><FamilyAccessPage /></SubPageLayout></ProtectedRoute>} />
             {/* Family Interface Routes */}
-            <Route path="/family" element={<ProtectedRoute><FamilyDashboard /></ProtectedRoute>} />
-            <Route path="/family/senior/:seniorId" element={<ProtectedRoute><SeniorDetailPage /></ProtectedRoute>} />
-            <Route path="/family/messages" element={<ProtectedRoute><FamilyMessagesPage /></ProtectedRoute>} />
-            <Route path="/family/notifications" element={<ProtectedRoute><FamilyNotificationsPage /></ProtectedRoute>} />
-            <Route path="/family/settings" element={<ProtectedRoute><FamilySettingsPage /></ProtectedRoute>} />
+            <Route path="/family" element={<ProtectedRoute><SubPageLayout><FamilyDashboard /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/family/senior/:seniorId" element={<ProtectedRoute><SubPageLayout><SeniorDetailPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/family/messages" element={<ProtectedRoute><SubPageLayout><FamilyMessagesPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/family/notifications" element={<ProtectedRoute><SubPageLayout><FamilyNotificationsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/family/settings" element={<ProtectedRoute><SubPageLayout><FamilySettingsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
