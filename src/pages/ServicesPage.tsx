@@ -9,7 +9,7 @@ import {
   ShieldAlert,
   FileText,
   Pill,
-  Lock,
+  MessageCircle,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 
@@ -70,6 +70,11 @@ export function ServicesPage() {
               onClick={() => navigate("/services/photos")}
             />
             <ServiceTile
+              icon={<MessageCircle className="w-8 h-8" />}
+              label="Communication"
+              onClick={() => navigate("/services/communication")}
+            />
+            <ServiceTile
               icon={<Music className="w-8 h-8" />}
               label="Musique & radio"
               onClick={() => navigate("/services/music")}
@@ -106,14 +111,10 @@ export function ServicesPage() {
               label="Santé & médicaments"
               onClick={() => navigate("/services/health")}
             />
-            <SecondaryTile
-              icon={<Lock className="w-6 h-6" />}
-              label="Coffre-fort numérique"
-              onClick={() => navigate("/services/vault")}
-            />
           </div>
         </section>
       </div>
     </div>
   );
 }
+

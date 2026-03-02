@@ -26,6 +26,7 @@ import { EmergencyPage } from "./pages/services/EmergencyPage";
 import { HelpPage } from "./pages/services/HelpPage";
 import { PartnersPage } from "./pages/services/PartnersPage";
 import ScamProtectionPage from "./pages/services/ScamProtectionPage";
+import { CommunicationPage } from "./pages/services/CommunicationPage";
 import { MemoryGame } from "./pages/services/games/MemoryGame";
 import { SudokuGame } from "./pages/services/games/SudokuGame";
 import { QuizGame } from "./pages/services/games/QuizGame";
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/services/help" element={<ProtectedRoute><SubPageLayout><HelpPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/partners" element={<ProtectedRoute><SubPageLayout><PartnersPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/scam-protection" element={<ProtectedRoute><SubPageLayout><ScamProtectionPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/communication" element={<ProtectedRoute><SubPageLayout><CommunicationPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SubPageLayout><SettingsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/settings/family-access" element={<ProtectedRoute><SubPageLayout><FamilyAccessPage /></SubPageLayout></ProtectedRoute>} />
             {/* Family Interface Routes */}
