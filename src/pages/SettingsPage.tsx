@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Bell, Volume2, Moon, Shield, HelpCircle, LogOut, ChevronRight, CheckCircle2, XCircle, Users, MessageSquare } from "lucide-react";
+import { ArrowLeft, User, Bell, Volume2, Moon, Shield, HelpCircle, LogOut, ChevronRight, CheckCircle2, Users, MessageSquare, Phone, AlertTriangle, MapPin, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,28 @@ interface Profile {
   avatar_url: string | null;
   phone_number: string | null;
   sms_notifications_enabled: boolean | null;
+}
+
+const FAQ_ITEMS = [
+  { q: "Comment parler à Oscar ?", a: "Appuyez sur le micro sur la page d'accueil et parlez naturellement." },
+  { q: "Comment inviter ma famille ?", a: "Allez dans Paramètres > Accès Famille et envoyez un code d'invitation." },
+  { q: "Mes données sont-elles sécurisées ?", a: "Oui, toutes vos données sont chiffrées et accessibles uniquement par vous." },
+];
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-border last:border-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-3 text-left gap-3"
+      >
+        <span className="text-base font-medium text-foreground">{q}</span>
+        <ChevronRight className={`w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform ${open ? "rotate-90" : ""}`} />
+      </button>
+      {open && <p className="pb-3 text-sm text-muted-foreground leading-relaxed">{a}</p>}
+    </div>
+  );
 }
 
 export function SettingsPage() {
@@ -38,12 +60,7 @@ export function SettingsPage() {
   }, [user]);
 
   const fetchProfile = async () => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user?.id)
-      .maybeSingle();
-    
+    const { data } = await supabase.from('profiles').select('*').eq('id', user?.id).maybeSingle();
     if (data) {
       setProfile(data);
       setSmsNotificationsEnabled(data.sms_notifications_enabled || false);
@@ -61,26 +78,19 @@ export function SettingsPage() {
       await signOut();
       toast.success("Déconnexion réussie");
       navigate("/auth");
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la déconnexion");
     }
   };
 
   const handleDisableMFA = async () => {
     if (mfaFactors.length === 0) return;
-    
     setMfaLoading(true);
     try {
       const { error } = await unenrollMFA(mfaFactors[0].id);
-      if (error) {
-        toast.error("Erreur lors de la désactivation");
-      } else {
-        toast.success("Double authentification désactivée");
-        await fetchMFAFactors();
-      }
-    } finally {
-      setMfaLoading(false);
-    }
+      if (error) toast.error("Erreur lors de la désactivation");
+      else { toast.success("Double authentification désactivée"); await fetchMFAFactors(); }
+    } finally { setMfaLoading(false); }
   };
 
   const handleMFAEnrollmentSuccess = () => {
@@ -90,124 +100,33 @@ export function SettingsPage() {
 
   const handleSmsNotificationsChange = async (enabled: boolean) => {
     setSmsNotificationsEnabled(enabled);
-    
-    const { error } = await supabase
-      .from('profiles')
-      .update({ sms_notifications_enabled: enabled })
-      .eq('id', user?.id);
-    
-    if (error) {
-      toast.error("Erreur lors de la mise à jour");
-      setSmsNotificationsEnabled(!enabled);
-    } else {
-      toast.success(enabled ? "Notifications SMS activées" : "Notifications SMS désactivées");
-    }
+    const { error } = await supabase.from('profiles').update({ sms_notifications_enabled: enabled }).eq('id', user?.id);
+    if (error) { toast.error("Erreur lors de la mise à jour"); setSmsNotificationsEnabled(!enabled); }
+    else toast.success(enabled ? "Notifications SMS activées" : "Notifications SMS désactivées");
+  };
+
+  const handleCallEmergency = () => window.open("tel:15", "_self");
+  const handleCallFamily = () => navigate("/services/communication");
+  const handleSendLocation = () => {
+    if (!navigator.geolocation) { toast.error("Géolocalisation non disponible"); return; }
+    navigator.geolocation.getCurrentPosition(pos => {
+      const url = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
+      if (navigator.share) {
+        navigator.share({ title: "Ma position", url });
+      } else {
+        window.open(url, "_blank");
+      }
+      toast.success("Position envoyée !");
+    }, () => toast.error("Impossible d'obtenir votre position"));
   };
 
   const isMFAEnabled = mfaFactors.length > 0;
-
-  const settingsSections = [
-    {
-      title: "Compte",
-      items: [
-        {
-          icon: User,
-          label: "Profil",
-          description: "Modifier vos informations personnelles",
-          action: () => navigate("/profile"),
-          type: "link" as const,
-        },
-      ],
-    },
-    {
-      title: "Famille",
-      items: [
-        {
-          icon: Users,
-          label: "Accès Famille",
-          description: "Inviter et gérer les membres de votre famille",
-          action: () => navigate("/settings/family-access"),
-          type: "link" as const,
-        },
-      ],
-    },
-    {
-      title: "Sécurité",
-      items: [
-        {
-          icon: Shield,
-          label: "Double authentification",
-          description: isMFAEnabled 
-            ? "Votre compte est protégé" 
-            : "Protégez votre compte avec un code",
-          status: isMFAEnabled,
-          action: isMFAEnabled ? handleDisableMFA : () => setShowMFAEnrollment(true),
-          type: "security" as const,
-        },
-      ],
-    },
-    {
-      title: "Préférences",
-      items: [
-        {
-          icon: Volume2,
-          label: "Mode vocal",
-          description: "Oscar lit les réponses à haute voix",
-          value: voiceEnabled,
-          onChange: setVoiceEnabled,
-          type: "toggle" as const,
-        },
-        {
-          icon: Bell,
-          label: "Notifications",
-          description: "Rappels et alertes importantes",
-          value: notificationsEnabled,
-          onChange: setNotificationsEnabled,
-          type: "toggle" as const,
-        },
-        {
-          icon: MessageSquare,
-          label: "Notifications SMS",
-          description: profile?.phone_number 
-            ? "Recevoir les alertes par SMS" 
-            : "Ajoutez un numéro dans votre profil",
-          value: smsNotificationsEnabled,
-          onChange: handleSmsNotificationsChange,
-          type: "toggle" as const,
-          disabled: !profile?.phone_number,
-        },
-        {
-          icon: Moon,
-          label: "Mode sombre",
-          description: "Adapter l'affichage à vos yeux",
-          value: darkMode,
-          onChange: setDarkMode,
-          type: "toggle" as const,
-        },
-      ],
-    },
-    {
-      title: "Support",
-      items: [
-        {
-          icon: HelpCircle,
-          label: "Aide & FAQ",
-          description: "Obtenir de l'aide sur Oscar",
-          action: () => navigate("/services/help"),
-          type: "link" as const,
-        },
-      ],
-    },
-  ];
 
   return (
     <>
       <div className="flex flex-col h-full bg-background">
         <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
-          >
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <h1 className="text-lg font-bold text-foreground">Paramètres</h1>
@@ -225,102 +144,175 @@ export function SettingsPage() {
                 )}
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-foreground">
-                  {profile?.full_name || "Utilisateur"}
-                </h2>
+                <h2 className="text-lg font-bold text-foreground">{profile?.full_name || "Utilisateur"}</h2>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
               </div>
             </div>
           </div>
 
-          {/* Settings sections */}
           <div className="p-4 space-y-6">
-            {settingsSections.map((section, idx) => (
-              <div key={idx} className="space-y-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">
-                  {section.title}
-                </h3>
-                <div className="bg-card rounded-xl border border-border overflow-hidden">
-                  {section.items.map((item, itemIdx) => (
-                    <div
-                      key={itemIdx}
-                      className={`flex items-center gap-4 p-4 ${
-                        itemIdx !== section.items.length - 1 ? "border-b border-border" : ""
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        item.type === 'security' && (item as any).status
-                          ? 'bg-green-500/20'
-                          : 'bg-secondary'
-                      }`}>
-                        <item.icon className={`w-5 h-5 ${
-                          item.type === 'security' && (item as any).status
-                            ? 'text-green-500'
-                            : 'text-foreground'
-                        }`} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-foreground">{item.label}</p>
-                          {item.type === 'security' && (item as any).status && (
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{item.description}</p>
-                      </div>
-                      {item.type === "toggle" ? (
-                        <Switch
-                          checked={(item as any).value}
-                          onCheckedChange={(item as any).onChange}
-                          disabled={(item as any).disabled}
-                        />
-                      ) : item.type === "security" ? (
-                        <Button
-                          variant={(item as any).status ? "outline" : "default"}
-                          size="sm"
-                          onClick={(item as any).action}
-                          disabled={mfaLoading}
-                          className={(item as any).status ? "border-destructive text-destructive hover:bg-destructive/10" : ""}
-                        >
-                          {mfaLoading ? "..." : (item as any).status ? "Désactiver" : "Activer"}
-                        </Button>
-                      ) : (
-                        <button
-                          onClick={(item as any).action}
-                          className="p-2 rounded-full hover:bg-secondary transition-colors"
-                        >
-                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+            {/* SOS Section — visually prominent */}
+            <section>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Urgence</h3>
+              <div className="bg-destructive/10 border-2 border-destructive/30 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-destructive flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="w-6 h-6 text-destructive-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-destructive text-base">SOS — Urgence</p>
+                    <p className="text-sm text-muted-foreground">Contactez les secours rapidement</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  <button
+                    onClick={handleCallEmergency}
+                    className="flex items-center gap-4 bg-destructive text-destructive-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-destructive/90 transition-colors active:scale-95"
+                  >
+                    <Phone className="w-6 h-6 flex-shrink-0" />
+                    Appeler les secours (15)
+                  </button>
+                  <button
+                    onClick={handleCallFamily}
+                    className="flex items-center gap-4 bg-card border-2 border-destructive/30 text-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-destructive/5 transition-colors active:scale-95"
+                  >
+                    <Users className="w-6 h-6 flex-shrink-0 text-destructive" />
+                    Appeler ma famille
+                  </button>
+                  <button
+                    onClick={handleSendLocation}
+                    className="flex items-center gap-4 bg-card border-2 border-destructive/30 text-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-destructive/5 transition-colors active:scale-95"
+                  >
+                    <MapPin className="w-6 h-6 flex-shrink-0 text-destructive" />
+                    Envoyer ma position
+                  </button>
                 </div>
               </div>
-            ))}
+            </section>
 
-            {/* Sign out button */}
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={handleSignOut}
-            >
+            {/* Help Section */}
+            <section>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Aide & Support</h3>
+              <div className="bg-card rounded-2xl border border-border p-4 space-y-4">
+                <button
+                  onClick={() => navigate("/")}
+                  className="w-full flex items-center gap-4 bg-primary text-primary-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-primary/90 transition-colors active:scale-95"
+                >
+                  <MessageCircle className="w-6 h-6 flex-shrink-0" />
+                  Parler à Oscar
+                </button>
+                <a
+                  href="tel:+33900000000"
+                  className="flex items-center gap-4 bg-secondary text-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-accent transition-colors active:scale-95"
+                >
+                  <Phone className="w-6 h-6 flex-shrink-0 text-primary" />
+                  Appeler le support
+                </a>
+                <div className="pt-2">
+                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Questions fréquentes</p>
+                  <div className="divide-y divide-border">
+                    {FAQ_ITEMS.map((item, i) => <FaqItem key={i} q={item.q} a={item.a} />)}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Account */}
+            <section>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Compte</h3>
+              <div className="bg-card rounded-xl border border-border overflow-hidden">
+                <div className="flex items-center gap-4 p-4 border-b border-border">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                    <User className="w-5 h-5 text-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">Profil</p>
+                    <p className="text-sm text-muted-foreground">Modifier vos informations</p>
+                  </div>
+                  <button onClick={() => navigate("/profile")} className="p-2 rounded-full hover:bg-secondary transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-4 p-4">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                    <Users className="w-5 h-5 text-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">Accès Famille</p>
+                    <p className="text-sm text-muted-foreground">Gérer les membres de la famille</p>
+                  </div>
+                  <button onClick={() => navigate("/settings/family-access")} className="p-2 rounded-full hover:bg-secondary transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Security */}
+            <section>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Sécurité</h3>
+              <div className="bg-card rounded-xl border border-border overflow-hidden">
+                <div className="flex items-center gap-4 p-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isMFAEnabled ? "bg-green-500/20" : "bg-secondary"}`}>
+                    <Shield className={`w-5 h-5 ${isMFAEnabled ? "text-green-500" : "text-foreground"}`} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-foreground">Double authentification</p>
+                      {isMFAEnabled && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{isMFAEnabled ? "Votre compte est protégé" : "Protégez votre compte"}</p>
+                  </div>
+                  <Button
+                    variant={isMFAEnabled ? "outline" : "default"}
+                    size="sm"
+                    onClick={isMFAEnabled ? handleDisableMFA : () => setShowMFAEnrollment(true)}
+                    disabled={mfaLoading}
+                    className={isMFAEnabled ? "border-destructive text-destructive hover:bg-destructive/10" : ""}
+                  >
+                    {mfaLoading ? "..." : isMFAEnabled ? "Désactiver" : "Activer"}
+                  </Button>
+                </div>
+              </div>
+            </section>
+
+            {/* Preferences */}
+            <section>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Préférences</h3>
+              <div className="bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
+                {[
+                  { icon: Volume2, label: "Mode vocal", desc: "Oscar lit les réponses à haute voix", value: voiceEnabled, onChange: setVoiceEnabled },
+                  { icon: Bell, label: "Notifications", desc: "Rappels et alertes importantes", value: notificationsEnabled, onChange: setNotificationsEnabled },
+                  { icon: MessageSquare, label: "Notifications SMS", desc: profile?.phone_number ? "Recevoir les alertes par SMS" : "Ajoutez un numéro dans votre profil", value: smsNotificationsEnabled, onChange: handleSmsNotificationsChange, disabled: !profile?.phone_number },
+                  { icon: Moon, label: "Mode sombre", desc: "Adapter l'affichage", value: darkMode, onChange: setDarkMode },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4">
+                    <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                      <item.icon className="w-5 h-5 text-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">{item.label}</p>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    </div>
+                    <Switch checked={item.value} onCheckedChange={item.onChange} disabled={(item as any).disabled} />
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Sign out */}
+            <Button variant="destructive" className="w-full min-h-[52px]" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Se déconnecter
             </Button>
 
-            {/* App version */}
-            <p className="text-center text-xs text-muted-foreground py-4">
-              Oscar v1.0.0 • Fait avec ❤️ pour vous
-            </p>
+            <p className="text-center text-xs text-muted-foreground py-4">Oscar v1.0.0 • Fait avec ❤️ pour vous</p>
           </div>
         </div>
       </div>
 
       {showMFAEnrollment && (
-        <MFAEnrollment
-          onSuccess={handleMFAEnrollmentSuccess}
-          onCancel={() => setShowMFAEnrollment(false)}
-        />
+        <MFAEnrollment onSuccess={handleMFAEnrollmentSuccess} onCancel={() => setShowMFAEnrollment(false)} />
       )}
     </>
   );

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import { HomePage } from "@/pages/HomePage";
 import { ServicesPage } from "@/pages/ServicesPage";
-import { SOSButton } from "@/components/SOSButton";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"home" | "services">("home");
@@ -13,7 +12,6 @@ const Index = () => {
         {activeTab === "home" ? <HomePage /> : <ServicesPage />}
       </main>
       <BottomNav active={activeTab} onNavigate={setActiveTab} />
-      <SOSButton />
     </div>
   );
 };
