@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Phone, Settings, AlertTriangle, FileText } from "lucide-react";
-import { HelpButton } from "@/components/HelpDrawer";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
@@ -208,9 +207,6 @@ export function HomePage() {
               <Phone className="w-5 h-5" />
             </button>
             
-            {/* Help button */}
-            <HelpButton />
-
             {/* Settings button */}
             <button
               onClick={() => navigate("/settings")}
