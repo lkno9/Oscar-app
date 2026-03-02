@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 interface FamilyContact {
   id: string;
@@ -208,11 +209,11 @@ export function CommunicationPage() {
           <TabsContent value="calls" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
             {/* Quick call buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <Button className="h-auto py-4 flex-col gap-2 min-h-[72px]" size="lg">
+              <Button className="h-auto py-4 flex-col gap-2 min-h-[72px]" size="lg" onClick={() => toast.info("Les appels seront bientôt disponibles")}>
                 <Phone className="w-6 h-6" />
                 <span className="text-base">Appel audio</span>
               </Button>
-              <Button variant="secondary" className="h-auto py-4 flex-col gap-2 min-h-[72px]" size="lg">
+              <Button variant="secondary" className="h-auto py-4 flex-col gap-2 min-h-[72px]" size="lg" onClick={() => toast.info("Les appels seront bientôt disponibles")}>
                 <Video className="w-6 h-6" />
                 <span className="text-base">Appel vidéo</span>
               </Button>

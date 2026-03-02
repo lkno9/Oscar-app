@@ -1,4 +1,4 @@
-import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Play, ExternalLink, Puzzle, Grid3X3, Calculator, PenTool, Target, Sparkles, Zap } from "lucide-react";
+import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Play, ExternalLink, Grid3X3, Calculator, PenTool, Target, Sparkles, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";

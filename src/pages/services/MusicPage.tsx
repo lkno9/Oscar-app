@@ -1,4 +1,4 @@
-import { ArrowLeft, Music, Radio, Play, ExternalLink, Globe, Headphones, Disc, Mic2, Heart, Star, StarOff } from "lucide-react";
+import { ArrowLeft, Music, Radio, Play, ExternalLink, Headphones, Disc, Mic2, Heart, Star } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useState, useEffect } from "react";
 

@@ -1,4 +1,4 @@
-import { ArrowLeft, Cloud, HardDrive, Image, FileText, FolderOpen, Lock, Upload, Plus, Eye, Trash2, X, Bot, Heart, Home, Folder, Shield, Users } from "lucide-react";
+import { ArrowLeft, Cloud, HardDrive, FileText, FolderOpen, Lock, Upload, Eye, Trash2, X, Bot, Heart, Home, Folder, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
+
 
 interface StoredDocument {
   id: string;

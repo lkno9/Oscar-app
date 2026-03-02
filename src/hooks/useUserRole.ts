@@ -23,13 +23,11 @@ export function useUserRole() {
         });
 
         if (error) {
-          console.error('Error fetching role:', error);
           setRole(null);
         } else {
           setRole(data as AppRole);
         }
       } catch (err) {
-        console.error('Error:', err);
         setRole(null);
       } finally {
         setLoading(false);

@@ -21,7 +21,7 @@ export function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showMFAVerification, setShowMFAVerification] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   const redirectBasedOnRole = async (userId: string) => {

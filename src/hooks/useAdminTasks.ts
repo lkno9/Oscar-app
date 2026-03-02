@@ -61,7 +61,6 @@ export const useAdminTasks = () => {
       
       setTasks(parsedTasks);
     } catch (error) {
-      console.error('Error fetching tasks:', error);
       toast({
         title: "Erreur",
         description: "Impossible de charger les démarches",
@@ -113,7 +112,6 @@ export const useAdminTasks = () => {
       await fetchTasks();
       return true;
     } catch (error) {
-      console.error('Error creating task:', error);
       toast({
         title: "Erreur",
         description: "Impossible de créer la démarche",
@@ -160,7 +158,6 @@ export const useAdminTasks = () => {
         });
       }
     } catch (error) {
-      console.error('Error updating task step:', error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour l'étape",
@@ -185,7 +182,6 @@ export const useAdminTasks = () => {
 
       await fetchTasks();
     } catch (error) {
-      console.error('Error deleting task:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer la démarche",

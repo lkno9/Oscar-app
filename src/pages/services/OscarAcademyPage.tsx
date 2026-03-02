@@ -1,7 +1,6 @@
-import { ArrowLeft, GraduationCap, Play, CheckCircle, Clock, Star, ChevronRight, Lock } from "lucide-react";
+import { ArrowLeft, GraduationCap, Play, CheckCircle, Clock, Star, ChevronRight } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 interface Module {
   id: string;
@@ -97,7 +96,6 @@ const MODULES: Module[] = [
 
 export function OscarAcademyPage() {
   const goBack = useBackNavigation();
-  const navigate = useNavigate();
   const [activeModule, setActiveModule] = useState<Module | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [completed, setCompleted] = useState<string[]>(() => {

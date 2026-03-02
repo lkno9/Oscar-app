@@ -33,7 +33,6 @@ export const useFavorites = () => {
       if (error) throw error;
       setFavorites(data || []);
     } catch (error) {
-      console.error('Error fetching favorites:', error);
       toast.error("Erreur lors du chargement des favoris");
     } finally {
       setLoading(false);
@@ -64,7 +63,6 @@ export const useFavorites = () => {
       fetchFavorites();
       return true;
     } catch (error) {
-      console.error('Error adding favorite:', error);
       toast.error("Erreur lors de l'ajout du favori");
       return false;
     }
@@ -82,7 +80,6 @@ export const useFavorites = () => {
       toast.success("Favori supprimé");
       fetchFavorites();
     } catch (error) {
-      console.error('Error deleting favorite:', error);
       toast.error("Erreur lors de la suppression");
     }
   };
@@ -97,7 +94,6 @@ export const useFavorites = () => {
       if (error) throw error;
       fetchFavorites();
     } catch (error) {
-      console.error('Error toggling pin:', error);
       toast.error("Erreur lors de la mise à jour");
     }
   };

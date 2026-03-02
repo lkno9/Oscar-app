@@ -172,6 +172,7 @@ export function PrescriptionsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette ordonnance ?")) return;
     const { error } = await supabase.from("health_records").delete().eq("id", id);
     if (error) {
       toast.error("Erreur lors de la suppression");

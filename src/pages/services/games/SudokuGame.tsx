@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, RefreshCw, Lightbulb, Trophy, Clock } from "lucide-react";
+import { ArrowLeft, RefreshCw, Lightbulb, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";

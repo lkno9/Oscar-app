@@ -84,6 +84,7 @@ export function PaymentsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) return;
     const { error } = await supabase.from("payments").delete().eq("id", id);
     if (error) {
       toast.error("Erreur lors de la suppression");

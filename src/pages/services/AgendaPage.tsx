@@ -142,7 +142,7 @@ export function AgendaPage() {
     const { error } = await supabase.from("events").insert({
       user_id: user?.id,
       title,
-      description: description || null,
+      description: location ? `${description || ""}\n📍 ${location}`.trim() : (description || null),
       event_date: eventDate,
       event_time: eventTime || null,
       event_type: eventType,
@@ -158,6 +158,7 @@ export function AgendaPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) return;
     await supabase.from("events").delete().eq("id", id);
     toast.success("Événement supprimé");
     fetchEvents();

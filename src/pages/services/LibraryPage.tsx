@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, Headphones, Newspaper, BookMarked, ExternalLink, Mic, Radio, Globe, FileText, GraduationCap, Library, Rss, Video } from "lucide-react";
+import { ArrowLeft, BookOpen, Headphones, Newspaper, BookMarked, ExternalLink, Mic, FileText, GraduationCap, Library, Video } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 
 export function LibraryPage() {

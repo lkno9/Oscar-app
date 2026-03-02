@@ -214,7 +214,7 @@ export function Game2048() {
 
       if (!canMove(newGrid)) {
         setGameOver(true);
-        toast.error("Game Over !");
+        toast.error("Partie terminée !");
         saveGameSession(false, newScore);
       }
     }
@@ -305,7 +305,7 @@ export function Game2048() {
         {(gameOver || won) && (
           <div className={`w-full max-w-xs rounded-xl p-4 text-center ${won ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300' : 'bg-destructive/20 text-destructive'}`}>
             <Trophy className="w-10 h-10 mx-auto mb-2" />
-            <h2 className="text-xl font-bold">{won ? "Victoire ! 🎉" : "Game Over"}</h2>
+            <h2 className="text-xl font-bold">{won ? "Victoire ! 🎉" : "Partie terminée"}</h2>
             <p>Score final : {score}</p>
           </div>
         )}

@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface Contact {
   id: string;
@@ -80,7 +81,7 @@ export function EmergencyPage() {
             <p className="font-semibold text-orange-700 dark:text-orange-400">Partager ma position</p>
             <p className="text-sm text-orange-600 dark:text-orange-500">Envoyer ma localisation aux proches</p>
           </div>
-          <Button size="sm" variant="outline" className="border-orange-300">
+          <Button size="sm" variant="outline" className="border-orange-300" onClick={() => toast.info("Le partage de position sera bientôt disponible")}>
             Partager
           </Button>
         </div>

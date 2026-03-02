@@ -92,7 +92,6 @@ export async function streamChat({
 
     onDone();
   } catch (error) {
-    console.error("Stream error:", error);
     onError("Erreur de connexion. Veuillez réessayer.");
   }
 }

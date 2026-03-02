@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface Call {
   id: string;
@@ -85,11 +86,11 @@ export function CallsPage() {
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Button className="h-auto py-4 flex-col gap-2" size="lg">
+          <Button className="h-auto py-4 flex-col gap-2" size="lg" onClick={() => toast.info("Les appels seront bientôt disponibles")}>
             <Phone className="w-6 h-6" />
             <span>Appel audio</span>
           </Button>
-          <Button variant="secondary" className="h-auto py-4 flex-col gap-2" size="lg">
+          <Button variant="secondary" className="h-auto py-4 flex-col gap-2" size="lg" onClick={() => toast.info("Les appels seront bientôt disponibles")}>
             <Video className="w-6 h-6" />
             <span>Appel vidéo</span>
           </Button>

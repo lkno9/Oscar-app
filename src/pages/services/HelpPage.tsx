@@ -2,6 +2,7 @@ import { ArrowLeft, HelpCircle, MessageCircle, BookOpen, Video, Phone } from "lu
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { toast } from "sonner";
 
 export function HelpPage() {
   const goBack = useBackNavigation();
@@ -49,11 +50,11 @@ export function HelpPage() {
 
         {/* Contact options */}
         <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+          <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => toast.info("Le support téléphonique sera bientôt disponible")}>
             <Phone className="w-6 h-6" />
             <span>Appeler le support</span>
           </Button>
-          <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+          <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => toast.info("Les tutoriels vidéo arrivent bientôt")}>
             <Video className="w-6 h-6" />
             <span>Tutoriels vidéo</span>
           </Button>
@@ -69,6 +70,7 @@ export function HelpPage() {
             <button
               key={faq.id}
               className="w-full bg-card rounded-xl p-4 shadow-sm border border-border flex items-center gap-4 hover:border-primary transition-colors text-left"
+              onClick={() => toast.info("Demandez à Oscar pour plus de détails sur cette question")}
             >
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <HelpCircle className="w-5 h-5 text-primary" />

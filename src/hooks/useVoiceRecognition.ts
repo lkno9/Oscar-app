@@ -112,7 +112,6 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
       recognitionRef.current.start();
     } catch (e) {
       // Recognition might already be running
-      console.error("Error starting recognition:", e);
     }
   }, [isSupported]);
 

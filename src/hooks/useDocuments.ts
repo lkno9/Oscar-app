@@ -35,7 +35,6 @@ export const useDocuments = () => {
       if (error) throw error;
       setDocuments(data || []);
     } catch (error) {
-      console.error('Error fetching documents:', error);
       toast({
         title: "Erreur",
         description: "Impossible de charger les documents",
@@ -101,7 +100,6 @@ export const useDocuments = () => {
       await fetchDocuments();
       return true;
     } catch (error) {
-      console.error('Error adding document:', error);
       toast({
         title: "Erreur",
         description: "Impossible d'ajouter le document",
@@ -127,7 +125,6 @@ export const useDocuments = () => {
 
       await fetchDocuments();
     } catch (error) {
-      console.error('Error deleting document:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le document",

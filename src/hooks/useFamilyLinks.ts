@@ -68,7 +68,7 @@ export function useFamilyLinks() {
 
       setLinks(linksWithProfiles);
     } catch (err) {
-      console.error('Error fetching family links:', err);
+      // Error fetching family links
     } finally {
       setLoading(false);
     }

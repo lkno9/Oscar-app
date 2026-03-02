@@ -77,6 +77,7 @@ export function VaultPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet élément ?")) return;
     const { error } = await supabase.from("secure_notes").delete().eq("id", id);
     if (error) {
       toast.error("Erreur lors de la suppression");
@@ -136,7 +137,7 @@ export function VaultPage() {
           <Shield className="w-8 h-8 text-green-600" />
           <div>
             <p className="font-semibold text-green-700 dark:text-green-400">Coffre-fort sécurisé</p>
-            <p className="text-sm text-green-600 dark:text-green-500">Chiffrement de bout en bout</p>
+            <p className="text-sm text-green-600 dark:text-green-500">Vos données sont protégées</p>
           </div>
         </div>
 

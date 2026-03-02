@@ -42,7 +42,7 @@ export default function ScamProtectionPage() {
       if (error) throw error;
       setAlerts(data || []);
     } catch (error) {
-      console.error("Error fetching alerts:", error);
+      // Error fetching alerts
     } finally {
       setIsLoading(false);
     }

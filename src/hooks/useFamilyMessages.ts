@@ -61,7 +61,7 @@ export function useFamilyMessages(contactId?: string) {
       const unread = (data || []).filter(m => m.receiver_id === user.id && !m.is_read).length;
       setUnreadCount(unread);
     } catch (err) {
-      console.error('Error fetching messages:', err);
+      // Error fetching messages
     } finally {
       setLoading(false);
     }
@@ -131,7 +131,7 @@ export function useFamilyMessages(contactId?: string) {
           }
         });
       } catch (emailError) {
-        console.log('Email notification failed (non-blocking):', emailError);
+        // Email notification failed (non-blocking)
       }
     }
 

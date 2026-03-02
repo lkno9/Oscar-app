@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Phone, Settings, Pill } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Phone, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
@@ -26,7 +26,6 @@ const INITIAL_MESSAGE: ChatMessageData = {
 
 export function HomePage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [messages, setMessages] = useState<ChatMessageData[]>([INITIAL_MESSAGE]);
   const [isTyping, setIsTyping] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);

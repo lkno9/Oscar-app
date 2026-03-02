@@ -80,6 +80,7 @@ export function FamilyPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce contact ?")) return;
     const { error } = await supabase.from("family_contacts").delete().eq("id", id);
     if (error) {
       toast.error("Erreur lors de la suppression");

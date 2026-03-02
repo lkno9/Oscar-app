@@ -11,6 +11,7 @@ import {
   type PartnerCategory,
   type PartnerService,
 } from "@/components/partners/PartnersData";
+import { toast } from "sonner";
 
 export function PartnersPage() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ export function PartnersPage() {
   };
 
   const handleAffiliateClick = (serviceId: string) => {
-    console.log("Affiliate click:", serviceId);
+    toast.info("Redirection en cours...");
   };
 
   return (

@@ -1,4 +1,4 @@
-import { ArrowLeft, Image, Camera, Plus, Upload, X, Trash2, Heart, Users, ZoomIn } from "lucide-react";
+import { ArrowLeft, Image, Camera, X, Trash2, Heart, Users, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,6 +65,7 @@ export function PhotosPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette photo ?")) return;
     await supabase.from("photos").delete().eq("id", id);
     toast.success("Photo supprimée");
     fetchPhotos();
