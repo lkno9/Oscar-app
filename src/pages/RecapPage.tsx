@@ -30,6 +30,8 @@ interface CalendarEvent { id: string; title: string; event_date: string; event_t
 interface Medication { id: string; name: string; dosage: string | null; }
 interface UrgentDocument { id: string; name: string; expiration_date: string; }
 interface ScamAlert { id: string; title: string; danger_level: string; }
+interface Reminder { id: string; label: string; date: string; type: "medication" | "document"; }
+interface AppNotification { id: string; title: string; message: string | null; type: string; created_at: string; is_read: boolean | null; }
 
 interface NewsArticle {
   title: string;
