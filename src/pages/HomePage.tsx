@@ -1,21 +1,24 @@
 import { useState, useRef, useEffect } from "react";
-import { Phone, Settings } from "lucide-react";
+import { Phone, Settings, Image } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { CallScreen } from "@/components/CallScreen";
 import { streamChat, Message } from "@/lib/oscarChat";
-import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
-import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { speakWithElevenLabs, stopElevenLabsSpeech, isElevenLabsSpeaking } from "@/lib/elevenLabsTTS";
+import { transcribeAudio, startAudioRecording } from "@/lib/elevenLabsSTT";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+
+const IMAGE_GEN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`;
 
 interface ChatMessageData {
   id: string;
   role: "user" | "assistant";
   content: string;
+  imageUrl?: string;
 }
 
 const INITIAL_MESSAGE: ChatMessageData = {
@@ -28,16 +31,19 @@ export function HomePage() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessageData[]>([INITIAL_MESSAGE]);
   const [isTyping, setIsTyping] = useState(false);
-  const [voiceMode, setVoiceMode] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [isSpeakingEL, setIsSpeakingEL] = useState(false);
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [callType, setCallType] = useState<"audio" | "video">("audio");
+  // ElevenLabs STT recording
+  const [isRecording, setIsRecording] = useState(false);
+  const recorderRef = useRef<{ stop: () => Promise<Blob> } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
-  
+
   const { user } = useAuth();
 
-  // Check medication reminders on load + every 30 minutes
+  // Medication reminders
   useEffect(() => {
     if (!user) return;
     const lastReminderRef = { window: "" };
@@ -49,13 +55,8 @@ export function HomePage() {
       const eveningWindow = hour >= 18 && hour < 21;
       if (!morningWindow && !noonWindow && !eveningWindow) return;
       const currentWindow = morningWindow ? "matin" : noonWindow ? "midi" : "soir";
-      // Don't re-show for same time window
       if (lastReminderRef.window === currentWindow) return;
-      const { data: meds } = await supabase
-        .from('medications')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true);
+      const { data: meds } = await supabase.from('medications').select('*').eq('user_id', user.id).eq('is_active', true);
       if (!meds || meds.length === 0) return;
       lastReminderRef.window = currentWindow;
       toast(`💊 Rappel médicaments du ${currentWindow}`, {
@@ -69,23 +70,6 @@ export function HomePage() {
     return () => clearInterval(interval);
   }, [user]);
 
-  const { 
-    isListening, 
-    transcript, 
-    isSupported: voiceSupported, 
-    error: voiceError,
-    startListening, 
-    stopListening,
-    resetTranscript,
-  } = useVoiceRecognition();
-
-  const { 
-    isSpeaking, 
-    isSupported: ttsSupported, 
-    speak, 
-    stop: stopSpeaking,
-  } = useTextToSpeech();
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -94,97 +78,152 @@ export function HomePage() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // Show voice errors
-  useEffect(() => {
-    if (voiceError) {
-      toast.error(voiceError);
-    }
-  }, [voiceError]);
-
-  // Handle speaking state
-  useEffect(() => {
-    if (!isSpeaking) {
+  // --- ElevenLabs TTS ---
+  const handleSpeak = async (text: string, messageId?: string) => {
+    stopElevenLabsSpeech();
+    if (messageId) setSpeakingMessageId(messageId);
+    setIsSpeakingEL(true);
+    try {
+      await speakWithElevenLabs(text);
+    } catch {
+      toast.error("Impossible de lire le message");
+    } finally {
+      setIsSpeakingEL(false);
       setSpeakingMessageId(null);
     }
-  }, [isSpeaking]);
-
-  // Auto-speak new assistant messages when voiceMode is on
-  useEffect(() => {
-    if (!voiceMode || !ttsSupported) return;
-    
-    const lastMessage = messages[messages.length - 1];
-    if (
-      lastMessage && 
-      lastMessage.role === "assistant" && 
-      lastMessage.id !== "welcome" &&
-      lastMessage.id !== lastAssistantIdRef.current &&
-      !isTyping
-    ) {
-      lastAssistantIdRef.current = lastMessage.id;
-      setSpeakingMessageId(lastMessage.id);
-      speak(lastMessage.content);
-    }
-  }, [messages, voiceMode, ttsSupported, speak, isTyping]);
-
-  const handleVoiceToggle = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      resetTranscript();
-      startListening();
-    }
-  };
-
-  const handleSpeak = (text: string, messageId?: string) => {
-    if (messageId) {
-      setSpeakingMessageId(messageId);
-    }
-    speak(text);
   };
 
   const handleStopSpeaking = () => {
-    stopSpeaking();
+    stopElevenLabsSpeech();
+    setIsSpeakingEL(false);
     setSpeakingMessageId(null);
   };
 
-  const handleAttach = (files: FileList) => {
-    const fileNames = Array.from(files).map(f => f.name).join(", ");
-    toast.info(`Fichier(s) sélectionné(s) : ${fileNames}`);
+  // --- ElevenLabs STT ---
+  const handleVoiceToggle = async () => {
+    if (isRecording) {
+      // Stop recording and transcribe
+      try {
+        const blob = await recorderRef.current?.stop();
+        recorderRef.current = null;
+        setIsRecording(false);
+        if (!blob) return;
+        setIsTyping(true);
+        const text = await transcribeAudio(blob);
+        if (text.trim()) {
+          handleSend(text.trim());
+        } else {
+          setIsTyping(false);
+          toast.error("Aucun texte détecté");
+        }
+      } catch (e) {
+        setIsRecording(false);
+        setIsTyping(false);
+        toast.error("Erreur de transcription");
+      }
+    } else {
+      // Start recording
+      try {
+        const recorder = await startAudioRecording();
+        recorderRef.current = recorder;
+        setIsRecording(true);
+      } catch {
+        toast.error("Impossible d'accéder au microphone");
+      }
+    }
+  };
+
+  // --- Image generation detection ---
+  const detectImageRequest = (content: string): string | null => {
+    const lower = content.toLowerCase();
+    const imageKeywords = ["génère une image", "génère moi une image", "crée une image", "dessine", "montre-moi une image", "illustre", "generate image", "fais une image"];
+    for (const kw of imageKeywords) {
+      if (lower.includes(kw)) {
+        return content;
+      }
+    }
+    return null;
+  };
+
+  const handleAttach = async (files: FileList) => {
+    const file = files[0];
+    if (!file) return;
+    // If audio file → transcribe
+    if (file.type.startsWith("audio/")) {
+      setIsTyping(true);
+      try {
+        const text = await transcribeAudio(file);
+        if (text.trim()) {
+          toast.success("Audio transcrit !");
+          handleSend(`[Transcription audio] : ${text.trim()}`);
+        } else {
+          toast.error("Aucun texte détecté");
+          setIsTyping(false);
+        }
+      } catch {
+        toast.error("Erreur de transcription");
+        setIsTyping(false);
+      }
+    } else {
+      toast.info(`Fichier sélectionné : ${file.name}`);
+    }
   };
 
   const handleSend = async (content: string) => {
-    // Stop listening if active
-    if (isListening) {
-      stopListening();
+    setIsRecording(false);
+
+    // Check for image generation request
+    const imagePrompt = detectImageRequest(content);
+    if (imagePrompt) {
+      const userMsg: ChatMessageData = { id: Date.now().toString(), role: "user", content };
+      setMessages(prev => [...prev, userMsg]);
+      setIsTyping(true);
+      try {
+        const resp = await fetch(IMAGE_GEN_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ prompt: imagePrompt }),
+        });
+        const data = await resp.json();
+        if (data.imageUrl) {
+          setMessages(prev => [...prev, {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: "Voici l'image que j'ai créée pour vous ! 🎨",
+            imageUrl: data.imageUrl,
+          }]);
+        } else {
+          throw new Error(data.error || "Erreur");
+        }
+      } catch {
+        toast.error("Impossible de générer l'image");
+      } finally {
+        setIsTyping(false);
+      }
+      return;
     }
-    resetTranscript();
 
-    const userMessage: ChatMessageData = {
-      id: Date.now().toString(),
-      role: "user",
-      content,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const userMessage: ChatMessageData = { id: Date.now().toString(), role: "user", content };
+    setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
 
-    // Build the conversation history for the API (excluding welcome message for cleaner context)
     const apiMessages: Message[] = messages
-      .filter((m) => m.id !== "welcome")
-      .map((m) => ({ role: m.role, content: m.content }));
+      .filter(m => m.id !== "welcome")
+      .map(m => ({ role: m.role, content: m.content }));
     apiMessages.push({ role: "user", content });
 
     let assistantSoFar = "";
-    let assistantId = (Date.now() + 1).toString();
+    const assistantId = (Date.now() + 1).toString();
 
     const upsertAssistant = (nextChunk: string) => {
       assistantSoFar += nextChunk;
-      setMessages((prev) => {
+      setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant" && last.id !== "welcome") {
-          return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
-          );
+          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
         }
         return [...prev, { id: assistantId, role: "assistant", content: assistantSoFar }];
       });
@@ -192,17 +231,9 @@ export function HomePage() {
 
     await streamChat({
       messages: apiMessages,
-      onDelta: (chunk) => {
-        setIsTyping(false);
-        upsertAssistant(chunk);
-      },
-      onDone: () => {
-        setIsTyping(false);
-      },
-      onError: (error) => {
-        setIsTyping(false);
-        toast.error(error);
-      },
+      onDelta: (chunk) => { setIsTyping(false); upsertAssistant(chunk); },
+      onDone: () => setIsTyping(false),
+      onError: (error) => { setIsTyping(false); toast.error(error); },
     });
   };
 
@@ -218,22 +249,14 @@ export function HomePage() {
               <p className="text-sm text-primary font-medium">En ligne</p>
             </div>
           </div>
-          
-{/* Right actions */}
           <div className="flex items-center gap-1">
-            {/* Audio call button */}
             <button
-              onClick={() => {
-                setCallType("audio");
-                setIsCallOpen(true);
-              }}
+              onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
               className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
               aria-label="Appel audio"
             >
               <Phone className="w-5 h-5" />
             </button>
-            
-            {/* Settings button */}
             <button
               onClick={() => navigate("/settings")}
               className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
@@ -245,18 +268,18 @@ export function HomePage() {
         </div>
       </header>
 
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
         {messages.map((message) => (
-          <ChatMessage 
-            key={message.id} 
-            role={message.role} 
+          <ChatMessage
+            key={message.id}
+            role={message.role}
             content={message.content}
+            imageUrl={message.imageUrl}
             messageId={message.id}
             onSpeak={(text) => handleSpeak(text, message.id)}
             onStopSpeaking={handleStopSpeaking}
-            isSpeaking={isSpeaking}
+            isSpeaking={isSpeakingEL}
             speakingMessageId={speakingMessageId || undefined}
           />
         ))}
@@ -265,20 +288,22 @@ export function HomePage() {
       </div>
 
       {/* Input */}
-      <ChatInput 
-        onSend={handleSend} 
+      <ChatInput
+        onSend={handleSend}
         onAttach={handleAttach}
+        onAudioRecorded={undefined}
         disabled={isTyping}
-        isListening={isListening}
-        transcript={transcript}
+        isListening={false}
+        isRecording={isRecording}
+        transcript=""
         onVoiceToggle={handleVoiceToggle}
-        voiceSupported={voiceSupported}
+        voiceSupported={true}
       />
 
       {/* Call Screen */}
-      <CallScreen 
-        isOpen={isCallOpen} 
-        onClose={() => setIsCallOpen(false)} 
+      <CallScreen
+        isOpen={isCallOpen}
+        onClose={() => setIsCallOpen(false)}
         initialVideoEnabled={callType === "video"}
       />
     </div>

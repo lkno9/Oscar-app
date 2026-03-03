@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
+  imageUrl?: string;
   onSpeak?: (text: string) => void;
   onStopSpeaking?: () => void;
   isSpeaking?: boolean;
@@ -14,6 +15,7 @@ interface ChatMessageProps {
 export function ChatMessage({ 
   role, 
   content, 
+  imageUrl,
   onSpeak, 
   onStopSpeaking,
   isSpeaking = false,
@@ -32,23 +34,23 @@ export function ChatMessage({
   };
 
   return (
-    <div
-      className={cn(
-        "flex animate-fade-in",
-        isUser ? "justify-end" : "justify-start"
-      )}
-    >
-      <div
-        className={cn(
-          "max-w-[85%] px-4 py-3 rounded-2xl text-base leading-relaxed",
-          isUser
-            ? "bg-primary text-primary-foreground rounded-br-md"
-            : "bg-secondary text-secondary-foreground rounded-bl-md"
+    <div className={cn("flex animate-fade-in", isUser ? "justify-end" : "justify-start")}>
+      <div className={cn(
+        "max-w-[85%] px-4 py-3 rounded-2xl text-base leading-relaxed",
+        isUser
+          ? "bg-primary text-primary-foreground rounded-br-md"
+          : "bg-secondary text-secondary-foreground rounded-bl-md"
+      )}>
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt="Image générée"
+            className="rounded-xl mb-2 max-w-full"
+          />
         )}
-      >
         <div className="flex items-start gap-2">
-          <span className="flex-1">{content}</span>
-          {!isUser && onSpeak && (
+          <span className="flex-1 whitespace-pre-wrap">{content}</span>
+          {!isUser && onSpeak && content && (
             <button
               onClick={handleSpeakClick}
               className={cn(
@@ -59,11 +61,7 @@ export function ChatMessage({
               )}
               aria-label={isThisMessageSpeaking ? "Arrêter la lecture" : "Écouter"}
             >
-              {isThisMessageSpeaking ? (
-                <VolumeX className="w-4 h-4" />
-              ) : (
-                <Volume2 className="w-4 h-4" />
-              )}
+              {isThisMessageSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
           )}
         </div>
