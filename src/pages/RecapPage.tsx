@@ -202,9 +202,9 @@ export function RecapPage() {
   };
 
   const quickActions = [
-    { icon: "📅", label: "Agenda", path: "/services/agenda", color: "hsl(var(--accent))", iconBg: "bg-purple-100 dark:bg-purple-900/30" },
-    { icon: "💊", label: "Santé", path: "/services/health", color: "hsl(var(--accent))", iconBg: "bg-green-100 dark:bg-green-900/30" },
-    { icon: "💬", label: "Famille", path: "/services/communication", iconBg: "bg-blue-100 dark:bg-blue-900/30", badge: unreadMessages.length },
+    { icon: "📅", label: "Agenda", path: "/services/agenda", iconBg: "bg-accent" },
+    { icon: "💊", label: "Santé", path: "/services/health", iconBg: "bg-accent" },
+    { icon: "💬", label: "Famille", path: "/services/communication", iconBg: "bg-secondary", badge: unreadMessages.length },
     { icon: "🆘", label: "Urgence", path: "/services/emergency", iconBg: "bg-destructive/10" },
   ];
 
