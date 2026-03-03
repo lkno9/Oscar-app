@@ -318,7 +318,7 @@ export function RecapPage() {
             {/* Quick actions — floating card over header */}
             <div className="bg-card border border-border rounded-2xl shadow-md p-3 -mt-5">
               <div className="grid grid-cols-4 gap-2">
-                {quickActions.map((a) => (
+                {QUICK_ACTIONS.map((a) => (
                   <button
                     key={a.path}
                     onClick={() => navigate(a.path)}
@@ -329,7 +329,7 @@ export function RecapPage() {
                         {a.badge > 9 ? "9+" : a.badge}
                       </span>
                     ) : null}
-                    <div className={`w-12 h-12 rounded-2xl ${a.iconBg} flex items-center justify-center text-2xl shadow-sm`}>
+                    <div className={`w-14 h-14 rounded-2xl ${a.bg} flex items-center justify-center shadow-sm`}>
                       {a.icon}
                     </div>
                     <span className="text-xs font-semibold text-foreground leading-tight text-center">{a.label}</span>
