@@ -295,15 +295,6 @@ export function RecapPage() {
               <p className="text-primary-foreground text-3xl font-bold tabular-nums leading-none">
                 {format(currentTime, "HH:mm")}
               </p>
-              {totalAlerts > 0 && (
-                <button
-                  onClick={() => navigate("/services/scam-protection")}
-                  className="flex items-center gap-1 justify-end mt-1.5"
-                >
-                  <Bell className="w-3.5 h-3.5 text-primary-foreground/80 animate-pulse" />
-                  <span className="text-xs text-primary-foreground/80 font-semibold">{totalAlerts} alerte{totalAlerts > 1 ? "s" : ""}</span>
-                </button>
-              )}
             </div>
           </div>
 
