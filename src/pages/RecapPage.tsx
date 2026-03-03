@@ -338,6 +338,37 @@ export function RecapPage() {
               </div>
             </div>
 
+            {/* 💊 Rappel médicaments */}
+            {showMedReminder && (
+              <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+                  <BellRing className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Rappel médicaments du {currentMedWindow}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {activeMeds.length} médicament{activeMeds.length > 1 ? "s" : ""} à prendre · {activeMeds.slice(0, 2).map(m => m.name).join(", ")}{activeMeds.length > 2 ? "..." : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => navigate("/services/health")}
+                    className="p-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 active:scale-95 transition-all"
+                    aria-label="Voir médicaments"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setDismissedReminder(currentMedWindow!)}
+                    className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-all"
+                    aria-label="Ignorer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Scam alert banner */}
             {scamAlerts.length > 0 && (
               <button
