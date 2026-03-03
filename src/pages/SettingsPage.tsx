@@ -260,7 +260,7 @@ export function SettingsPage() {
                     <p className="font-medium text-foreground">Profil</p>
                     <p className="text-sm text-muted-foreground">Modifier vos informations</p>
                   </div>
-                  <button onClick={() => navigate("/profile")} className="p-2 rounded-full hover:bg-secondary transition-colors">
+                  <button onClick={() => toast.info("La page profil sera bientôt disponible")} className="p-2 rounded-full hover:bg-secondary transition-colors">
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   </button>
                 </div>
