@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Phone, Settings, Image } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { CallScreen } from "@/components/CallScreen";
-import { sendBotpressMessage } from "@/lib/oscarChat";
+import { useBotpressChat } from "@/hooks/useBotpressChat";
 import { speakWithElevenLabs, stopElevenLabsSpeech } from "@/lib/elevenLabsTTS";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,12 +34,35 @@ export function HomePage() {
   const [isSpeakingEL, setIsSpeakingEL] = useState(false);
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [callType, setCallType] = useState<"audio" | "video">("audio");
-  // ElevenLabs STT recording
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
 
   const { user } = useAuth();
+
+  // Handle incoming bot message from Botpress SDK
+  const handleBotMessage = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setIsTyping(false);
+    const id = Date.now().toString();
+    // Simulate word-by-word streaming
+    const words = text.split(" ");
+    let accumulated = "";
+    words.forEach((word, i) => {
+      setTimeout(() => {
+        accumulated += (i === 0 ? "" : " ") + word;
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant" && last.id === id) {
+            return prev.map(m => m.id === id ? { ...m, content: accumulated } : m);
+          }
+          return [...prev, { id, role: "assistant", content: accumulated }];
+        });
+      }, i * 25);
+    });
+  }, []);
+
+  const { sendMessage: sendToBotpress } = useBotpressChat(handleBotMessage);
 
   // Medication reminders
   useEffect(() => {
@@ -217,23 +240,8 @@ export function HomePage() {
       const promptText = isImage
         ? `Peux-tu analyser cette image ? (${file.name})`
         : `Peux-tu analyser ce document ? (${file.name})`;
-      await sendBotpressMessage({
-        message: promptText,
-        userId: user?.id,
-        onDelta: (chunk) => {
-          setIsTyping(false);
-          assistantSoFar += chunk;
-          setMessages(prev => {
-            const last = prev[prev.length - 1];
-            if (last?.role === "assistant" && last.id !== "welcome") {
-              return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
-            }
-            return [...prev, { id: assistantId, role: "assistant", content: assistantSoFar }];
-          });
-        },
-        onDone: () => setIsTyping(false),
-        onError: (error) => { setIsTyping(false); toast.error(error); },
-      });
+      setIsTyping(true);
+      sendToBotpress(promptText);
     } catch {
       setIsTyping(false);
       toast.error("Impossible de lire le fichier");
@@ -280,28 +288,7 @@ export function HomePage() {
     const userMessage: ChatMessageData = { id: Date.now().toString(), role: "user", content };
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
-
-    let assistantSoFar = "";
-    const assistantId = (Date.now() + 1).toString();
-
-    const upsertAssistant = (nextChunk: string) => {
-      assistantSoFar += nextChunk;
-      setMessages(prev => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant" && last.id !== "welcome") {
-          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
-        }
-        return [...prev, { id: assistantId, role: "assistant", content: assistantSoFar }];
-      });
-    };
-
-    await sendBotpressMessage({
-      message: content,
-      userId: user?.id,
-      onDelta: (chunk) => { setIsTyping(false); upsertAssistant(chunk); },
-      onDone: () => setIsTyping(false),
-      onError: (error) => { setIsTyping(false); toast.error(error); },
-    });
+    sendToBotpress(content);
   };
 
   return (
