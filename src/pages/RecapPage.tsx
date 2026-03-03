@@ -263,7 +263,7 @@ export function RecapPage() {
             </div>
             <div className="text-right">
               <p className="text-primary-foreground text-3xl font-bold tabular-nums leading-none">
-                {format(currentTime, "HH:mm")}
+                {format(currentTime, "HH:mm:ss")}
               </p>
               {totalAlerts > 0 && (
                 <button
