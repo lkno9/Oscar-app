@@ -591,8 +591,8 @@ export function RecapPage() {
                 <div className="space-y-2">
                   {reminders.map((r) => (
                     <div key={r.id} className="flex items-center gap-3 py-1">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${r.type === "medication" ? "bg-pink-100" : "bg-primary/10"}`}>
-                        {r.type === "medication" ? <Pill className="w-4 h-4 text-pink-500" /> : <Bell className="w-4 h-4 text-primary" />}
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${r.type === "medication" ? "bg-accent" : "bg-primary/10"}`}>
+                        {r.type === "medication" ? <Pill className="w-4 h-4 text-accent-foreground" /> : <Bell className="w-4 h-4 text-primary" />}
                       </div>
                       <p className="flex-1 text-sm text-foreground truncate">{r.label}</p>
                       <span className="text-xs text-muted-foreground flex-shrink-0">
