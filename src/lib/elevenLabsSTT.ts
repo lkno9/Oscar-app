@@ -27,7 +27,8 @@ export function startAudioRecording(): Promise<{ stop: () => Promise<Blob> }> {
   return new Promise(async (resolve, reject) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       const chunks: BlobPart[] = [];
 
       mediaRecorder.ondataavailable = (e) => {
@@ -41,7 +42,7 @@ export function startAudioRecording(): Promise<{ stop: () => Promise<Blob> }> {
           new Promise((res) => {
             mediaRecorder.onstop = () => {
               stream.getTracks().forEach((t) => t.stop());
-              res(new Blob(chunks, { type: "audio/webm" }));
+              res(new Blob(chunks, { type: mimeType }));
             };
             mediaRecorder.stop();
           }),
