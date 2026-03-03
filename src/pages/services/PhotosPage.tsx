@@ -32,9 +32,11 @@ export function PhotosPage() {
   }, [user]);
 
   const fetchPhotos = async () => {
+    if (!user) return;
     const { data } = await supabase
       .from("photos")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (data) {
       // My photos — all uploaded by user
@@ -66,6 +68,15 @@ export function PhotosPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette photo ?")) return;
+    // Find the photo to get its storage path
+    const photo = [...photos, ...receivedPhotos].find(p => p.id === id);
+    if (photo?.url && user) {
+      // Extract storage path from public URL
+      const match = photo.url.match(/user-files\/(.+)$/);
+      if (match) {
+        await supabase.storage.from("user-files").remove([match[1]]);
+      }
+    }
     await supabase.from("photos").delete().eq("id", id);
     toast.success("Photo supprimée");
     fetchPhotos();

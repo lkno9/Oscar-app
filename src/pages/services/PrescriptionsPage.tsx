@@ -49,10 +49,12 @@ export function PrescriptionsPage() {
   }, [user]);
 
   const fetchRecords = async () => {
+    if (!user) return;
     // Fetch prescriptions
     const { data: rxData, error: rxError } = await supabase
       .from("health_records")
       .select("*")
+      .eq("user_id", user.id)
       .eq("record_type", "prescription")
       .order("record_date", { ascending: false });
 
@@ -66,6 +68,7 @@ export function PrescriptionsPage() {
     const { data: reimbData, error: reimbError } = await supabase
       .from("health_records")
       .select("*")
+      .eq("user_id", user.id)
       .eq("record_type", "reimbursement")
       .order("record_date", { ascending: false });
 
@@ -173,6 +176,14 @@ export function PrescriptionsPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette ordonnance ?")) return;
+    // Clean up storage file if it exists
+    const record = [...prescriptions, ...reimbursements].find(r => r.id === id);
+    if (record?.unit && record.unit.startsWith("http")) {
+      const match = record.unit.match(/user-files\/(.+)$/);
+      if (match) {
+        await supabase.storage.from("user-files").remove([match[1]]);
+      }
+    }
     const { error } = await supabase.from("health_records").delete().eq("id", id);
     if (error) {
       toast.error("Erreur lors de la suppression");
@@ -322,6 +333,16 @@ export function PrescriptionsPage() {
                     {formatDate(rx.record_date)}
                     {rx.value && ` • ${rx.value} médicaments`}
                   </p>
+                  {rx.unit && rx.unit.startsWith("http") && (
+                    <a
+                      href={rx.unit}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary underline-offset-2 hover:underline mt-1 inline-block"
+                    >
+                      📎 Voir le document
+                    </a>
+                  )}
                 </div>
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   isExpired(rx.record_date) 

@@ -37,31 +37,36 @@ export function HomePage() {
   
   const { user } = useAuth();
 
-  // Check medication reminders on load
+  // Check medication reminders on load + every 30 minutes
   useEffect(() => {
     if (!user) return;
+    const lastReminderRef = { window: "" };
     const checkMedReminders = async () => {
       const now = new Date();
       const hour = now.getHours();
+      const morningWindow = hour >= 7 && hour < 10;
+      const noonWindow = hour >= 12 && hour < 14;
+      const eveningWindow = hour >= 18 && hour < 21;
+      if (!morningWindow && !noonWindow && !eveningWindow) return;
+      const currentWindow = morningWindow ? "matin" : noonWindow ? "midi" : "soir";
+      // Don't re-show for same time window
+      if (lastReminderRef.window === currentWindow) return;
       const { data: meds } = await supabase
         .from('medications')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true);
       if (!meds || meds.length === 0) return;
-      const morningWindow = hour >= 7 && hour < 10;
-      const noonWindow = hour >= 12 && hour < 14;
-      const eveningWindow = hour >= 18 && hour < 21;
-      if (morningWindow || noonWindow || eveningWindow) {
-        const label = morningWindow ? 'matin' : noonWindow ? 'midi' : 'soir';
-        toast(`💊 Rappel médicaments du ${label}`, {
-          description: `N'oubliez pas de prendre vos ${meds.length} médicament${meds.length > 1 ? 's' : ''}.`,
-          duration: 8000,
-          action: { label: 'Voir', onClick: () => navigate('/services/health') },
-        });
-      }
+      lastReminderRef.window = currentWindow;
+      toast(`💊 Rappel médicaments du ${currentWindow}`, {
+        description: `N'oubliez pas de prendre vos ${meds.length} médicament${meds.length > 1 ? 's' : ''}.`,
+        duration: 8000,
+        action: { label: 'Voir', onClick: () => navigate('/services/health') },
+      });
     };
     checkMedReminders();
+    const interval = setInterval(checkMedReminders, 30 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [user]);
 
   const { 

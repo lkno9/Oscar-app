@@ -77,9 +77,9 @@ export function HealthPage() {
   const fetchAll = async () => {
     const today = new Date().toISOString().split("T")[0];
     const [medsRes, moodRes, eventsRes] = await Promise.all([
-      supabase.from("medications").select("*").order("name"),
-      supabase.from("mood_entries").select("*").order("entry_date", { ascending: false }).limit(7),
-      supabase.from("events").select("*").gte("event_date", today)
+      supabase.from("medications").select("*").eq("user_id", user!.id).order("name"),
+      supabase.from("mood_entries").select("*").eq("user_id", user!.id).order("entry_date", { ascending: false }).limit(7),
+      supabase.from("events").select("*").eq("user_id", user!.id).gte("event_date", today)
         .in("event_type", ["medical", "health"])
         .order("event_date").limit(5),
     ]);

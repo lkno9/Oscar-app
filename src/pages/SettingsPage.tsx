@@ -44,10 +44,18 @@ export function SettingsPage() {
   const { user, signOut, listFactors, unenrollMFA } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    const stored = localStorage.getItem("oscar_voice_enabled");
+    return stored !== null ? stored === "true" : true;
+  });
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    const stored = localStorage.getItem("oscar_notifications_enabled");
+    return stored !== null ? stored === "true" : true;
+  });
   const [smsNotificationsEnabled, setSmsNotificationsEnabled] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return document.documentElement.classList.contains("dark");
+  });
   const [showMFAEnrollment, setShowMFAEnrollment] = useState(false);
   const [mfaFactors, setMfaFactors] = useState<Factor[]>([]);
   const [mfaLoading, setMfaLoading] = useState(false);
@@ -96,6 +104,29 @@ export function SettingsPage() {
   const handleMFAEnrollmentSuccess = () => {
     setShowMFAEnrollment(false);
     fetchMFAFactors();
+  };
+
+  const handleVoiceChange = (enabled: boolean) => {
+    setVoiceEnabled(enabled);
+    localStorage.setItem("oscar_voice_enabled", String(enabled));
+    toast.success(enabled ? "Mode vocal activé" : "Mode vocal désactivé");
+  };
+
+  const handleNotificationsChange = (enabled: boolean) => {
+    setNotificationsEnabled(enabled);
+    localStorage.setItem("oscar_notifications_enabled", String(enabled));
+    toast.success(enabled ? "Notifications activées" : "Notifications désactivées");
+  };
+
+  const handleDarkModeChange = (enabled: boolean) => {
+    setDarkMode(enabled);
+    if (enabled) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("oscar_dark_mode", "true");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("oscar_dark_mode", "false");
+    }
   };
 
   const handleSmsNotificationsChange = async (enabled: boolean) => {
@@ -281,10 +312,10 @@ export function SettingsPage() {
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Préférences</h3>
               <div className="bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
                 {[
-                  { icon: Volume2, label: "Mode vocal", desc: "Oscar lit les réponses à haute voix", value: voiceEnabled, onChange: setVoiceEnabled },
-                  { icon: Bell, label: "Notifications", desc: "Rappels et alertes importantes", value: notificationsEnabled, onChange: setNotificationsEnabled },
+                  { icon: Volume2, label: "Mode vocal", desc: "Oscar lit les réponses à haute voix", value: voiceEnabled, onChange: handleVoiceChange },
+                  { icon: Bell, label: "Notifications", desc: "Rappels et alertes importantes", value: notificationsEnabled, onChange: handleNotificationsChange },
                   { icon: MessageSquare, label: "Notifications SMS", desc: profile?.phone_number ? "Recevoir les alertes par SMS" : "Ajoutez un numéro dans votre profil", value: smsNotificationsEnabled, onChange: handleSmsNotificationsChange, disabled: !profile?.phone_number },
-                  { icon: Moon, label: "Mode sombre", desc: "Adapter l'affichage", value: darkMode, onChange: setDarkMode },
+                  { icon: Moon, label: "Mode sombre", desc: "Adapter l'affichage", value: darkMode, onChange: handleDarkModeChange },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-4 p-4">
                     <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">

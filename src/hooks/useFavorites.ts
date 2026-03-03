@@ -27,6 +27,7 @@ export const useFavorites = () => {
         .from('secure_notes')
         .select('*')
         .eq('user_id', user.id)
+        .eq('category', 'favorite')
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -53,7 +54,7 @@ export const useFavorites = () => {
           user_id: user.id,
           title,
           content: content || null,
-          category: category || null,
+          category: 'favorite',
           is_pinned: false
         });
 

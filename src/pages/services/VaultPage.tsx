@@ -36,9 +36,12 @@ export function VaultPage() {
   }, [user]);
 
   const fetchNotes = async () => {
+    if (!user) return;
     const { data, error } = await supabase
       .from("secure_notes")
       .select("*")
+      .eq("user_id", user.id)
+      .neq("category", "favorite")
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false });
     

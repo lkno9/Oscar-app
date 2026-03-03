@@ -111,6 +111,15 @@ export const useDocuments = () => {
 
   const deleteDocument = async (id: string) => {
     try {
+      // Find the document to clean up its storage file
+      const doc = documents.find(d => d.id === id);
+      if (doc?.file_url) {
+        const match = doc.file_url.match(/user-files\/(.+)$/);
+        if (match) {
+          await supabase.storage.from('user-files').remove([match[1]]);
+        }
+      }
+
       const { error } = await supabase
         .from('documents')
         .delete()
