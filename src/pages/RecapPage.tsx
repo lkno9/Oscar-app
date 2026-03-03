@@ -205,11 +205,42 @@ export function RecapPage() {
     }
   };
 
-  const quickActions = [
-    { icon: "📅", label: "Agenda", path: "/services/agenda", iconBg: "bg-accent" },
-    { icon: "💊", label: "Santé", path: "/services/health", iconBg: "bg-accent" },
-    { icon: "💬", label: "Famille", path: "/services/communication", iconBg: "bg-secondary", badge: unreadMessages.length },
-    { icon: "🆘", label: "Urgence", path: "/services/emergency", iconBg: "bg-destructive/10" },
+  // Rappels médicaments du jour
+  const hour = currentTime.getHours();
+  const currentMedWindow = hour >= 7 && hour < 10 ? "matin" : hour >= 12 && hour < 14 ? "midi" : hour >= 18 && hour < 21 ? "soir" : null;
+  const [dismissedReminder, setDismissedReminder] = useState<string | null>(null);
+  const showMedReminder = currentMedWindow && dismissedReminder !== currentMedWindow && activeMeds.length > 0;
+
+  const QUICK_ACTIONS = [
+    {
+      label: "Agenda",
+      path: "/services/agenda",
+      icon: <CalendarDays className="w-7 h-7 text-[hsl(221,83%,53%)]" />,
+      bg: "bg-[hsl(221,83%,53%)]/10",
+    },
+    {
+      label: "Santé",
+      path: "/services/health",
+      icon: <Pill className="w-7 h-7 text-[hsl(340,82%,59%)]" />,
+      bg: "bg-[hsl(340,82%,59%)]/10",
+    },
+    {
+      label: "Famille",
+      path: "/services/communication",
+      icon: <MessageSquare className="w-7 h-7 text-muted-foreground" />,
+      bg: "bg-secondary",
+      badge: unreadMessages.length,
+    },
+    {
+      label: "Urgence",
+      path: "/services/emergency",
+      icon: (
+        <span className="text-destructive-foreground text-base font-extrabold leading-none bg-destructive rounded-lg px-2 py-1">
+          SOS
+        </span>
+      ),
+      bg: "bg-destructive/10",
+    },
   ];
 
   return (
