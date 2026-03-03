@@ -287,7 +287,7 @@ export function HomePage() {
           <div className="flex items-center gap-3">
             <div className="relative">
               <OscarAvatar size="md" />
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-[hsl(142,76%,36%)] border-2 border-card rounded-full" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
