@@ -112,7 +112,7 @@ export function RecapPage() {
     in30Days.setDate(in30Days.getDate() + 30);
     const in30DaysStr = in30Days.toISOString().split("T")[0];
 
-    const [profileRes, moodRes, messagesRes, eventsRes, medsRes, docsRes, alertsRes] = await Promise.all([
+    const [profileRes, moodRes, messagesRes, eventsRes, medsRes, docsRes, alertsRes, remindersRes, notifsRes] = await Promise.all([
       supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
       supabase.from("mood_entries").select("mood_level").eq("user_id", user.id).eq("entry_date", today).maybeSingle(),
       supabase.from("family_messages").select("id, content, created_at, sender_id").eq("receiver_id", user.id).eq("is_read", false).order("created_at", { ascending: false }).limit(5),
@@ -120,6 +120,8 @@ export function RecapPage() {
       supabase.from("medications").select("id, name, dosage").eq("user_id", user.id).eq("is_active", true).order("name").limit(5),
       supabase.from("documents").select("id, name, expiration_date").eq("user_id", user.id).gte("expiration_date", today).lte("expiration_date", in30DaysStr).order("expiration_date"),
       supabase.from("scam_alerts").select("id, title, danger_level").eq("is_active", true).limit(3),
+      supabase.from("document_reminders").select("id, reminder_date, reminder_type, document_id, documents(name)").eq("user_id", user.id).eq("is_sent", false).gte("reminder_date", today).order("reminder_date").limit(5),
+      supabase.from("family_notifications").select("id, title, message, type, created_at, is_read").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
     ]);
 
     if (profileRes.data) setProfile(profileRes.data);
@@ -140,6 +142,30 @@ export function RecapPage() {
     if (medsRes.data) setActiveMeds(medsRes.data);
     if (docsRes.data) setUrgentDocs(docsRes.data);
     if (alertsRes.data) setScamAlerts(alertsRes.data);
+
+    // Build reminders list: document reminders + medication time windows
+    const builtReminders: Reminder[] = [];
+    if (remindersRes.data) {
+      remindersRes.data.forEach((r: any) => {
+        builtReminders.push({
+          id: r.id,
+          label: r.documents?.name ? `Renouveler "${r.documents.name}"` : `Rappel document`,
+          date: r.reminder_date,
+          type: "document",
+        });
+      });
+    }
+    if (medsRes.data && medsRes.data.length > 0) {
+      builtReminders.push({
+        id: "med-today",
+        label: `Prendre vos médicaments du jour (${medsRes.data.length})`,
+        date: today,
+        type: "medication",
+      });
+    }
+    setReminders(builtReminders);
+
+    if (notifsRes.data) setNotifications(notifsRes.data as AppNotification[]);
     setLoading(false);
   };
 
