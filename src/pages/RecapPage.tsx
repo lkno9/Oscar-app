@@ -588,9 +588,6 @@ export function RecapPage() {
               </SectionCard>
             )}
 
-            {/* Explorer */}
-            <div>
-              <p className="text-base font-bold text-foreground mb-3 px-0.5">Explorer</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { icon: <span className="text-2xl">🎵</span>, iconBg: "bg-[hsl(270,60%,92%)]", label: "Musique", desc: "Écouter de la musique", path: "/services/music" },
