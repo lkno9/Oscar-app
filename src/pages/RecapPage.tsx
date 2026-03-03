@@ -590,28 +590,31 @@ export function RecapPage() {
 
             {/* Explorer */}
             <div>
-              <p className="text-sm font-semibold text-foreground mb-2.5 px-0.5">Explorer</p>
+              <p className="text-base font-bold text-foreground mb-3 px-0.5">Explorer</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { emoji: "🎵", label: "Musique", desc: "Écouter de la musique", path: "/services/music" },
-                  { emoji: "🎮", label: "Jeux", desc: "Sudoku, Mémoire...", path: "/services/games" },
-                  { emoji: "📚", label: "Bibliothèque", desc: "Lire un article", path: "/services/library" },
-                  { emoji: "🛡️", label: "Protection", desc: "Arnaque & sécurité", path: "/services/scam-protection" },
+                  { icon: <span className="text-2xl">🎵</span>, iconBg: "bg-[hsl(270,60%,92%)]", label: "Musique", desc: "Écouter de la musique", path: "/services/music" },
+                  { icon: <span className="text-2xl">🎮</span>, iconBg: "bg-[hsl(220,60%,92%)]", label: "Jeux", desc: "Sudoku, Mémoire...", path: "/services/games" },
+                  { icon: <span className="text-2xl">📚</span>, iconBg: "bg-[hsl(40,80%,90%)]", label: "Bibliothèque", desc: "Lire un article", path: "/services/library" },
+                  { icon: <span className="text-2xl">🛡️</span>, iconBg: "bg-[hsl(200,70%,90%)]", label: "Protection", desc: "Arnaque & sécurité", path: "/services/scam-protection" },
                 ].map((s) => (
                   <button
                     key={s.path}
                     onClick={() => navigate(s.path)}
-                    className="flex items-center gap-3 bg-card border border-border rounded-2xl px-3.5 py-3 text-left hover:shadow-md active:scale-95 transition-all"
+                    className="flex items-center gap-3 bg-card border border-border rounded-2xl px-3.5 py-3.5 text-left hover:shadow-md active:scale-95 transition-all"
                   >
-                    <span className="text-2xl">{s.emoji}</span>
+                    <div className={`w-11 h-11 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
+                      {s.icon}
+                    </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{s.label}</p>
+                      <p className="text-sm font-bold text-foreground">{s.label}</p>
                       <p className="text-xs text-muted-foreground truncate">{s.desc}</p>
                     </div>
                   </button>
                 ))}
               </div>
             </div>
+
 
           </div>
         )}
