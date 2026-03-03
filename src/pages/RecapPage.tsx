@@ -7,13 +7,11 @@ import {
   ShieldAlert,
   ChevronRight,
   Smile,
-  Phone,
-  Heart,
   FileText,
-  Gamepad2,
-  Sun,
-  CloudSun,
   Bell,
+  Newspaper,
+  ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +28,15 @@ interface Medication { id: string; name: string; dosage: string | null; }
 interface UrgentDocument { id: string; name: string; expiration_date: string; }
 interface ScamAlert { id: string; title: string; danger_level: string; }
 
+interface NewsArticle {
+  title: string;
+  description: string;
+  link: string;
+  pubDate: string;
+  source: string;
+  category: "droits" | "seniors" | "securite";
+}
+
 const MOODS = [
   { level: 1, emoji: "😢", label: "Triste", color: "text-blue-500" },
   { level: 2, emoji: "😕", label: "Pas bien", color: "text-indigo-500" },
@@ -41,6 +48,22 @@ const MOODS = [
 const EVENT_ICONS: Record<string, string> = {
   medical: "🏥", health: "💊", family: "👨‍👩‍👧", admin: "📋", leisure: "🎉", general: "📅",
 };
+
+const NEWS_CATEGORIES = [
+  { key: "all", label: "Tout" },
+  { key: "droits", label: "Droits" },
+  { key: "seniors", label: "Seniors" },
+  { key: "securite", label: "Sécurité" },
+] as const;
+
+const NEWS_CATEGORY_STYLES: Record<string, { emoji: string; bg: string; text: string }> = {
+  droits: { emoji: "📋", bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-400" },
+  seniors: { emoji: "👴", bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-400" },
+  securite: { emoji: "🛡️", bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400" },
+};
+
+const NEWS_CACHE_KEY = "oscar_news_cache";
+const NEWS_CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours
 
 export function RecapPage() {
   const navigate = useNavigate();
@@ -56,13 +79,22 @@ export function RecapPage() {
   const [scamAlerts, setScamAlerts] = useState<ScamAlert[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // News state
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsFilter, setNewsFilter] = useState<string>("all");
+  const [showAllNews, setShowAllNews] = useState(false);
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    if (user) fetchData();
+    if (user) {
+      fetchData();
+      fetchNews();
+    }
   }, [user]);
 
   const fetchData = async () => {
@@ -103,11 +135,71 @@ export function RecapPage() {
     setLoading(false);
   };
 
+  const fetchNews = async (forceRefresh = false) => {
+    // Check localStorage cache first
+    if (!forceRefresh) {
+      try {
+        const cached = localStorage.getItem(NEWS_CACHE_KEY);
+        if (cached) {
+          const { articles, fetchedAt } = JSON.parse(cached);
+          const age = Date.now() - new Date(fetchedAt).getTime();
+          if (age < NEWS_CACHE_DURATION && articles?.length > 0) {
+            setNewsArticles(articles);
+            setNewsLoading(false);
+            return;
+          }
+        }
+      } catch {
+        // Ignore cache errors
+      }
+    }
+
+    setNewsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-senior-news");
+      if (error) throw error;
+      if (data?.articles?.length > 0) {
+        setNewsArticles(data.articles);
+        // Cache the results
+        localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify({
+          articles: data.articles,
+          fetchedAt: new Date().toISOString(),
+        }));
+      }
+    } catch {
+      // If fetch fails, try to use stale cache
+      try {
+        const cached = localStorage.getItem(NEWS_CACHE_KEY);
+        if (cached) {
+          const { articles } = JSON.parse(cached);
+          if (articles?.length > 0) setNewsArticles(articles);
+        }
+      } catch {
+        // No cache available
+      }
+    } finally {
+      setNewsLoading(false);
+    }
+  };
+
   const getFirstName = () => profile.full_name ? profile.full_name.split(" ")[0] : "vous";
   const moodInfo = todayMood ? MOODS.find((m) => m.level === todayMood.mood_level) : null;
   const hour = currentTime.getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
   const totalAlerts = scamAlerts.length + urgentDocs.length;
+
+  const filteredNews = newsFilter === "all"
+    ? newsArticles
+    : newsArticles.filter((a) => a.category === newsFilter);
+  const displayedNews = showAllNews ? filteredNews : filteredNews.slice(0, 4);
+
+  const formatNewsDate = (dateStr: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: fr });
+    } catch {
+      return "";
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -181,10 +273,10 @@ export function RecapPage() {
             {/* Quick actions */}
             <div className="grid grid-cols-4 gap-2">
               {[
-                { icon: "📅", label: "Agenda", path: "/services/agenda", color: "bg-purple-100 dark:bg-purple-900/30" },
-                { icon: "💊", label: "Santé", path: "/services/health", color: "bg-green-100 dark:bg-green-900/30" },
-                { icon: "💬", label: "Famille", path: "/services/communication", color: "bg-blue-100 dark:bg-blue-900/30", badge: unreadMessages.length },
-                { icon: "🆘", label: "Urgence", path: "/services/emergency", color: "bg-red-100 dark:bg-red-900/30" },
+                { icon: "📅", label: "Agenda", path: "/services/agenda" },
+                { icon: "💊", label: "Santé", path: "/services/health" },
+                { icon: "💬", label: "Famille", path: "/services/communication", badge: unreadMessages.length },
+                { icon: "🆘", label: "Urgence", path: "/services/emergency" },
               ].map((a) => (
                 <button
                   key={a.path}
@@ -216,6 +308,105 @@ export function RecapPage() {
                 <ChevronRight className="w-4 h-4 text-destructive/60 flex-shrink-0" />
               </button>
             )}
+
+            {/* ============================================ */}
+            {/* === ACTUALITÉS SENIORS (real RSS content) === */}
+            {/* ============================================ */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Newspaper className="w-5 h-5 text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground">Actualités</h2>
+                </div>
+                <button
+                  onClick={() => fetchNews(true)}
+                  className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
+                  aria-label="Rafraîchir les actualités"
+                >
+                  <RefreshCw className={`w-4 h-4 text-muted-foreground ${newsLoading ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+
+              {/* Category filters */}
+              <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide">
+                {NEWS_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.key}
+                    onClick={() => { setNewsFilter(cat.key); setShowAllNews(false); }}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      newsFilter === cat.key
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Articles */}
+              {newsLoading && newsArticles.length === 0 ? (
+                <div className="bg-card border border-border rounded-2xl p-6 text-center">
+                  <RefreshCw className="w-6 h-6 text-muted-foreground mx-auto mb-2 animate-spin" />
+                  <p className="text-sm text-muted-foreground">Chargement des actualités...</p>
+                </div>
+              ) : filteredNews.length > 0 ? (
+                <div className="space-y-2.5">
+                  {displayedNews.map((article, i) => {
+                    const style = NEWS_CATEGORY_STYLES[article.category] || NEWS_CATEGORY_STYLES.droits;
+                    return (
+                      <a
+                        key={`${article.link}-${i}`}
+                        href={article.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block bg-card border border-border rounded-2xl p-3.5 hover:shadow-md active:scale-[0.99] transition-all"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-10 h-10 rounded-xl ${style.bg} flex items-center justify-center flex-shrink-0 text-lg`}>
+                            {style.emoji}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`text-xs font-medium ${style.text}`}>{article.source}</span>
+                              <span className="text-xs text-muted-foreground">{formatNewsDate(article.pubDate)}</span>
+                            </div>
+                            <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
+                              {article.title}
+                            </h3>
+                            {article.description && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                                {article.description}
+                              </p>
+                            )}
+                          </div>
+                          <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+                        </div>
+                      </a>
+                    );
+                  })}
+                  {!showAllNews && filteredNews.length > 4 && (
+                    <button
+                      onClick={() => setShowAllNews(true)}
+                      className="w-full py-2.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                    >
+                      Voir plus d'actualités ({filteredNews.length - 4} de plus)
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-card border border-border rounded-2xl p-6 text-center">
+                  <Newspaper className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm text-muted-foreground">Aucune actualité disponible</p>
+                  <button
+                    onClick={() => fetchNews(true)}
+                    className="mt-2 text-xs text-primary font-medium"
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Messages famille */}
             {unreadMessages.length > 0 && (
@@ -322,7 +513,7 @@ export function RecapPage() {
               </SectionCard>
             )}
 
-            {/* Services rapides */}
+            {/* Explorer */}
             <div>
               <p className="text-sm font-semibold text-foreground mb-2.5 px-0.5">Explorer</p>
               <div className="grid grid-cols-2 gap-3">

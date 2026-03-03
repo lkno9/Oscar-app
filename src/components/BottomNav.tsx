@@ -1,18 +1,24 @@
-import { Home, Grid2x2 } from "lucide-react";
+import { Home, MessageCircle, Grid2x2 } from "lucide-react";
 
 interface BottomNavProps {
-  active: "home" | "services";
-  onNavigate: (tab: "home" | "services") => void;
+  active: "oscar" | "accueil" | "services";
+  onNavigate: (tab: "oscar" | "accueil" | "services") => void;
 }
 
 export function BottomNav({ active, onNavigate }: BottomNavProps) {
   return (
     <nav className="h-16 bg-card border-t border-border flex shadow-soft">
       <NavButton
+        icon={<MessageCircle className="w-6 h-6" />}
+        label="Oscar"
+        active={active === "oscar"}
+        onClick={() => onNavigate("oscar")}
+      />
+      <NavButton
         icon={<Home className="w-6 h-6" />}
         label="Accueil"
-        active={active === "home"}
-        onClick={() => onNavigate("home")}
+        active={active === "accueil"}
+        onClick={() => onNavigate("accueil")}
       />
       <NavButton
         icon={<Grid2x2 className="w-6 h-6" />}
