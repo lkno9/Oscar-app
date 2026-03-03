@@ -1,50 +1,52 @@
-const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
+// Free browser-native TTS using Web Speech API
 
-let currentAudio: HTMLAudioElement | null = null;
+let currentUtterance: SpeechSynthesisUtterance | null = null;
+
+function getFrenchVoice(): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  const fr = voices.filter(v => v.lang.startsWith("fr"));
+  return fr.find(v => v.name.toLowerCase().includes("natural") || v.name.toLowerCase().includes("premium") || v.name.toLowerCase().includes("enhanced"))
+    || fr[0]
+    || voices[0]
+    || null;
+}
 
 export async function speakWithElevenLabs(text: string): Promise<void> {
-  // Stop any current speech
   stopElevenLabsSpeech();
-
-  const response = await fetch(TTS_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-    },
-    body: JSON.stringify({ text }),
-  });
-
-  if (!response.ok) {
-    throw new Error("Erreur TTS");
-  }
-
-  const audioBlob = await response.blob();
-  const audioUrl = URL.createObjectURL(audioBlob);
-  currentAudio = new Audio(audioUrl);
-  await currentAudio.play();
+  if (!("speechSynthesis" in window)) throw new Error("TTS non supporté");
 
   return new Promise((resolve) => {
-    currentAudio!.onended = () => {
-      URL.revokeObjectURL(audioUrl);
-      currentAudio = null;
-      resolve();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "fr-FR";
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    // Wait for voices to load if needed
+    const trySpeak = () => {
+      const voice = getFrenchVoice();
+      if (voice) utterance.voice = voice;
+      utterance.onend = () => { currentUtterance = null; resolve(); };
+      utterance.onerror = () => { currentUtterance = null; resolve(); };
+      currentUtterance = utterance;
+      window.speechSynthesis.speak(utterance);
     };
-    currentAudio!.onerror = () => {
-      URL.revokeObjectURL(audioUrl);
-      currentAudio = null;
-      resolve();
-    };
+
+    if (window.speechSynthesis.getVoices().length > 0) {
+      trySpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => { trySpeak(); };
+    }
   });
 }
 
 export function stopElevenLabsSpeech(): void {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
   }
+  currentUtterance = null;
 }
 
 export function isElevenLabsSpeaking(): boolean {
-  return currentAudio !== null && !currentAudio.paused;
+  return "speechSynthesis" in window && window.speechSynthesis.speaking;
 }
