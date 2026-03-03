@@ -11,98 +11,98 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationId, userId } = await req.json();
+    const { message, conversationId, userKey } = await req.json();
 
-    const BOTPRESS_TOKEN = Deno.env.get("BOTPRESS_TOKEN");
-    const BOTPRESS_BOT_ID = Deno.env.get("BOTPRESS_BOT_ID");
+    const BOTPRESS_WEBHOOK_ID = Deno.env.get("BOTPRESS_BOT_ID"); // reusing BOT_ID secret as WEBHOOK_ID
+    const BASE_URL = `https://chat.botpress.cloud/${BOTPRESS_WEBHOOK_ID}`;
 
-    if (!BOTPRESS_TOKEN || !BOTPRESS_BOT_ID) {
-      throw new Error("BOTPRESS_TOKEN or BOTPRESS_BOT_ID not configured");
+    if (!BOTPRESS_WEBHOOK_ID) {
+      throw new Error("BOTPRESS_BOT_ID (webhook ID) not configured");
     }
 
-    // Use a stable conversation ID (per user session)
-    const convId = conversationId || `app-${userId || "anon"}-${Date.now()}`;
+    // Step 1: Get or create a user key
+    let currentUserKey = userKey;
+    let currentConversationId = conversationId;
 
-    // Step 1: Create or reuse conversation
-    const createConvRes = await fetch(
-      `https://api.botpress.cloud/v1/chat/conversations`,
-      {
+    if (!currentUserKey) {
+      const userRes = await fetch(`${BASE_URL}/users`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${BOTPRESS_TOKEN}`,
-          "x-bot-id": BOTPRESS_BOT_ID,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id: convId }),
-      }
-    );
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
 
-    if (!createConvRes.ok && createConvRes.status !== 409) {
-      const err = await createConvRes.text();
-      console.error("Create conversation error:", createConvRes.status, err);
-      throw new Error(`Botpress conversation error: ${createConvRes.status}`);
+      if (!userRes.ok) {
+        const err = await userRes.text();
+        console.error("Create user error:", userRes.status, err);
+        throw new Error(`Failed to create Botpress user: ${userRes.status}`);
+      }
+
+      const userData = await userRes.json();
+      currentUserKey = userData.key;
     }
 
-    const convData = createConvRes.status === 409
-      ? { conversation: { id: convId } }
-      : await createConvRes.json();
-
-    const finalConvId = convData?.conversation?.id || convId;
-
-    // Step 2: Send message
-    const msgRes = await fetch(
-      `https://api.botpress.cloud/v1/chat/messages`,
-      {
+    // Step 2: Get or create a conversation
+    if (!currentConversationId) {
+      const convRes = await fetch(`${BASE_URL}/conversations`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${BOTPRESS_TOKEN}`,
-          "x-bot-id": BOTPRESS_BOT_ID,
           "Content-Type": "application/json",
+          "x-user-key": currentUserKey,
         },
-        body: JSON.stringify({
-          conversationId: finalConvId,
-          type: "text",
-          payload: { text: message },
-          userId: userId || "app-user",
-        }),
+        body: JSON.stringify({}),
+      });
+
+      if (!convRes.ok) {
+        const err = await convRes.text();
+        console.error("Create conversation error:", convRes.status, err);
+        throw new Error(`Failed to create conversation: ${convRes.status}`);
       }
-    );
+
+      const convData = await convRes.json();
+      currentConversationId = convData.conversation?.id;
+    }
+
+    // Step 3: Send message
+    const msgRes = await fetch(`${BASE_URL}/conversations/${currentConversationId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-key": currentUserKey,
+      },
+      body: JSON.stringify({
+        payload: { type: "text", text: message },
+      }),
+    });
 
     if (!msgRes.ok) {
       const err = await msgRes.text();
       console.error("Send message error:", msgRes.status, err);
-      throw new Error(`Botpress message error: ${msgRes.status}`);
+      throw new Error(`Failed to send message: ${msgRes.status}`);
     }
 
-    // Step 3: Poll for bot response (wait up to 15s)
+    // Step 4: Poll for bot response (up to 15s)
     let botReply = null;
     const startTime = Date.now();
-    const sentAt = new Date().toISOString();
 
     while (Date.now() - startTime < 15000) {
       await new Promise((r) => setTimeout(r, 1500));
 
       const listRes = await fetch(
-        `https://api.botpress.cloud/v1/chat/messages?conversationId=${finalConvId}&direction=desc&limit=5`,
+        `${BASE_URL}/conversations/${currentConversationId}/messages`,
         {
-          headers: {
-            Authorization: `Bearer ${BOTPRESS_TOKEN}`,
-            "x-bot-id": BOTPRESS_BOT_ID,
-          },
+          headers: { "x-user-key": currentUserKey },
         }
       );
 
       if (!listRes.ok) continue;
 
       const listData = await listRes.json();
-      const messages = listData?.messages || [];
+      const msgs = listData?.messages || [];
 
-      // Find bot response after user message
-      const botMsg = messages.find(
-        (m: { direction?: string; createdAt?: string; payload?: { text?: string } }) =>
-          m.direction === "incoming" &&
-          m.createdAt > sentAt &&
-          m.payload?.text
+      // Find the latest bot message (not from user)
+      const botMsg = msgs.find(
+        (m: { source?: { type?: string }; payload?: { text?: string } }) =>
+          m.source?.type === "bot" && m.payload?.text
       );
 
       if (botMsg) {
@@ -116,7 +116,11 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ reply: botReply, conversationId: finalConvId }),
+      JSON.stringify({
+        reply: botReply,
+        conversationId: currentConversationId,
+        userKey: currentUserKey,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
