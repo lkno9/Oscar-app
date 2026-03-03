@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, Grid2x2 } from "lucide-react";
+import { Bot, House, Grid2x2 } from "lucide-react";
 
 interface BottomNavProps {
   active: "home" | "recap" | "services";
