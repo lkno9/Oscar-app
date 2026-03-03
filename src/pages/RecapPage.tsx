@@ -12,6 +12,9 @@ import {
   Newspaper,
   ExternalLink,
   RefreshCw,
+  BellRing,
+  X,
+  Check,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -85,8 +88,9 @@ export function RecapPage() {
   const [newsFilter, setNewsFilter] = useState<string>("all");
   const [showAllNews, setShowAllNews] = useState(false);
 
+  // ⏱ Horloge temps réel — mise à jour chaque seconde
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -201,11 +205,41 @@ export function RecapPage() {
     }
   };
 
-  const quickActions = [
-    { icon: "📅", label: "Agenda", path: "/services/agenda", iconBg: "bg-accent" },
-    { icon: "💊", label: "Santé", path: "/services/health", iconBg: "bg-accent" },
-    { icon: "💬", label: "Famille", path: "/services/communication", iconBg: "bg-secondary", badge: unreadMessages.length },
-    { icon: "🆘", label: "Urgence", path: "/services/emergency", iconBg: "bg-destructive/10" },
+  // Rappels médicaments du jour
+  const currentMedWindow = hour >= 7 && hour < 10 ? "matin" : hour >= 12 && hour < 14 ? "midi" : hour >= 18 && hour < 21 ? "soir" : null;
+  const [dismissedReminder, setDismissedReminder] = useState<string | null>(null);
+  const showMedReminder = currentMedWindow && dismissedReminder !== currentMedWindow && activeMeds.length > 0;
+
+  const QUICK_ACTIONS = [
+    {
+      label: "Agenda",
+      path: "/services/agenda",
+      icon: <CalendarDays className="w-7 h-7 text-[hsl(221,83%,53%)]" />,
+      bg: "bg-[hsl(221,83%,53%)]/10",
+    },
+    {
+      label: "Santé",
+      path: "/services/health",
+      icon: <Pill className="w-7 h-7 text-[hsl(340,82%,59%)]" />,
+      bg: "bg-[hsl(340,82%,59%)]/10",
+    },
+    {
+      label: "Famille",
+      path: "/services/communication",
+      icon: <MessageSquare className="w-7 h-7 text-muted-foreground" />,
+      bg: "bg-secondary",
+      badge: unreadMessages.length,
+    },
+    {
+      label: "Urgence",
+      path: "/services/emergency",
+      icon: (
+        <span className="text-destructive-foreground text-base font-extrabold leading-none bg-destructive rounded-lg px-2 py-1">
+          SOS
+        </span>
+      ),
+      bg: "bg-destructive/10",
+    },
   ];
 
   return (
@@ -229,7 +263,7 @@ export function RecapPage() {
             </div>
             <div className="text-right">
               <p className="text-primary-foreground text-3xl font-bold tabular-nums leading-none">
-                {format(currentTime, "HH:mm")}
+                {format(currentTime, "HH:mm:ss")}
               </p>
               {totalAlerts > 0 && (
                 <button
@@ -284,7 +318,7 @@ export function RecapPage() {
             {/* Quick actions — floating card over header */}
             <div className="bg-card border border-border rounded-2xl shadow-md p-3 -mt-5">
               <div className="grid grid-cols-4 gap-2">
-                {quickActions.map((a) => (
+                {QUICK_ACTIONS.map((a) => (
                   <button
                     key={a.path}
                     onClick={() => navigate(a.path)}
@@ -295,7 +329,7 @@ export function RecapPage() {
                         {a.badge > 9 ? "9+" : a.badge}
                       </span>
                     ) : null}
-                    <div className={`w-12 h-12 rounded-2xl ${a.iconBg} flex items-center justify-center text-2xl shadow-sm`}>
+                    <div className={`w-14 h-14 rounded-2xl ${a.bg} flex items-center justify-center shadow-sm`}>
                       {a.icon}
                     </div>
                     <span className="text-xs font-semibold text-foreground leading-tight text-center">{a.label}</span>
@@ -303,6 +337,37 @@ export function RecapPage() {
                 ))}
               </div>
             </div>
+
+            {/* 💊 Rappel médicaments */}
+            {showMedReminder && (
+              <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+                  <BellRing className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Rappel médicaments du {currentMedWindow}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {activeMeds.length} médicament{activeMeds.length > 1 ? "s" : ""} à prendre · {activeMeds.slice(0, 2).map(m => m.name).join(", ")}{activeMeds.length > 2 ? "..." : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => navigate("/services/health")}
+                    className="p-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 active:scale-95 transition-all"
+                    aria-label="Voir médicaments"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setDismissedReminder(currentMedWindow!)}
+                    className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-all"
+                    aria-label="Ignorer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Scam alert banner */}
             {scamAlerts.length > 0 && (
@@ -525,28 +590,31 @@ export function RecapPage() {
 
             {/* Explorer */}
             <div>
-              <p className="text-sm font-semibold text-foreground mb-2.5 px-0.5">Explorer</p>
+              <p className="text-base font-bold text-foreground mb-3 px-0.5">Explorer</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { emoji: "🎵", label: "Musique", desc: "Écouter de la musique", path: "/services/music" },
-                  { emoji: "🎮", label: "Jeux", desc: "Sudoku, Mémoire...", path: "/services/games" },
-                  { emoji: "📚", label: "Bibliothèque", desc: "Lire un article", path: "/services/library" },
-                  { emoji: "🛡️", label: "Protection", desc: "Arnaque & sécurité", path: "/services/scam-protection" },
+                  { icon: <span className="text-2xl">🎵</span>, iconBg: "bg-[hsl(270,60%,92%)]", label: "Musique", desc: "Écouter de la musique", path: "/services/music" },
+                  { icon: <span className="text-2xl">🎮</span>, iconBg: "bg-[hsl(220,60%,92%)]", label: "Jeux", desc: "Sudoku, Mémoire...", path: "/services/games" },
+                  { icon: <span className="text-2xl">📚</span>, iconBg: "bg-[hsl(40,80%,90%)]", label: "Bibliothèque", desc: "Lire un article", path: "/services/library" },
+                  { icon: <span className="text-2xl">🛡️</span>, iconBg: "bg-[hsl(200,70%,90%)]", label: "Protection", desc: "Arnaque & sécurité", path: "/services/scam-protection" },
                 ].map((s) => (
                   <button
                     key={s.path}
                     onClick={() => navigate(s.path)}
-                    className="flex items-center gap-3 bg-card border border-border rounded-2xl px-3.5 py-3 text-left hover:shadow-md active:scale-95 transition-all"
+                    className="flex items-center gap-3 bg-card border border-border rounded-2xl px-3.5 py-3.5 text-left hover:shadow-md active:scale-95 transition-all"
                   >
-                    <span className="text-2xl">{s.emoji}</span>
+                    <div className={`w-11 h-11 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
+                      {s.icon}
+                    </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{s.label}</p>
+                      <p className="text-sm font-bold text-foreground">{s.label}</p>
                       <p className="text-xs text-muted-foreground truncate">{s.desc}</p>
                     </div>
                   </button>
                 ))}
               </div>
             </div>
+
 
           </div>
         )}
