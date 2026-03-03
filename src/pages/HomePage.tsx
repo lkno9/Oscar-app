@@ -278,36 +278,28 @@ export function HomePage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Header amélioré */}
-      <header className="relative px-5 py-4 bg-card border-b border-border overflow-hidden">
-        {/* Subtle background accent */}
-        <div className="absolute inset-0 bg-gradient-to-r from-accent/30 to-transparent pointer-events-none" />
-        <div className="relative flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <header className="px-4 py-4 bg-card border-b border-border">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <OscarAvatar size="md" />
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-[hsl(142,76%,36%)] border-2 border-card rounded-full" />
-            </div>
+            <OscarAvatar size="md" />
             <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-lg font-bold text-foreground">Oscar</h1>
-                <Sparkles className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-xs text-primary font-semibold tracking-wide uppercase">Votre assistant IA</p>
+              <h1 className="text-lg font-bold text-foreground">Oscar</h1>
+              <p className="text-sm text-primary font-medium">En ligne</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
-              className="p-2.5 rounded-xl text-muted-foreground hover:text-primary hover:bg-accent transition-all"
+              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
               aria-label="Appel audio"
             >
               <Phone className="w-5 h-5" />
             </button>
             <button
               onClick={() => navigate("/settings")}
-              className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
               aria-label="Paramètres"
             >
               <Settings className="w-5 h-5" />
@@ -316,17 +308,8 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-3 scrollbar-hide">
-        {/* Date separator */}
-        <div className="flex items-center gap-3 my-2">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground font-medium px-2">
-            {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
-          </span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
         {messages.map((message) => (
           <ChatMessage
             key={message.id}
