@@ -122,8 +122,12 @@ export function HomePage() {
     recognition.onend = () => setIsRecording(false);
     recognition.onerror = (e: any) => {
       setIsRecording(false);
-      if (e.error === "not-allowed") toast.error("Accès au microphone refusé");
-      else if (e.error !== "aborted") toast.error("Erreur de reconnaissance vocale");
+      console.error("SpeechRecognition error:", e.error, e.message);
+      if (e.error === "not-allowed") toast.error("Accès au microphone refusé. Autorisez le micro dans les paramètres du navigateur.");
+      else if (e.error === "network") toast.error("Erreur réseau — la reconnaissance vocale nécessite une connexion internet active.");
+      else if (e.error === "no-speech") toast.error("Aucune parole détectée, réessayez.");
+      else if (e.error === "audio-capture") toast.error("Aucun microphone détecté.");
+      else if (e.error !== "aborted") toast.error(`Erreur vocale : ${e.error}`);
     };
     recognition.onresult = (e: any) => {
       const text = e.results[0][0].transcript;
