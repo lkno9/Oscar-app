@@ -580,6 +580,61 @@ export function RecapPage() {
               </SectionCard>
             )}
 
+            {/* Rappels */}
+            <SectionCard
+              title="Rappels"
+              emoji="🔔"
+              badge={reminders.length > 0 ? reminders.length : undefined}
+              onMore={() => navigate("/services/agenda")}
+            >
+              {reminders.length > 0 ? (
+                <div className="space-y-2">
+                  {reminders.map((r) => (
+                    <div key={r.id} className="flex items-center gap-3 py-1">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${r.type === "medication" ? "bg-pink-100" : "bg-primary/10"}`}>
+                        {r.type === "medication" ? <Pill className="w-4 h-4 text-pink-500" /> : <Bell className="w-4 h-4 text-primary" />}
+                      </div>
+                      <p className="flex-1 text-sm text-foreground truncate">{r.label}</p>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {r.date === new Date().toISOString().split("T")[0] ? "Aujourd'hui" : format(new Date(r.date), "d MMM", { locale: fr })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-1">Aucun rappel pour le moment.</p>
+              )}
+            </SectionCard>
+
+            {/* Notifications */}
+            <SectionCard
+              title="Notifications"
+              emoji="📬"
+              badge={notifications.filter(n => !n.is_read).length || undefined}
+              onMore={() => navigate("/services/communication")}
+            >
+              {notifications.length > 0 ? (
+                <div className="space-y-2">
+                  {notifications.map((n) => (
+                    <div key={n.id} className="flex items-center gap-3 py-1">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${!n.is_read ? "bg-primary/10" : "bg-secondary"}`}>
+                        <Bell className={`w-4 h-4 ${!n.is_read ? "text-primary" : "text-muted-foreground"}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm truncate ${!n.is_read ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{n.title}</p>
+                        {n.message && <p className="text-xs text-muted-foreground truncate">{n.message}</p>}
+                      </div>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-1">Aucune notification.</p>
+              )}
+            </SectionCard>
+
 
 
           </div>
