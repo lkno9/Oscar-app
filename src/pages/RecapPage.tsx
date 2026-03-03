@@ -83,6 +83,8 @@ export function RecapPage() {
   const [urgentDocs, setUrgentDocs] = useState<UrgentDocument[]>([]);
   const [scamAlerts, setScamAlerts] = useState<ScamAlert[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   // News state
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
