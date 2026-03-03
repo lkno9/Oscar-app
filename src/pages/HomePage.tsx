@@ -5,7 +5,7 @@ import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { CallScreen } from "@/components/CallScreen";
-import { streamChat, Message } from "@/lib/oscarChat";
+import { sendBotpressMessage } from "@/lib/oscarChat";
 import { speakWithElevenLabs, stopElevenLabsSpeech } from "@/lib/elevenLabsTTS";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -210,23 +210,16 @@ export function HomePage() {
       };
       setMessages(prev => [...prev, userMsg]);
 
-      const apiMessages: Message[] = messages
-        .filter(m => m.id !== "welcome")
-        .map(m => ({ role: m.role, content: m.content }));
-
-      // Add multimodal message
-      apiMessages.push({
-        role: "user",
-        content: [
-          { type: "text", text: isImage ? "Peux-tu analyser cette image et me dire ce que tu vois ?" : `Peux-tu analyser ce document (${file.name}) ?` },
-          { type: "image_url", image_url: { url: base64 } },
-        ],
-      });
+      // No need to build apiMessages - Botpress manages conversation history
 
       let assistantSoFar = "";
       const assistantId = (Date.now() + 1).toString();
-      await streamChat({
-        messages: apiMessages,
+      const promptText = isImage
+        ? `Peux-tu analyser cette image ? (${file.name})`
+        : `Peux-tu analyser ce document ? (${file.name})`;
+      await sendBotpressMessage({
+        message: promptText,
+        userId: user?.id,
         onDelta: (chunk) => {
           setIsTyping(false);
           assistantSoFar += chunk;
@@ -288,11 +281,6 @@ export function HomePage() {
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
 
-    const apiMessages: Message[] = messages
-      .filter(m => m.id !== "welcome")
-      .map(m => ({ role: m.role, content: m.content }));
-    apiMessages.push({ role: "user", content });
-
     let assistantSoFar = "";
     const assistantId = (Date.now() + 1).toString();
 
@@ -307,8 +295,9 @@ export function HomePage() {
       });
     };
 
-    await streamChat({
-      messages: apiMessages,
+    await sendBotpressMessage({
+      message: content,
+      userId: user?.id,
       onDelta: (chunk) => { setIsTyping(false); upsertAssistant(chunk); },
       onDone: () => setIsTyping(false),
       onError: (error) => { setIsTyping(false); toast.error(error); },
