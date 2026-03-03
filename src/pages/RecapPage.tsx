@@ -486,7 +486,7 @@ export function RecapPage() {
               >
                 <div className="flex flex-wrap gap-2">
                   {activeMeds.slice(0, 4).map((med) => (
-                    <span key={med.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-xl text-sm font-medium text-green-700 dark:text-green-400">
+                    <span key={med.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent rounded-xl text-sm font-medium text-accent-foreground">
                       💊 {med.name}
                     </span>
                   ))}
@@ -510,11 +510,11 @@ export function RecapPage() {
                 <div className="space-y-2">
                   {urgentDocs.slice(0, 2).map((doc) => (
                     <div key={doc.id} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-orange-600" />
+                      <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-4 h-4 text-destructive" />
                       </div>
                       <p className="flex-1 text-sm text-foreground truncate">{doc.name}</p>
-                      <span className="text-xs font-semibold text-orange-600">
+                      <span className="text-xs font-semibold text-destructive">
                         {format(new Date(doc.expiration_date), "d MMM", { locale: fr })}
                       </span>
                     </div>
