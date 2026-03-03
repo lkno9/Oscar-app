@@ -38,10 +38,10 @@ interface NewsArticle {
 }
 
 const MOODS = [
-  { level: 1, emoji: "😢", label: "Triste", color: "text-blue-500" },
-  { level: 2, emoji: "😕", label: "Pas bien", color: "text-indigo-500" },
-  { level: 3, emoji: "😐", label: "Correct", color: "text-yellow-500" },
-  { level: 4, emoji: "🙂", label: "Bien", color: "text-green-500" },
+  { level: 1, emoji: "😢", label: "Triste", color: "text-muted-foreground" },
+  { level: 2, emoji: "😕", label: "Pas bien", color: "text-muted-foreground" },
+  { level: 3, emoji: "😐", label: "Correct", color: "text-foreground" },
+  { level: 4, emoji: "🙂", label: "Bien", color: "text-primary" },
   { level: 5, emoji: "😊", label: "Très bien", color: "text-primary" },
 ];
 
@@ -57,9 +57,9 @@ const NEWS_CATEGORIES = [
 ] as const;
 
 const NEWS_CATEGORY_STYLES: Record<string, { emoji: string; bg: string; text: string }> = {
-  droits: { emoji: "📋", bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-400" },
-  seniors: { emoji: "👴", bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-400" },
-  securite: { emoji: "🛡️", bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400" },
+  droits: { emoji: "📋", bg: "bg-secondary", text: "text-foreground" },
+  seniors: { emoji: "👴", bg: "bg-accent", text: "text-accent-foreground" },
+  securite: { emoji: "🛡️", bg: "bg-destructive/10", text: "text-destructive" },
 };
 
 const NEWS_CACHE_KEY = "oscar_news_cache";
