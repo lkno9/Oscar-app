@@ -6,8 +6,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { CallScreen } from "@/components/CallScreen";
 import { streamChat, Message } from "@/lib/oscarChat";
-import { speakWithElevenLabs, stopElevenLabsSpeech, isElevenLabsSpeaking } from "@/lib/elevenLabsTTS";
-import { transcribeAudio, startAudioRecording } from "@/lib/elevenLabsSTT";
+import { speakWithElevenLabs, stopElevenLabsSpeech } from "@/lib/elevenLabsTTS";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -37,7 +36,6 @@ export function HomePage() {
   const [callType, setCallType] = useState<"audio" | "video">("audio");
   // ElevenLabs STT recording
   const [isRecording, setIsRecording] = useState(false);
-  const recorderRef = useRef<{ stop: () => Promise<Blob> } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
 
@@ -99,37 +97,44 @@ export function HomePage() {
     setSpeakingMessageId(null);
   };
 
-  // --- ElevenLabs STT ---
-  const handleVoiceToggle = async () => {
+  // --- Browser Web Speech API STT ---
+  const speechRecognitionRef = useRef<any>(null);
+
+  const handleVoiceToggle = () => {
     if (isRecording) {
-      // Stop recording and transcribe
-      try {
-        const blob = await recorderRef.current?.stop();
-        recorderRef.current = null;
-        setIsRecording(false);
-        if (!blob) return;
-        setIsTyping(true);
-        const text = await transcribeAudio(blob);
-        if (text.trim()) {
-          handleSend(text.trim());
-        } else {
-          setIsTyping(false);
-          toast.error("Aucun texte détecté");
-        }
-      } catch (e) {
-        setIsRecording(false);
-        setIsTyping(false);
-        toast.error("Erreur de transcription");
-      }
-    } else {
-      // Start recording
-      try {
-        const recorder = await startAudioRecording();
-        recorderRef.current = recorder;
-        setIsRecording(true);
-      } catch {
-        toast.error("Impossible d'accéder au microphone");
-      }
+      speechRecognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Reconnaissance vocale non supportée par ce navigateur");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onend = () => setIsRecording(false);
+    recognition.onerror = (e: any) => {
+      setIsRecording(false);
+      if (e.error === "not-allowed") toast.error("Accès au microphone refusé");
+      else if (e.error !== "aborted") toast.error("Erreur de reconnaissance vocale");
+    };
+    recognition.onresult = (e: any) => {
+      const text = e.results[0][0].transcript;
+      if (text.trim()) handleSend(text.trim());
+    };
+
+    speechRecognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch {
+      toast.error("Impossible de démarrer la reconnaissance vocale");
     }
   };
 
@@ -148,25 +153,7 @@ export function HomePage() {
   const handleAttach = async (files: FileList) => {
     const file = files[0];
     if (!file) return;
-    // If audio file → transcribe
-    if (file.type.startsWith("audio/")) {
-      setIsTyping(true);
-      try {
-        const text = await transcribeAudio(file);
-        if (text.trim()) {
-          toast.success("Audio transcrit !");
-          handleSend(`[Transcription audio] : ${text.trim()}`);
-        } else {
-          toast.error("Aucun texte détecté");
-          setIsTyping(false);
-        }
-      } catch {
-        toast.error("Erreur de transcription");
-        setIsTyping(false);
-      }
-    } else {
-      toast.info(`Fichier sélectionné : ${file.name}`);
-    }
+    toast.info(`Fichier sélectionné : ${file.name}`);
   };
 
   const handleSend = async (content: string) => {
