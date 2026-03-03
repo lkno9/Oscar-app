@@ -88,8 +88,9 @@ export function RecapPage() {
   const [newsFilter, setNewsFilter] = useState<string>("all");
   const [showAllNews, setShowAllNews] = useState(false);
 
+  // ⏱ Horloge temps réel — mise à jour chaque seconde
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
