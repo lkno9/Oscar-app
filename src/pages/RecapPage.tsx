@@ -588,29 +588,6 @@ export function RecapPage() {
               </SectionCard>
             )}
 
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: <span className="text-2xl">🎵</span>, iconBg: "bg-[hsl(270,60%,92%)]", label: "Musique", desc: "Écouter de la musique", path: "/services/music" },
-                  { icon: <span className="text-2xl">🎮</span>, iconBg: "bg-[hsl(220,60%,92%)]", label: "Jeux", desc: "Sudoku, Mémoire...", path: "/services/games" },
-                  { icon: <span className="text-2xl">📚</span>, iconBg: "bg-[hsl(40,80%,90%)]", label: "Bibliothèque", desc: "Lire un article", path: "/services/library" },
-                  { icon: <span className="text-2xl">🛡️</span>, iconBg: "bg-[hsl(200,70%,90%)]", label: "Protection", desc: "Arnaque & sécurité", path: "/services/scam-protection" },
-                ].map((s) => (
-                  <button
-                    key={s.path}
-                    onClick={() => navigate(s.path)}
-                    className="flex items-center gap-3 bg-card border border-border rounded-2xl px-3.5 py-3.5 text-left hover:shadow-md active:scale-95 transition-all"
-                  >
-                    <div className={`w-11 h-11 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
-                      {s.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-foreground">{s.label}</p>
-                      <p className="text-xs text-muted-foreground truncate">{s.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
 
 
           </div>
