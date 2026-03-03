@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Sparkles, Shield, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PartnerServiceCard } from "@/components/partners/PartnerServiceCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,20 +51,13 @@ export function PartnersPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <header className="px-4 py-4 bg-card border-b border-border sticky top-0 z-10">
+      <header className="px-4 py-4 bg-card border-b border-border">
         <div className="flex items-center gap-3 mb-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              <h1 className="text-xl font-bold text-foreground">Bons Plans Seniors</h1>
+              <h1 className="text-lg font-bold text-foreground">Bons Plans Seniors</h1>
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
               Services sélectionnés pour vous simplifier la vie

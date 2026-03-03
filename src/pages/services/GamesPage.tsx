@@ -208,7 +208,7 @@ export function GamesPage() {
                 className="bg-card rounded-xl p-2 shadow-sm border border-border flex flex-col items-center gap-1"
               >
                 <span className="text-xl">{cat.emoji}</span>
-                <span className="text-[9px] text-muted-foreground text-center font-medium">{cat.name}</span>
+                <span className="text-xs text-muted-foreground text-center font-medium">{cat.name}</span>
               </div>
             ))}
           </div>

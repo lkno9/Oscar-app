@@ -25,7 +25,7 @@ import { VaultPage } from "./pages/services/VaultPage";
 import { EmergencyPage } from "./pages/services/EmergencyPage";
 import { HelpPage } from "./pages/services/HelpPage";
 import { PartnersPage } from "./pages/services/PartnersPage";
-import ScamProtectionPage from "./pages/services/ScamProtectionPage";
+import { ScamProtectionPage } from "./pages/services/ScamProtectionPage";
 import { CommunicationPage } from "./pages/services/CommunicationPage";
 import { MemoryGame } from "./pages/services/games/MemoryGame";
 import { SudokuGame } from "./pages/services/games/SudokuGame";

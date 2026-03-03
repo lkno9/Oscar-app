@@ -192,7 +192,7 @@ export function OscarAcademyPage() {
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
-          <h1 className="text-lg font-bold text-foreground">Oscar Academy</h1>
+          <h1 className="text-lg font-bold text-foreground">Académie Oscar</h1>
           <p className="text-sm text-muted-foreground">Apprenez à utiliser Oscar</p>
         </div>
         <GraduationCap className="w-6 h-6 text-primary" />

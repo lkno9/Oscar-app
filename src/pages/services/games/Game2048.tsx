@@ -361,7 +361,7 @@ export function Game2048() {
         {/* Instructions */}
         <div className="w-full max-w-xs bg-secondary/50 rounded-xl p-4 text-center">
           <p className="text-sm text-muted-foreground">
-            Glissez ou utilisez les flèches pour déplacer les tuiles. Fusionnez les même nombres pour atteindre 2048 !
+            Glissez ou utilisez les flèches pour déplacer les tuiles. Fusionnez les mêmes nombres pour atteindre 2048 !
           </p>
         </div>
       </div>

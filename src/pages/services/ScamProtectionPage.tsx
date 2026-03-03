@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Shield, AlertTriangle, GraduationCap, BookOpen, Phone, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScamChecker } from "@/components/scam-protection/ScamChecker";
 import { ScamAlertCard } from "@/components/scam-protection/ScamAlertCard";
@@ -21,8 +21,8 @@ interface ScamAlert {
   source: string | null;
 }
 
-export default function ScamProtectionPage() {
-  const navigate = useNavigate();
+export function ScamProtectionPage() {
+  const goBack = useBackNavigation();
   const [alerts, setAlerts] = useState<ScamAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
@@ -53,17 +53,15 @@ export default function ScamProtectionPage() {
   return (
     <div className="flex flex-col h-full overflow-y-auto scrollbar-hide bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-4">
+      <header className="bg-card border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/services")}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Protection Arnaques</h1>
+              <h1 className="text-lg font-bold text-foreground">Protection Arnaques</h1>
               <p className="text-sm text-muted-foreground">Oscar veille sur votre sécurité</p>
             </div>
           </div>

@@ -124,7 +124,7 @@ export function LibraryPage() {
               <div className={`w-10 h-10 rounded-full ${cat.bg} flex items-center justify-center`}>
                 <cat.icon className={`w-5 h-5 ${cat.color}`} />
               </div>
-              <span className="font-medium text-foreground text-[10px] text-center">{cat.label}</span>
+              <span className="font-medium text-foreground text-xs text-center">{cat.label}</span>
             </div>
           ))}
         </div>
@@ -170,7 +170,7 @@ export function LibraryPage() {
               >
                 <span className="text-2xl">{item.emoji}</span>
                 <span className="font-medium text-foreground text-xs text-center">{item.title}</span>
-                <span className="text-[10px] text-muted-foreground text-center line-clamp-1">{item.description}</span>
+                <span className="text-xs text-muted-foreground text-center line-clamp-1">{item.description}</span>
               </button>
             ))}
           </div>
@@ -190,7 +190,7 @@ export function LibraryPage() {
                 className="bg-card rounded-xl p-2 shadow-sm border border-border flex flex-col items-center gap-1 hover:border-primary transition-colors"
               >
                 <span className="text-xl">{item.emoji}</span>
-                <span className="font-medium text-foreground text-[10px] text-center leading-tight">{item.title}</span>
+                <span className="font-medium text-foreground text-xs text-center leading-tight">{item.title}</span>
               </button>
             ))}
           </div>
@@ -210,7 +210,7 @@ export function LibraryPage() {
                 className="bg-card rounded-xl p-3 shadow-sm border border-border flex flex-col items-center gap-1 hover:border-primary transition-colors"
               >
                 <span className="text-2xl">{item.emoji}</span>
-                <span className="font-medium text-foreground text-[10px] text-center">{item.title}</span>
+                <span className="font-medium text-foreground text-xs text-center">{item.title}</span>
               </button>
             ))}
           </div>
@@ -258,7 +258,7 @@ export function LibraryPage() {
                 <span className="text-xl">{item.emoji}</span>
                 <div className="flex-1 text-left">
                   <span className="font-medium text-foreground text-xs block">{item.title}</span>
-                  <span className="text-[10px] text-muted-foreground line-clamp-1">{item.description}</span>
+                  <span className="text-xs text-muted-foreground line-clamp-1">{item.description}</span>
                 </div>
               </button>
             ))}

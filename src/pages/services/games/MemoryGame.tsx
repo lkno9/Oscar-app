@@ -123,7 +123,7 @@ export function MemoryGame() {
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
-          <h1 className="text-lg font-bold text-foreground">Memory</h1>
+          <h1 className="text-lg font-bold text-foreground">Mémoire</h1>
           <p className="text-sm text-muted-foreground">Trouvez les paires</p>
         </div>
         <Button size="sm" variant="outline" onClick={initGame}>

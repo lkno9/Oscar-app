@@ -262,7 +262,7 @@ export function SudokuGame() {
           </Button>
           <Button onClick={initGame}>
             <RefreshCw className="w-4 h-4 mr-2" />
-            {isComplete ? "Rejouer" : "Nouveau"}
+            {isComplete ? "Rejouer" : "Nouvelle partie"}
           </Button>
         </div>
 
