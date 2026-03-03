@@ -315,26 +315,6 @@ export function RecapPage() {
         ) : (
           <div className="px-4 pb-6 space-y-4">
 
-            {/* Quick actions — floating card over header */}
-            <div className="bg-card border border-border rounded-2xl shadow-md p-3 -mt-5">
-              <div className="grid grid-cols-4 gap-2">
-                {QUICK_ACTIONS.map((a) => (
-                  <button
-                    key={a.path}
-                    onClick={() => navigate(a.path)}
-                    className="relative flex flex-col items-center gap-2 py-3 rounded-xl hover:bg-secondary active:scale-95 transition-all"
-                  >
-                    {a.badge ? (
-                      <span className="absolute top-1 right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-                        {a.badge > 9 ? "9+" : a.badge}
-                      </span>
-                    ) : null}
-                    <span className="text-xs font-semibold text-foreground leading-tight text-center">{a.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* 💊 Rappel médicaments */}
             {showMedReminder && (
               <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
