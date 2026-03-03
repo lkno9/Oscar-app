@@ -30,6 +30,8 @@ interface CalendarEvent { id: string; title: string; event_date: string; event_t
 interface Medication { id: string; name: string; dosage: string | null; }
 interface UrgentDocument { id: string; name: string; expiration_date: string; }
 interface ScamAlert { id: string; title: string; danger_level: string; }
+interface Reminder { id: string; label: string; date: string; type: "medication" | "document"; }
+interface AppNotification { id: string; title: string; message: string | null; type: string; created_at: string; is_read: boolean | null; }
 
 interface NewsArticle {
   title: string;
@@ -81,6 +83,8 @@ export function RecapPage() {
   const [urgentDocs, setUrgentDocs] = useState<UrgentDocument[]>([]);
   const [scamAlerts, setScamAlerts] = useState<ScamAlert[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   // News state
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
@@ -108,7 +112,7 @@ export function RecapPage() {
     in30Days.setDate(in30Days.getDate() + 30);
     const in30DaysStr = in30Days.toISOString().split("T")[0];
 
-    const [profileRes, moodRes, messagesRes, eventsRes, medsRes, docsRes, alertsRes] = await Promise.all([
+    const [profileRes, moodRes, messagesRes, eventsRes, medsRes, docsRes, alertsRes, remindersRes, notifsRes] = await Promise.all([
       supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
       supabase.from("mood_entries").select("mood_level").eq("user_id", user.id).eq("entry_date", today).maybeSingle(),
       supabase.from("family_messages").select("id, content, created_at, sender_id").eq("receiver_id", user.id).eq("is_read", false).order("created_at", { ascending: false }).limit(5),
@@ -116,6 +120,8 @@ export function RecapPage() {
       supabase.from("medications").select("id, name, dosage").eq("user_id", user.id).eq("is_active", true).order("name").limit(5),
       supabase.from("documents").select("id, name, expiration_date").eq("user_id", user.id).gte("expiration_date", today).lte("expiration_date", in30DaysStr).order("expiration_date"),
       supabase.from("scam_alerts").select("id, title, danger_level").eq("is_active", true).limit(3),
+      supabase.from("document_reminders").select("id, reminder_date, reminder_type, document_id, documents(name)").eq("user_id", user.id).eq("is_sent", false).gte("reminder_date", today).order("reminder_date").limit(5),
+      supabase.from("family_notifications").select("id, title, message, type, created_at, is_read").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
     ]);
 
     if (profileRes.data) setProfile(profileRes.data);
@@ -136,6 +142,30 @@ export function RecapPage() {
     if (medsRes.data) setActiveMeds(medsRes.data);
     if (docsRes.data) setUrgentDocs(docsRes.data);
     if (alertsRes.data) setScamAlerts(alertsRes.data);
+
+    // Build reminders list: document reminders + medication time windows
+    const builtReminders: Reminder[] = [];
+    if (remindersRes.data) {
+      remindersRes.data.forEach((r: any) => {
+        builtReminders.push({
+          id: r.id,
+          label: r.documents?.name ? `Renouveler "${r.documents.name}"` : `Rappel document`,
+          date: r.reminder_date,
+          type: "document",
+        });
+      });
+    }
+    if (medsRes.data && medsRes.data.length > 0) {
+      builtReminders.push({
+        id: "med-today",
+        label: `Prendre vos médicaments du jour (${medsRes.data.length})`,
+        date: today,
+        type: "medication",
+      });
+    }
+    setReminders(builtReminders);
+
+    if (notifsRes.data) setNotifications(notifsRes.data as AppNotification[]);
     setLoading(false);
   };
 
@@ -549,6 +579,61 @@ export function RecapPage() {
                 </div>
               </SectionCard>
             )}
+
+            {/* Rappels */}
+            <SectionCard
+              title="Rappels"
+              emoji="🔔"
+              badge={reminders.length > 0 ? reminders.length : undefined}
+              onMore={() => navigate("/services/agenda")}
+            >
+              {reminders.length > 0 ? (
+                <div className="space-y-2">
+                  {reminders.map((r) => (
+                    <div key={r.id} className="flex items-center gap-3 py-1">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${r.type === "medication" ? "bg-accent" : "bg-primary/10"}`}>
+                        {r.type === "medication" ? <Pill className="w-4 h-4 text-accent-foreground" /> : <Bell className="w-4 h-4 text-primary" />}
+                      </div>
+                      <p className="flex-1 text-sm text-foreground truncate">{r.label}</p>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {r.date === new Date().toISOString().split("T")[0] ? "Aujourd'hui" : format(new Date(r.date), "d MMM", { locale: fr })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-1">Aucun rappel pour le moment.</p>
+              )}
+            </SectionCard>
+
+            {/* Notifications */}
+            <SectionCard
+              title="Notifications"
+              emoji="📬"
+              badge={notifications.filter(n => !n.is_read).length || undefined}
+              onMore={() => navigate("/services/communication")}
+            >
+              {notifications.length > 0 ? (
+                <div className="space-y-2">
+                  {notifications.map((n) => (
+                    <div key={n.id} className="flex items-center gap-3 py-1">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${!n.is_read ? "bg-primary/10" : "bg-secondary"}`}>
+                        <Bell className={`w-4 h-4 ${!n.is_read ? "text-primary" : "text-muted-foreground"}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm truncate ${!n.is_read ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{n.title}</p>
+                        {n.message && <p className="text-xs text-muted-foreground truncate">{n.message}</p>}
+                      </div>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-1">Aucune notification.</p>
+              )}
+            </SectionCard>
 
 
 
