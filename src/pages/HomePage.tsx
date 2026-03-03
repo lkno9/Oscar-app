@@ -180,7 +180,71 @@ export function HomePage() {
   const handleAttach = async (files: FileList) => {
     const file = files[0];
     if (!file) return;
-    toast.info(`Fichier sélectionné : ${file.name}`);
+
+    const isImage = file.type.startsWith("image/");
+    const isPdf = file.type === "application/pdf";
+
+    if (!isImage && !isPdf) {
+      toast.info(`Fichier sélectionné : ${file.name}`);
+      return;
+    }
+
+    setIsTyping(true);
+    try {
+      // Convert to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result); // full data URL: "data:image/png;base64,..."
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const userMsg: ChatMessageData = {
+        id: Date.now().toString(),
+        role: "user",
+        content: isImage ? `[Image envoyée : ${file.name}]` : `[Document envoyé : ${file.name}]`,
+        imageUrl: isImage ? base64 : undefined,
+      };
+      setMessages(prev => [...prev, userMsg]);
+
+      const apiMessages: Message[] = messages
+        .filter(m => m.id !== "welcome")
+        .map(m => ({ role: m.role, content: m.content }));
+
+      // Add multimodal message
+      apiMessages.push({
+        role: "user",
+        content: [
+          { type: "text", text: isImage ? "Peux-tu analyser cette image et me dire ce que tu vois ?" : `Peux-tu analyser ce document (${file.name}) ?` },
+          { type: "image_url", image_url: { url: base64 } },
+        ],
+      });
+
+      let assistantSoFar = "";
+      const assistantId = (Date.now() + 1).toString();
+      await streamChat({
+        messages: apiMessages,
+        onDelta: (chunk) => {
+          setIsTyping(false);
+          assistantSoFar += chunk;
+          setMessages(prev => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant" && last.id !== "welcome") {
+              return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+            }
+            return [...prev, { id: assistantId, role: "assistant", content: assistantSoFar }];
+          });
+        },
+        onDone: () => setIsTyping(false),
+        onError: (error) => { setIsTyping(false); toast.error(error); },
+      });
+    } catch {
+      setIsTyping(false);
+      toast.error("Impossible de lire le fichier");
+    }
   };
 
   const handleSend = async (content: string) => {
