@@ -1,8 +1,8 @@
-import { Bot, House, Grid2x2 } from "lucide-react";
+import { Bot, Grid2x2 } from "lucide-react";
 
 interface BottomNavProps {
-  active: "home" | "recap" | "services";
-  onNavigate: (tab: "home" | "recap" | "services") => void;
+  active: "home" | "services";
+  onNavigate: (tab: "home" | "services") => void;
 }
 
 export function BottomNav({ active, onNavigate }: BottomNavProps) {
@@ -13,12 +13,6 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
         label="Oscar"
         active={active === "home"}
         onClick={() => onNavigate("home")}
-      />
-      <NavButton
-        icon={<House className="w-6 h-6" />}
-        label="Accueil"
-        active={active === "recap"}
-        onClick={() => onNavigate("recap")}
       />
       <NavButton
         icon={<Grid2x2 className="w-6 h-6" />}
