@@ -67,8 +67,8 @@ interface UrgentDocument {
 
 interface GameSession {
   game_type: string;
-  score: number;
-  created_at: string;
+  score: number | null;
+  played_at: string;
 }
 
 interface CallRecord {
@@ -86,7 +86,7 @@ interface ScamAlert {
 interface AdminTask {
   id: string;
   title: string;
-  steps: string | null;
+  steps: unknown;
   current_step: number | null;
 }
 
@@ -173,7 +173,7 @@ export function RecapPage() {
       // Documents expiring within 30 days
       supabase.from("documents").select("id, name, expiration_date").eq("user_id", user.id).gte("expiration_date", today).lte("expiration_date", in30DaysStr).order("expiration_date"),
       // Last game
-      supabase.from("game_sessions").select("game_type, score, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("game_sessions").select("game_type, score, played_at").eq("user_id", user.id).order("played_at", { ascending: false }).limit(1).maybeSingle(),
       // Last call
       supabase.from("call_history").select("contact_name, call_type, call_date").eq("user_id", user.id).order("call_date", { ascending: false }).limit(1).maybeSingle(),
       // Active scam alerts
@@ -236,10 +236,10 @@ export function RecapPage() {
     }
   };
 
-  const getStepsCount = (steps: string | null): number => {
+  const getStepsCount = (steps: unknown): number => {
     if (!steps) return 0;
     try {
-      const parsed = JSON.parse(steps);
+      const parsed = JSON.parse(steps as string);
       return Array.isArray(parsed) ? parsed.length : 0;
     } catch {
       return 0;
@@ -537,7 +537,7 @@ export function RecapPage() {
                         </p>
                       </div>
                       <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {formatRelative(lastGame.created_at)}
+                        {formatRelative(lastGame.played_at)}
                       </span>
                     </div>
                   )}
