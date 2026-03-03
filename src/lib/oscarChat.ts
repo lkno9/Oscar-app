@@ -3,12 +3,12 @@ export type Message = { role: "user" | "assistant"; content: MessageContent };
 
 const BOTPRESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/botpress-chat`;
 
-// Stable conversation ID per browser session
+// Stable session state
 let sessionConversationId: string | null = null;
+let sessionUserKey: string | null = null;
 
 export async function sendBotpressMessage({
   message,
-  userId,
   onDelta,
   onDone,
   onError,
@@ -29,7 +29,7 @@ export async function sendBotpressMessage({
       body: JSON.stringify({
         message,
         conversationId: sessionConversationId,
-        userId,
+        userKey: sessionUserKey,
       }),
     });
 
@@ -41,10 +41,9 @@ export async function sendBotpressMessage({
 
     const data = await resp.json();
 
-    // Save conversation ID for continuity
-    if (data.conversationId) {
-      sessionConversationId = data.conversationId;
-    }
+    // Persist session state
+    if (data.conversationId) sessionConversationId = data.conversationId;
+    if (data.userKey) sessionUserKey = data.userKey;
 
     if (data.reply) {
       // Simulate streaming for smooth UX
@@ -64,7 +63,7 @@ export async function sendBotpressMessage({
   }
 }
 
-// Keep legacy streamChat for backward compatibility if needed
+// Legacy streamChat kept for backward compatibility
 export async function streamChat({
   messages,
   onDelta,
@@ -76,12 +75,11 @@ export async function streamChat({
   onDone: () => void;
   onError: (error: string) => void;
 }) {
-  // Extract last user message and send to Botpress
   const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
   const text = typeof lastUserMsg?.content === "string"
     ? lastUserMsg.content
     : Array.isArray(lastUserMsg?.content)
-    ? lastUserMsg.content.find((c) => c.type === "text")?.text || ""
+    ? (lastUserMsg.content.find((c) => c.type === "text") as { type: "text"; text: string } | undefined)?.text || ""
     : "";
 
   await sendBotpressMessage({ message: text, onDelta, onDone, onError });
