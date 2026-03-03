@@ -102,6 +102,7 @@ export function HomePage() {
 
   const handleVoiceToggle = () => {
     if (isRecording) {
+      // Manual stop → send accumulated transcript
       speechRecognitionRef.current?.stop();
       setIsRecording(false);
       return;
@@ -115,11 +116,37 @@ export function HomePage() {
 
     const recognition = new SpeechRecognition();
     recognition.lang = "fr-FR";
-    recognition.interimResults = false;
+    recognition.continuous = true;       // ne coupe pas automatiquement
+    recognition.interimResults = true;   // affiche en temps réel
     recognition.maxAlternatives = 1;
 
+    let finalText = "";
+
     recognition.onstart = () => setIsRecording(true);
-    recognition.onend = () => setIsRecording(false);
+
+    recognition.onresult = (e: any) => {
+      let interim = "";
+      finalText = "";
+      for (let i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          finalText += e.results[i][0].transcript;
+        } else {
+          interim += e.results[i][0].transcript;
+        }
+      }
+      // Show interim in input via transcript (optional, for visual feedback)
+      const current = finalText || interim;
+      console.debug("Voice interim:", current);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      if (finalText.trim()) {
+        handleSend(finalText.trim());
+        finalText = "";
+      }
+    };
+
     recognition.onerror = (e: any) => {
       setIsRecording(false);
       console.error("SpeechRecognition error:", e.error, e.message);
@@ -128,10 +155,6 @@ export function HomePage() {
       else if (e.error === "no-speech") toast.error("Aucune parole détectée, réessayez.");
       else if (e.error === "audio-capture") toast.error("Aucun microphone détecté.");
       else if (e.error !== "aborted") toast.error(`Erreur vocale : ${e.error}`);
-    };
-    recognition.onresult = (e: any) => {
-      const text = e.results[0][0].transcript;
-      if (text.trim()) handleSend(text.trim());
     };
 
     speechRecognitionRef.current = recognition;
