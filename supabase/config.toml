@@ -13,3 +13,12 @@ verify_jwt = false
 
 [functions.fetch-scam-alerts]
 verify_jwt = false
+
+[functions.elevenlabs-tts]
+verify_jwt = false
+
+[functions.elevenlabs-stt]
+verify_jwt = false
+
+[functions.generate-image]
+verify_jwt = false
