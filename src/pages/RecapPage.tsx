@@ -201,56 +201,67 @@ export function RecapPage() {
     }
   };
 
+  const quickActions = [
+    { icon: "📅", label: "Agenda", path: "/services/agenda", color: "hsl(var(--accent))", iconBg: "bg-purple-100 dark:bg-purple-900/30" },
+    { icon: "💊", label: "Santé", path: "/services/health", color: "hsl(var(--accent))", iconBg: "bg-green-100 dark:bg-green-900/30" },
+    { icon: "💬", label: "Famille", path: "/services/communication", iconBg: "bg-blue-100 dark:bg-blue-900/30", badge: unreadMessages.length },
+    { icon: "🆘", label: "Urgence", path: "/services/emergency", iconBg: "bg-destructive/10" },
+  ];
+
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary to-primary/70 px-5 pt-5 pb-8">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-2 right-4 w-32 h-32 rounded-full bg-white/30" />
-          <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white/20" />
-        </div>
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/80 px-5 pt-6 pb-10">
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full bg-white/10 translate-y-1/2 -translate-x-1/4" />
+
         <div className="relative">
-          <div className="flex items-start justify-between mb-4">
+          {/* Date + heure */}
+          <div className="flex items-start justify-between mb-5">
             <div>
-              <p className="text-primary-foreground/80 text-sm font-medium">
+              <p className="text-primary-foreground/75 text-sm font-medium capitalize">
                 {format(currentTime, "EEEE d MMMM", { locale: fr })}
               </p>
-              <h1 className="text-2xl font-bold text-primary-foreground mt-0.5">
+              <h1 className="text-2xl font-bold text-primary-foreground mt-0.5 leading-tight">
                 {greeting}, {getFirstName()} 👋
               </h1>
             </div>
             <div className="text-right">
-              <p className="text-primary-foreground text-2xl font-bold tabular-nums">
+              <p className="text-primary-foreground text-3xl font-bold tabular-nums leading-none">
                 {format(currentTime, "HH:mm")}
               </p>
               {totalAlerts > 0 && (
-                <div className="flex items-center gap-1 justify-end mt-1">
-                  <Bell className="w-3.5 h-3.5 text-yellow-300" />
+                <button
+                  onClick={() => navigate("/services/scam-protection")}
+                  className="flex items-center gap-1 justify-end mt-1.5"
+                >
+                  <Bell className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
                   <span className="text-xs text-yellow-300 font-semibold">{totalAlerts} alerte{totalAlerts > 1 ? "s" : ""}</span>
-                </div>
+                </button>
               )}
             </div>
           </div>
 
           {/* Mood strip */}
-          <div className="flex items-center gap-2 bg-white/15 rounded-2xl px-4 py-2.5">
+          <div className="flex items-center gap-3 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3">
             {moodInfo ? (
               <>
-                <span className="text-2xl">{moodInfo.emoji}</span>
+                <span className="text-3xl">{moodInfo.emoji}</span>
                 <div>
-                  <p className="text-primary-foreground text-xs font-medium">Votre humeur aujourd'hui</p>
-                  <p className="text-primary-foreground font-bold text-sm">{moodInfo.label}</p>
+                  <p className="text-primary-foreground/80 text-xs font-medium">Votre humeur aujourd'hui</p>
+                  <p className="text-primary-foreground font-bold text-base">{moodInfo.label}</p>
                 </div>
               </>
             ) : (
               <>
-                <Smile className="w-6 h-6 text-primary-foreground/70" />
+                <Smile className="w-7 h-7 text-primary-foreground/70 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-primary-foreground text-xs font-medium">Comment vous sentez-vous ?</p>
+                  <p className="text-primary-foreground text-sm font-medium">Comment vous sentez-vous ?</p>
                 </div>
                 <button
                   onClick={() => navigate("/services/health")}
-                  className="bg-white/25 hover:bg-white/35 transition-colors text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-xl"
+                  className="bg-white text-primary text-xs font-bold px-4 py-2 rounded-xl shadow-sm hover:bg-white/90 active:scale-95 transition-all"
                 >
                   Indiquer
                 </button>
@@ -268,30 +279,29 @@ export function RecapPage() {
             <p className="text-muted-foreground text-sm">Chargement...</p>
           </div>
         ) : (
-          <div className="px-4 pb-6 -mt-4 space-y-4">
+          <div className="px-4 pb-6 space-y-4">
 
-            {/* Quick actions */}
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { icon: "📅", label: "Agenda", path: "/services/agenda" },
-                { icon: "💊", label: "Santé", path: "/services/health" },
-                { icon: "💬", label: "Famille", path: "/services/communication", badge: unreadMessages.length },
-                { icon: "🆘", label: "Urgence", path: "/services/emergency" },
-              ].map((a) => (
-                <button
-                  key={a.path}
-                  onClick={() => navigate(a.path)}
-                  className="relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md active:scale-95 transition-all"
-                >
-                  {a.badge ? (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
-                      {a.badge}
-                    </span>
-                  ) : null}
-                  <span className="text-2xl">{a.icon}</span>
-                  <span className="text-xs font-medium text-foreground leading-tight text-center">{a.label}</span>
-                </button>
-              ))}
+            {/* Quick actions — floating card over header */}
+            <div className="bg-card border border-border rounded-2xl shadow-md p-3 -mt-5">
+              <div className="grid grid-cols-4 gap-2">
+                {quickActions.map((a) => (
+                  <button
+                    key={a.path}
+                    onClick={() => navigate(a.path)}
+                    className="relative flex flex-col items-center gap-2 py-3 rounded-xl hover:bg-secondary active:scale-95 transition-all"
+                  >
+                    {a.badge ? (
+                      <span className="absolute top-1 right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {a.badge > 9 ? "9+" : a.badge}
+                      </span>
+                    ) : null}
+                    <div className={`w-12 h-12 rounded-2xl ${a.iconBg} flex items-center justify-center text-2xl shadow-sm`}>
+                      {a.icon}
+                    </div>
+                    <span className="text-xs font-semibold text-foreground leading-tight text-center">{a.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Scam alert banner */}
