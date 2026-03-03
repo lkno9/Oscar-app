@@ -1,8 +1,8 @@
-import { Home, Grid2x2 } from "lucide-react";
+import { Home, LayoutDashboard, Grid2x2 } from "lucide-react";
 
 interface BottomNavProps {
-  active: "home" | "services";
-  onNavigate: (tab: "home" | "services") => void;
+  active: "home" | "recap" | "services";
+  onNavigate: (tab: "home" | "recap" | "services") => void;
 }
 
 export function BottomNav({ active, onNavigate }: BottomNavProps) {
@@ -13,6 +13,12 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
         label="Accueil"
         active={active === "home"}
         onClick={() => onNavigate("home")}
+      />
+      <NavButton
+        icon={<LayoutDashboard className="w-6 h-6" />}
+        label="Récap"
+        active={active === "recap"}
+        onClick={() => onNavigate("recap")}
       />
       <NavButton
         icon={<Grid2x2 className="w-6 h-6" />}
