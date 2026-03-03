@@ -329,9 +329,6 @@ export function RecapPage() {
                         {a.badge > 9 ? "9+" : a.badge}
                       </span>
                     ) : null}
-                    <div className={`w-14 h-14 rounded-2xl ${a.bg} flex items-center justify-center shadow-sm`}>
-                      {a.icon}
-                    </div>
                     <span className="text-xs font-semibold text-foreground leading-tight text-center">{a.label}</span>
                   </button>
                 ))}
@@ -367,21 +364,6 @@ export function RecapPage() {
                   </button>
                 </div>
               </div>
-            )}
-
-            {/* Scam alert banner */}
-            {scamAlerts.length > 0 && (
-              <button
-                onClick={() => navigate("/services/scam-protection")}
-                className="w-full flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-2xl px-4 py-3 text-left"
-              >
-                <ShieldAlert className="w-5 h-5 text-destructive flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-destructive">Alerte sécurité</p>
-                  <p className="text-xs text-destructive/80 truncate">{scamAlerts[0].title}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-destructive/60 flex-shrink-0" />
-              </button>
             )}
 
             {/* ============================================ */}
