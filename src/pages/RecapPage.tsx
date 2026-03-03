@@ -206,7 +206,6 @@ export function RecapPage() {
   };
 
   // Rappels médicaments du jour
-  const hour = currentTime.getHours();
   const currentMedWindow = hour >= 7 && hour < 10 ? "matin" : hour >= 12 && hour < 14 ? "midi" : hour >= 18 && hour < 21 ? "soir" : null;
   const [dismissedReminder, setDismissedReminder] = useState<string | null>(null);
   const showMedReminder = currentMedWindow && dismissedReminder !== currentMedWindow && activeMeds.length > 0;
