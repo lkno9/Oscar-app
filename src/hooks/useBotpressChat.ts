@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 type OnMessageCallback = (text: string) => void;
@@ -28,12 +28,12 @@ function loadBotpressScript(onReady: () => void) {
 
 export function useBotpressChat(onMessage: OnMessageCallback) {
   const listenerRegistered = useRef(false);
-  const [ready, setReady] = useState(false);
+  const onMessageRef = useRef(onMessage);
+  onMessageRef.current = onMessage;
 
   useEffect(() => {
     let cancelled = false;
 
-    // Fetch bot ID from backend config
     supabase.functions.invoke("botpress-config").then(({ data }) => {
       const botId = data?.botId;
       if (!botId || cancelled) return;
@@ -43,24 +43,20 @@ export function useBotpressChat(onMessage: OnMessageCallback) {
         const bp = (window as unknown as { botpress?: BotpressSDK }).botpress;
         if (!bp) return;
 
-        // Init widget hidden
         bp.init({
           botId,
           hideWidget: true,
           showPoweredBy: false,
         });
 
-        // Listen for bot responses (register only once)
         if (!listenerRegistered.current) {
           listenerRegistered.current = true;
           bp.on("message", (event: BotpressMessageEvent) => {
             if (event.direction === "incoming" && event.payload?.text) {
-              onMessage(event.payload.text);
+              onMessageRef.current(event.payload.text);
             }
           });
         }
-
-        setReady(true);
       });
     });
 
@@ -76,7 +72,7 @@ export function useBotpressChat(onMessage: OnMessageCallback) {
     bp.sendMessage({ type: "text", text });
   };
 
-  return { sendMessage, ready };
+  return { sendMessage };
 }
 
 // Botpress SDK types
