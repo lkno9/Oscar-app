@@ -236,8 +236,8 @@ export function RecapPage() {
                   onClick={() => navigate("/services/scam-protection")}
                   className="flex items-center gap-1 justify-end mt-1.5"
                 >
-                  <Bell className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
-                  <span className="text-xs text-yellow-300 font-semibold">{totalAlerts} alerte{totalAlerts > 1 ? "s" : ""}</span>
+                  <Bell className="w-3.5 h-3.5 text-primary-foreground/80 animate-pulse" />
+                  <span className="text-xs text-primary-foreground/80 font-semibold">{totalAlerts} alerte{totalAlerts > 1 ? "s" : ""}</span>
                 </button>
               )}
             </div>
@@ -457,7 +457,7 @@ export function RecapPage() {
                 <div className="space-y-2">
                   {nextEvents.map((ev) => (
                     <div key={ev.id} className="flex items-center gap-3 py-1">
-                      <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 text-xl">
+                      <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center flex-shrink-0 text-xl">
                         {EVENT_ICONS[ev.event_type || "general"] || "📅"}
                       </div>
                       <div className="flex-1 min-w-0">
