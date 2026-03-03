@@ -2,7 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 const OSCAR_SYSTEM_PROMPT = `You are Oscar.
@@ -335,21 +336,13 @@ Example:
 "Ce message semble suspect.
 Il est plus sûr de ne pas cliquer sur le lien."
 
-6️⃣ Images (optional feature)
+6️⃣ Analyse d'images et documents
 
-Oscar may generate simple, friendly images to:
-
-illustrate explanations
-
-clarify instructions
-
-Rules:
-
-Always show the image first
-
-Ask:
-
-"Est-ce que cela vous convient ?"
+Quand un utilisateur envoie une image ou un document, Oscar l'analyse attentivement et :
+- Décrit ce qu'il voit clairement
+- Extrait les informations importantes (dates, noms, montants...)
+- Signale les points d'attention (dates d'expiration proches, anomalies...)
+- Propose des actions concrètes si nécessaire
 
 7️⃣ Email assistance
 
@@ -423,6 +416,19 @@ Quand un utilisateur envoie une image ou un document, Oscar l'analyse attentivem
 - Extrait les informations importantes (dates, noms, montants...)
 - Signale les points d'attention (dates d'expiration proches, anomalies...)
 - Propose des actions concrètes si nécessaire`;
+
+// Detect if any message contains image content (for Pixtral vision model)
+function hasImageContent(messages: Array<{ role: string; content: unknown }>): boolean {
+  return messages.some((msg) => {
+    if (Array.isArray(msg.content)) {
+      return msg.content.some(
+        (part: { type: string }) => part.type === "image_url"
+      );
+    }
+    return false;
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -430,57 +436,108 @@ serve(async (req) => {
 
   try {
     const { messages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");
+
+    if (!MISTRAL_API_KEY) {
+      throw new Error("MISTRAL_API_KEY is not configured");
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          { role: "system", content: OSCAR_SYSTEM_PROMPT },
-          ...messages,
-        ],
-        stream: true,
-      }),
-    });
+    // Validate messages
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Messages manquants dans la requête." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Keep last 20 messages to stay within token limits
+    const truncatedMessages = messages.slice(-20);
+
+    // Choose model: pixtral-large for vision, mistral-large for text
+    const useVision = hasImageContent(truncatedMessages);
+    const model = useVision ? "pixtral-large-latest" : "mistral-large-latest";
+
+    // Build final messages array with system prompt
+    const mistralMessages = [
+      { role: "system", content: OSCAR_SYSTEM_PROMPT },
+      ...truncatedMessages,
+    ];
+
+    const response = await fetch(
+      "https://api.mistral.ai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${MISTRAL_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: mistralMessages,
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 1024,
+        }),
+      }
+    );
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Trop de demandes. Veuillez réessayer dans un moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            error:
+              "Trop de demandes. Veuillez réessayer dans un moment.",
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Crédit insuffisant. Veuillez recharger votre compte." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (response.status === 401) {
+        return new Response(
+          JSON.stringify({ error: "Clé API Mistral invalide." }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return new Response(JSON.stringify({ error: "Erreur de connexion à l'IA" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("Mistral API error:", response.status, errorText);
+      return new Response(
+        JSON.stringify({
+          error: "Erreur de connexion à l'IA. Veuillez réessayer.",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
+    // Stream SSE response directly to client (passthrough)
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
     });
   } catch (e) {
-    console.error("Oscar chat error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur inconnue" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("Mistral chat error:", e);
+    return new Response(
+      JSON.stringify({
+        error: e instanceof Error ? e.message : "Erreur inconnue",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });

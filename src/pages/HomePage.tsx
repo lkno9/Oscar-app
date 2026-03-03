@@ -1,17 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Phone, Settings, Image } from "lucide-react";
+import { Phone, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { CallScreen } from "@/components/CallScreen";
-import { useBotpressChat } from "@/hooks/useBotpressChat";
+import { useMistralChat } from "@/hooks/useMistralChat";
 import { speakWithElevenLabs, stopElevenLabsSpeech } from "@/lib/elevenLabsTTS";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-
-const IMAGE_GEN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`;
 
 interface ChatMessageData {
   id: string;
@@ -40,29 +38,41 @@ export function HomePage() {
 
   const { user } = useAuth();
 
-  // Handle incoming bot message from Botpress SDK
-  const handleBotMessage = useCallback((text: string) => {
-    if (!text.trim()) return;
+  // Real SSE streaming: accumulate tokens into assistant message
+  const handleStreamDelta = useCallback((token: string) => {
     setIsTyping(false);
-    const id = Date.now().toString();
-    // Simulate word-by-word streaming
-    const words = text.split(" ");
-    let accumulated = "";
-    words.forEach((word, i) => {
-      setTimeout(() => {
-        accumulated += (i === 0 ? "" : " ") + word;
-        setMessages(prev => {
-          const last = prev[prev.length - 1];
-          if (last?.role === "assistant" && last.id === id) {
-            return prev.map(m => m.id === id ? { ...m, content: accumulated } : m);
-          }
-          return [...prev, { id, role: "assistant", content: accumulated }];
-        });
-      }, i * 25);
+    setMessages(prev => {
+      const last = prev[prev.length - 1];
+      if (last?.role === "assistant" && last.id === lastAssistantIdRef.current) {
+        return prev.map(m =>
+          m.id === lastAssistantIdRef.current
+            ? { ...m, content: m.content + token }
+            : m
+        );
+      }
+      // First token: create a new assistant message
+      const id = Date.now().toString();
+      lastAssistantIdRef.current = id;
+      return [...prev, { id, role: "assistant" as const, content: token }];
     });
   }, []);
 
-  const { sendMessage: sendToBotpress } = useBotpressChat(handleBotMessage);
+  const handleStreamDone = useCallback((_fullText: string) => {
+    setIsTyping(false);
+    lastAssistantIdRef.current = null;
+  }, []);
+
+  const handleStreamError = useCallback((error: string) => {
+    setIsTyping(false);
+    lastAssistantIdRef.current = null;
+    toast.error(error);
+  }, []);
+
+  const { sendMessage: sendToMistral } = useMistralChat({
+    onDelta: handleStreamDelta,
+    onDone: handleStreamDone,
+    onError: handleStreamError,
+  });
 
   // Medication reminders
   useEffect(() => {
@@ -188,18 +198,6 @@ export function HomePage() {
     }
   };
 
-  // --- Image generation detection ---
-  const detectImageRequest = (content: string): string | null => {
-    const lower = content.toLowerCase();
-    const imageKeywords = ["génère une image", "génère moi une image", "crée une image", "dessine", "montre-moi une image", "illustre", "generate image", "fais une image"];
-    for (const kw of imageKeywords) {
-      if (lower.includes(kw)) {
-        return content;
-      }
-    }
-    return null;
-  };
-
   const handleAttach = async (files: FileList) => {
     const file = files[0];
     if (!file) return;
@@ -214,13 +212,10 @@ export function HomePage() {
 
     setIsTyping(true);
     try {
-      // Convert to base64
+      // Convert to base64 data URL
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result); // full data URL: "data:image/png;base64,..."
-        };
+        reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
@@ -233,15 +228,12 @@ export function HomePage() {
       };
       setMessages(prev => [...prev, userMsg]);
 
-      // No need to build apiMessages - Botpress manages conversation history
-
-      let assistantSoFar = "";
-      const assistantId = (Date.now() + 1).toString();
+      // Send to Mistral with vision (Pixtral) — image as base64 in message content
       const promptText = isImage
         ? `Peux-tu analyser cette image ? (${file.name})`
         : `Peux-tu analyser ce document ? (${file.name})`;
-      setIsTyping(true);
-      sendToBotpress(promptText);
+
+      sendToMistral(promptText, base64);
     } catch {
       setIsTyping(false);
       toast.error("Impossible de lire le fichier");
@@ -251,44 +243,10 @@ export function HomePage() {
   const handleSend = async (content: string) => {
     setIsRecording(false);
 
-    // Check for image generation request
-    const imagePrompt = detectImageRequest(content);
-    if (imagePrompt) {
-      const userMsg: ChatMessageData = { id: Date.now().toString(), role: "user", content };
-      setMessages(prev => [...prev, userMsg]);
-      setIsTyping(true);
-      try {
-        const resp = await fetch(IMAGE_GEN_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ prompt: imagePrompt }),
-        });
-        const data = await resp.json();
-        if (data.imageUrl) {
-          setMessages(prev => [...prev, {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            content: "Voici l'image que j'ai créée pour vous ! 🎨",
-            imageUrl: data.imageUrl,
-          }]);
-        } else {
-          throw new Error(data.error || "Erreur");
-        }
-      } catch {
-        toast.error("Impossible de générer l'image");
-      } finally {
-        setIsTyping(false);
-      }
-      return;
-    }
-
     const userMessage: ChatMessageData = { id: Date.now().toString(), role: "user", content };
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
-    sendToBotpress(content);
+    sendToMistral(content);
   };
 
   return (
