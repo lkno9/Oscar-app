@@ -12,6 +12,9 @@ import {
   Newspaper,
   ExternalLink,
   RefreshCw,
+  BellRing,
+  X,
+  Check,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +30,8 @@ interface CalendarEvent { id: string; title: string; event_date: string; event_t
 interface Medication { id: string; name: string; dosage: string | null; }
 interface UrgentDocument { id: string; name: string; expiration_date: string; }
 interface ScamAlert { id: string; title: string; danger_level: string; }
+interface Reminder { id: string; label: string; date: string; type: "medication" | "document"; }
+interface AppNotification { id: string; title: string; message: string | null; type: string; created_at: string; is_read: boolean | null; }
 
 interface NewsArticle {
   title: string;
@@ -38,10 +43,10 @@ interface NewsArticle {
 }
 
 const MOODS = [
-  { level: 1, emoji: "😢", label: "Triste", color: "text-blue-500" },
-  { level: 2, emoji: "😕", label: "Pas bien", color: "text-indigo-500" },
-  { level: 3, emoji: "😐", label: "Correct", color: "text-yellow-500" },
-  { level: 4, emoji: "🙂", label: "Bien", color: "text-green-500" },
+  { level: 1, emoji: "😢", label: "Triste", color: "text-muted-foreground" },
+  { level: 2, emoji: "😕", label: "Pas bien", color: "text-muted-foreground" },
+  { level: 3, emoji: "😐", label: "Correct", color: "text-foreground" },
+  { level: 4, emoji: "🙂", label: "Bien", color: "text-primary" },
   { level: 5, emoji: "😊", label: "Très bien", color: "text-primary" },
 ];
 
@@ -57,9 +62,9 @@ const NEWS_CATEGORIES = [
 ] as const;
 
 const NEWS_CATEGORY_STYLES: Record<string, { emoji: string; bg: string; text: string }> = {
-  droits: { emoji: "📋", bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-400" },
-  seniors: { emoji: "👴", bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-400" },
-  securite: { emoji: "🛡️", bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400" },
+  droits: { emoji: "📋", bg: "bg-secondary", text: "text-foreground" },
+  seniors: { emoji: "👴", bg: "bg-accent", text: "text-accent-foreground" },
+  securite: { emoji: "🛡️", bg: "bg-destructive/10", text: "text-destructive" },
 };
 
 const NEWS_CACHE_KEY = "oscar_news_cache";
@@ -78,6 +83,8 @@ export function RecapPage() {
   const [urgentDocs, setUrgentDocs] = useState<UrgentDocument[]>([]);
   const [scamAlerts, setScamAlerts] = useState<ScamAlert[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   // News state
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
@@ -85,8 +92,9 @@ export function RecapPage() {
   const [newsFilter, setNewsFilter] = useState<string>("all");
   const [showAllNews, setShowAllNews] = useState(false);
 
+  // ⏱ Horloge temps réel — mise à jour chaque seconde
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -104,7 +112,7 @@ export function RecapPage() {
     in30Days.setDate(in30Days.getDate() + 30);
     const in30DaysStr = in30Days.toISOString().split("T")[0];
 
-    const [profileRes, moodRes, messagesRes, eventsRes, medsRes, docsRes, alertsRes] = await Promise.all([
+    const [profileRes, moodRes, messagesRes, eventsRes, medsRes, docsRes, alertsRes, remindersRes, notifsRes] = await Promise.all([
       supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
       supabase.from("mood_entries").select("mood_level").eq("user_id", user.id).eq("entry_date", today).maybeSingle(),
       supabase.from("family_messages").select("id, content, created_at, sender_id").eq("receiver_id", user.id).eq("is_read", false).order("created_at", { ascending: false }).limit(5),
@@ -112,6 +120,8 @@ export function RecapPage() {
       supabase.from("medications").select("id, name, dosage").eq("user_id", user.id).eq("is_active", true).order("name").limit(5),
       supabase.from("documents").select("id, name, expiration_date").eq("user_id", user.id).gte("expiration_date", today).lte("expiration_date", in30DaysStr).order("expiration_date"),
       supabase.from("scam_alerts").select("id, title, danger_level").eq("is_active", true).limit(3),
+      supabase.from("document_reminders").select("id, reminder_date, reminder_type, document_id, documents(name)").eq("user_id", user.id).eq("is_sent", false).gte("reminder_date", today).order("reminder_date").limit(5),
+      supabase.from("family_notifications").select("id, title, message, type, created_at, is_read").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
     ]);
 
     if (profileRes.data) setProfile(profileRes.data);
@@ -132,6 +142,30 @@ export function RecapPage() {
     if (medsRes.data) setActiveMeds(medsRes.data);
     if (docsRes.data) setUrgentDocs(docsRes.data);
     if (alertsRes.data) setScamAlerts(alertsRes.data);
+
+    // Build reminders list: document reminders + medication time windows
+    const builtReminders: Reminder[] = [];
+    if (remindersRes.data) {
+      remindersRes.data.forEach((r: any) => {
+        builtReminders.push({
+          id: r.id,
+          label: r.documents?.name ? `Renouveler "${r.documents.name}"` : `Rappel document`,
+          date: r.reminder_date,
+          type: "document",
+        });
+      });
+    }
+    if (medsRes.data && medsRes.data.length > 0) {
+      builtReminders.push({
+        id: "med-today",
+        label: `Prendre vos médicaments du jour (${medsRes.data.length})`,
+        date: today,
+        type: "medication",
+      });
+    }
+    setReminders(builtReminders);
+
+    if (notifsRes.data) setNotifications(notifsRes.data as AppNotification[]);
     setLoading(false);
   };
 
@@ -201,56 +235,88 @@ export function RecapPage() {
     }
   };
 
+  // Rappels médicaments du jour
+  const currentMedWindow = hour >= 7 && hour < 10 ? "matin" : hour >= 12 && hour < 14 ? "midi" : hour >= 18 && hour < 21 ? "soir" : null;
+  const [dismissedReminder, setDismissedReminder] = useState<string | null>(null);
+  const showMedReminder = currentMedWindow && dismissedReminder !== currentMedWindow && activeMeds.length > 0;
+
+  const QUICK_ACTIONS = [
+    {
+      label: "Agenda",
+      path: "/services/agenda",
+      icon: <CalendarDays className="w-7 h-7 text-primary" />,
+      bg: "bg-primary/10",
+    },
+    {
+      label: "Santé",
+      path: "/services/health",
+      icon: <Pill className="w-7 h-7 text-pink-500" />,
+      bg: "bg-pink-100",
+    },
+    {
+      label: "Famille",
+      path: "/services/communication",
+      icon: <MessageSquare className="w-7 h-7 text-muted-foreground" />,
+      bg: "bg-secondary",
+      badge: unreadMessages.length,
+    },
+    {
+      label: "Urgence",
+      path: "/services/emergency",
+      icon: (
+        <span className="text-destructive-foreground text-base font-extrabold leading-none">
+          SOS
+        </span>
+      ),
+      bg: "bg-destructive",
+    },
+  ];
+
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary to-primary/70 px-5 pt-5 pb-8">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-2 right-4 w-32 h-32 rounded-full bg-white/30" />
-          <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white/20" />
-        </div>
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/80 px-5 pt-6 pb-10">
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full bg-white/10 translate-y-1/2 -translate-x-1/4" />
+
         <div className="relative">
-          <div className="flex items-start justify-between mb-4">
+          {/* Date + heure */}
+          <div className="flex items-start justify-between mb-5">
             <div>
-              <p className="text-primary-foreground/80 text-sm font-medium">
+              <p className="text-primary-foreground/75 text-sm font-medium capitalize">
                 {format(currentTime, "EEEE d MMMM", { locale: fr })}
               </p>
-              <h1 className="text-2xl font-bold text-primary-foreground mt-0.5">
+              <h1 className="text-2xl font-bold text-primary-foreground mt-0.5 leading-tight">
                 {greeting}, {getFirstName()} 👋
               </h1>
             </div>
             <div className="text-right">
-              <p className="text-primary-foreground text-2xl font-bold tabular-nums">
+              <p className="text-primary-foreground text-3xl font-bold tabular-nums leading-none">
                 {format(currentTime, "HH:mm")}
               </p>
-              {totalAlerts > 0 && (
-                <div className="flex items-center gap-1 justify-end mt-1">
-                  <Bell className="w-3.5 h-3.5 text-yellow-300" />
-                  <span className="text-xs text-yellow-300 font-semibold">{totalAlerts} alerte{totalAlerts > 1 ? "s" : ""}</span>
-                </div>
-              )}
             </div>
           </div>
 
           {/* Mood strip */}
-          <div className="flex items-center gap-2 bg-white/15 rounded-2xl px-4 py-2.5">
+          <div className="flex items-center gap-3 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3">
             {moodInfo ? (
               <>
-                <span className="text-2xl">{moodInfo.emoji}</span>
+                <span className="text-3xl">{moodInfo.emoji}</span>
                 <div>
-                  <p className="text-primary-foreground text-xs font-medium">Votre humeur aujourd'hui</p>
-                  <p className="text-primary-foreground font-bold text-sm">{moodInfo.label}</p>
+                  <p className="text-primary-foreground/80 text-xs font-medium">Votre humeur aujourd'hui</p>
+                  <p className="text-primary-foreground font-bold text-base">{moodInfo.label}</p>
                 </div>
               </>
             ) : (
               <>
-                <Smile className="w-6 h-6 text-primary-foreground/70" />
+                <Smile className="w-7 h-7 text-primary-foreground/70 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-primary-foreground text-xs font-medium">Comment vous sentez-vous ?</p>
+                  <p className="text-primary-foreground text-sm font-medium">Comment vous sentez-vous ?</p>
                 </div>
                 <button
                   onClick={() => navigate("/services/health")}
-                  className="bg-white/25 hover:bg-white/35 transition-colors text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-xl"
+                  className="bg-white text-primary text-xs font-bold px-4 py-2 rounded-xl shadow-sm hover:bg-white/90 active:scale-95 transition-all"
                 >
                   Indiquer
                 </button>
@@ -268,45 +334,37 @@ export function RecapPage() {
             <p className="text-muted-foreground text-sm">Chargement...</p>
           </div>
         ) : (
-          <div className="px-4 pb-6 -mt-4 space-y-4">
+          <div className="px-4 pb-6 space-y-4">
 
-            {/* Quick actions */}
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { icon: "📅", label: "Agenda", path: "/services/agenda" },
-                { icon: "💊", label: "Santé", path: "/services/health" },
-                { icon: "💬", label: "Famille", path: "/services/communication", badge: unreadMessages.length },
-                { icon: "🆘", label: "Urgence", path: "/services/emergency" },
-              ].map((a) => (
-                <button
-                  key={a.path}
-                  onClick={() => navigate(a.path)}
-                  className="relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md active:scale-95 transition-all"
-                >
-                  {a.badge ? (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
-                      {a.badge}
-                    </span>
-                  ) : null}
-                  <span className="text-2xl">{a.icon}</span>
-                  <span className="text-xs font-medium text-foreground leading-tight text-center">{a.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Scam alert banner */}
-            {scamAlerts.length > 0 && (
-              <button
-                onClick={() => navigate("/services/scam-protection")}
-                className="w-full flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-2xl px-4 py-3 text-left"
-              >
-                <ShieldAlert className="w-5 h-5 text-destructive flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-destructive">Alerte sécurité</p>
-                  <p className="text-xs text-destructive/80 truncate">{scamAlerts[0].title}</p>
+            {/* 💊 Rappel médicaments */}
+            {showMedReminder && (
+              <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+                  <BellRing className="w-5 h-5 text-primary" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-destructive/60 flex-shrink-0" />
-              </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Rappel médicaments du {currentMedWindow}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {activeMeds.length} médicament{activeMeds.length > 1 ? "s" : ""} à prendre · {activeMeds.slice(0, 2).map(m => m.name).join(", ")}{activeMeds.length > 2 ? "..." : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => navigate("/services/health")}
+                    className="p-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 active:scale-95 transition-all"
+                    aria-label="Voir médicaments"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setDismissedReminder(currentMedWindow!)}
+                    className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-all"
+                    aria-label="Ignorer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* ============================================ */}
@@ -447,7 +505,7 @@ export function RecapPage() {
                 <div className="space-y-2">
                   {nextEvents.map((ev) => (
                     <div key={ev.id} className="flex items-center gap-3 py-1">
-                      <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 text-xl">
+                      <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center flex-shrink-0 text-xl">
                         {EVENT_ICONS[ev.event_type || "general"] || "📅"}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -476,7 +534,7 @@ export function RecapPage() {
               >
                 <div className="flex flex-wrap gap-2">
                   {activeMeds.slice(0, 4).map((med) => (
-                    <span key={med.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-xl text-sm font-medium text-green-700 dark:text-green-400">
+                    <span key={med.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent rounded-xl text-sm font-medium text-accent-foreground">
                       💊 {med.name}
                     </span>
                   ))}
@@ -500,11 +558,11 @@ export function RecapPage() {
                 <div className="space-y-2">
                   {urgentDocs.slice(0, 2).map((doc) => (
                     <div key={doc.id} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-orange-600" />
+                      <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-4 h-4 text-destructive" />
                       </div>
                       <p className="flex-1 text-sm text-foreground truncate">{doc.name}</p>
-                      <span className="text-xs font-semibold text-orange-600">
+                      <span className="text-xs font-semibold text-destructive">
                         {format(new Date(doc.expiration_date), "d MMM", { locale: fr })}
                       </span>
                     </div>
@@ -513,30 +571,62 @@ export function RecapPage() {
               </SectionCard>
             )}
 
-            {/* Explorer */}
-            <div>
-              <p className="text-sm font-semibold text-foreground mb-2.5 px-0.5">Explorer</p>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { emoji: "🎵", label: "Musique", desc: "Écouter de la musique", path: "/services/music" },
-                  { emoji: "🎮", label: "Jeux", desc: "Sudoku, Mémoire...", path: "/services/games" },
-                  { emoji: "📚", label: "Bibliothèque", desc: "Lire un article", path: "/services/library" },
-                  { emoji: "🛡️", label: "Protection", desc: "Arnaque & sécurité", path: "/services/scam-protection" },
-                ].map((s) => (
-                  <button
-                    key={s.path}
-                    onClick={() => navigate(s.path)}
-                    className="flex items-center gap-3 bg-card border border-border rounded-2xl px-3.5 py-3 text-left hover:shadow-md active:scale-95 transition-all"
-                  >
-                    <span className="text-2xl">{s.emoji}</span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{s.label}</p>
-                      <p className="text-xs text-muted-foreground truncate">{s.desc}</p>
+            {/* Rappels */}
+            <SectionCard
+              title="Rappels"
+              emoji="🔔"
+              badge={reminders.length > 0 ? reminders.length : undefined}
+              onMore={() => navigate("/services/agenda")}
+            >
+              {reminders.length > 0 ? (
+                <div className="space-y-2">
+                  {reminders.map((r) => (
+                    <div key={r.id} className="flex items-center gap-3 py-1">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${r.type === "medication" ? "bg-accent" : "bg-primary/10"}`}>
+                        {r.type === "medication" ? <Pill className="w-4 h-4 text-accent-foreground" /> : <Bell className="w-4 h-4 text-primary" />}
+                      </div>
+                      <p className="flex-1 text-sm text-foreground truncate">{r.label}</p>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {r.date === new Date().toISOString().split("T")[0] ? "Aujourd'hui" : format(new Date(r.date), "d MMM", { locale: fr })}
+                      </span>
                     </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-1">Aucun rappel pour le moment.</p>
+              )}
+            </SectionCard>
+
+            {/* Notifications */}
+            <SectionCard
+              title="Notifications"
+              emoji="📬"
+              badge={notifications.filter(n => !n.is_read).length || undefined}
+              onMore={() => navigate("/services/communication")}
+            >
+              {notifications.length > 0 ? (
+                <div className="space-y-2">
+                  {notifications.map((n) => (
+                    <div key={n.id} className="flex items-center gap-3 py-1">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${!n.is_read ? "bg-primary/10" : "bg-secondary"}`}>
+                        <Bell className={`w-4 h-4 ${!n.is_read ? "text-primary" : "text-muted-foreground"}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm truncate ${!n.is_read ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{n.title}</p>
+                        {n.message && <p className="text-xs text-muted-foreground truncate">{n.message}</p>}
+                      </div>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-1">Aucune notification.</p>
+              )}
+            </SectionCard>
+
+
 
           </div>
         )}

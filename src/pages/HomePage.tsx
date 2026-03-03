@@ -6,10 +6,11 @@ import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { CallScreen } from "@/components/CallScreen";
 import { useMistralChat } from "@/hooks/useMistralChat";
-import { speakWithElevenLabs, stopElevenLabsSpeech } from "@/lib/elevenLabsTTS";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+
+const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
 interface ChatMessageData {
   id: string;
@@ -24,17 +25,51 @@ const INITIAL_MESSAGE: ChatMessageData = {
   content: "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider aujourd'hui ? N'hésitez pas à me poser vos questions, nous ferons cela ensemble. 😊",
 };
 
+// ElevenLabs TTS
+let currentAudio: HTMLAudioElement | null = null;
+
+async function speakWithElevenLabs(text: string): Promise<void> {
+  stopSpeech();
+  const response = await fetch(TTS_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok) throw new Error("TTS échoué");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  return new Promise((resolve) => {
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.onended = () => { currentAudio = null; URL.revokeObjectURL(url); resolve(); };
+    audio.onerror = () => { currentAudio = null; URL.revokeObjectURL(url); resolve(); };
+    audio.play();
+  });
+}
+
+function stopSpeech() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessageData[]>([INITIAL_MESSAGE]);
   const [isTyping, setIsTyping] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
-  const [isSpeakingEL, setIsSpeakingEL] = useState(false);
+  const [isSpeakingState, setIsSpeakingState] = useState(false);
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [callType, setCallType] = useState<"audio" | "video">("audio");
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
+  const speechRecognitionRef = useRef<any>(null);
 
   const { user } = useAuth();
 
@@ -101,115 +136,92 @@ export function HomePage() {
     return () => clearInterval(interval);
   }, [user]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // --- ElevenLabs TTS ---
   const handleSpeak = async (text: string, messageId?: string) => {
-    stopElevenLabsSpeech();
+    stopSpeech();
     if (messageId) setSpeakingMessageId(messageId);
-    setIsSpeakingEL(true);
+    setIsSpeakingState(true);
     try {
       await speakWithElevenLabs(text);
     } catch {
-      toast.error("Impossible de lire le message");
+      // Fallback to Web Speech API
+      try {
+        await fallbackSpeak(text);
+      } catch {
+        toast.error("Impossible de lire le message");
+      }
     } finally {
-      setIsSpeakingEL(false);
+      setIsSpeakingState(false);
       setSpeakingMessageId(null);
     }
   };
 
+  const fallbackSpeak = (text: string): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!("speechSynthesis" in window)) { resolve(); return; }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "fr-FR";
+      utterance.rate = 0.95;
+      utterance.onend = () => resolve();
+      utterance.onerror = () => resolve();
+      window.speechSynthesis.speak(utterance);
+    });
+  };
+
   const handleStopSpeaking = () => {
-    stopElevenLabsSpeech();
-    setIsSpeakingEL(false);
+    stopSpeech();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setIsSpeakingState(false);
     setSpeakingMessageId(null);
   };
 
-  // --- Browser Web Speech API STT ---
-  const speechRecognitionRef = useRef<any>(null);
-
   const handleVoiceToggle = () => {
     if (isRecording) {
-      // Manual stop → send accumulated transcript
       speechRecognitionRef.current?.stop();
       setIsRecording(false);
       return;
     }
-
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast.error("Reconnaissance vocale non supportée par ce navigateur");
       return;
     }
-
     const recognition = new SpeechRecognition();
     recognition.lang = "fr-FR";
-    recognition.continuous = true;       // ne coupe pas automatiquement
-    recognition.interimResults = true;   // affiche en temps réel
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.maxAlternatives = 1;
-
     let finalText = "";
-
     recognition.onstart = () => setIsRecording(true);
-
     recognition.onresult = (e: any) => {
-      let interim = "";
       finalText = "";
       for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          finalText += e.results[i][0].transcript;
-        } else {
-          interim += e.results[i][0].transcript;
-        }
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
       }
-      // Show interim in input via transcript (optional, for visual feedback)
-      const current = finalText || interim;
-      console.debug("Voice interim:", current);
     };
-
     recognition.onend = () => {
       setIsRecording(false);
-      if (finalText.trim()) {
-        handleSend(finalText.trim());
-        finalText = "";
-      }
+      if (finalText.trim()) { handleSend(finalText.trim()); finalText = ""; }
     };
-
     recognition.onerror = (e: any) => {
       setIsRecording(false);
-      console.error("SpeechRecognition error:", e.error, e.message);
-      if (e.error === "not-allowed") toast.error("Accès au microphone refusé. Autorisez le micro dans les paramètres du navigateur.");
-      else if (e.error === "network") toast.error("Erreur réseau — la reconnaissance vocale nécessite une connexion internet active.");
-      else if (e.error === "no-speech") toast.error("Aucune parole détectée, réessayez.");
-      else if (e.error === "audio-capture") toast.error("Aucun microphone détecté.");
+      if (e.error === "not-allowed") toast.error("Accès au microphone refusé.");
       else if (e.error !== "aborted") toast.error(`Erreur vocale : ${e.error}`);
     };
-
     speechRecognitionRef.current = recognition;
-    try {
-      recognition.start();
-    } catch {
-      toast.error("Impossible de démarrer la reconnaissance vocale");
-    }
+    try { recognition.start(); } catch { toast.error("Impossible de démarrer la reconnaissance vocale"); }
   };
 
   const handleAttach = async (files: FileList) => {
     const file = files[0];
     if (!file) return;
-
     const isImage = file.type.startsWith("image/");
     const isPdf = file.type === "application/pdf";
-
-    if (!isImage && !isPdf) {
-      toast.info(`Fichier sélectionné : ${file.name}`);
-      return;
-    }
-
+    if (!isImage && !isPdf) { toast.info(`Fichier sélectionné : ${file.name}`); return; }
     setIsTyping(true);
     try {
       // Convert to base64 data URL
@@ -219,7 +231,6 @@ export function HomePage() {
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-
       const userMsg: ChatMessageData = {
         id: Date.now().toString(),
         role: "user",
@@ -291,7 +302,7 @@ export function HomePage() {
             messageId={message.id}
             onSpeak={(text) => handleSpeak(text, message.id)}
             onStopSpeaking={handleStopSpeaking}
-            isSpeaking={isSpeakingEL}
+            isSpeaking={isSpeakingState}
             speakingMessageId={speakingMessageId || undefined}
           />
         ))}
