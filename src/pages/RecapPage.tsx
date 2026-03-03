@@ -214,14 +214,14 @@ export function RecapPage() {
     {
       label: "Agenda",
       path: "/services/agenda",
-      icon: <CalendarDays className="w-7 h-7 text-[hsl(221,83%,53%)]" />,
-      bg: "bg-[hsl(221,83%,53%)]/10",
+      icon: <CalendarDays className="w-7 h-7 text-primary" />,
+      bg: "bg-primary/10",
     },
     {
       label: "Santé",
       path: "/services/health",
-      icon: <Pill className="w-7 h-7 text-[hsl(340,82%,59%)]" />,
-      bg: "bg-[hsl(340,82%,59%)]/10",
+      icon: <Pill className="w-7 h-7 text-pink-500" />,
+      bg: "bg-pink-100",
     },
     {
       label: "Famille",
@@ -234,11 +234,11 @@ export function RecapPage() {
       label: "Urgence",
       path: "/services/emergency",
       icon: (
-        <span className="text-destructive-foreground text-base font-extrabold leading-none bg-destructive rounded-lg px-2 py-1">
+        <span className="text-destructive-foreground text-base font-extrabold leading-none">
           SOS
         </span>
       ),
-      bg: "bg-destructive/10",
+      bg: "bg-destructive",
     },
   ];
 
