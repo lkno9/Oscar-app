@@ -178,7 +178,10 @@ export function HomePage() {
     setIsSpeakingState(true);
     try {
       await speakWithElevenLabs(text);
-    } catch {
+    } catch (ttsErr: any) {
+      console.error("[Oscar TTS] ElevenLabs failed:", ttsErr?.message);
+      // Don't silently fallback — show a toast so we know ElevenLabs is failing
+      toast.info("Voix ElevenLabs indisponible, utilisation de la voix du navigateur.");
       try {
         await fallbackSpeak(text);
       } catch {
