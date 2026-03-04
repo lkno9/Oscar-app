@@ -198,8 +198,17 @@ export function HomePage() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
-      const recorder = new MediaRecorder(stream, { mimeType });
+      // Prefer webm, fallback to mp4, fallback to no mimeType (browser default)
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : "";
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
       audioChunksRef.current = [];
 
       recorder.ondataavailable = (e) => {
@@ -210,13 +219,15 @@ export function HomePage() {
         stream.getTracks().forEach((t) => t.stop());
         setIsRecording(false);
 
-        const blob = new Blob(audioChunksRef.current, { type: mimeType });
-        if (blob.size < 1000) return; // too short, ignore
+        const finalMime = recorder.mimeType || "audio/webm";
+        const blob = new Blob(audioChunksRef.current, { type: finalMime });
+        if (blob.size < 100) return; // only reject truly empty recordings
 
         setIsTyping(true);
         try {
+          const ext = finalMime.includes("mp4") ? "mp4" : "webm";
           const fd = new FormData();
-          fd.append("audio", blob, `voice.${mimeType.includes("webm") ? "webm" : "mp4"}`);
+          fd.append("audio", blob, `voice.${ext}`);
 
           const res = await fetch(
             `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-stt`,
@@ -242,7 +253,8 @@ export function HomePage() {
         }
       };
 
-      recorder.start();
+      // Request data every 250ms to ensure we capture audio on all browsers
+      recorder.start(250);
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
     } catch (err: any) {
