@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff, X } from "lucide-react";
+import { PhoneOff, Mic, MicOff, X } from "lucide-react";
 import { OscarAvatar } from "./OscarAvatar";
-import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
-import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { streamChat, Message } from "@/lib/oscarChat";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -13,197 +11,282 @@ interface CallScreenProps {
   initialVideoEnabled?: boolean;
 }
 
-export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: CallScreenProps) {
-  const [isVideoEnabled, setIsVideoEnabled] = useState(initialVideoEnabled);
+const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
+
+export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [isOscarSpeaking, setIsOscarSpeaking] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const callTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const [statusText, setStatusText] = useState("Connexion...");
 
-  const {
-    isListening,
-    transcript,
-    isSupported: voiceSupported,
-    startListening,
-    stopListening,
-    resetTranscript,
-  } = useVoiceRecognition();
+  const conversationRef = useRef<Message[]>([]);
+  const callTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const wantListeningRef = useRef(false);
+  const finalTranscriptRef = useRef("");
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsAbortRef = useRef<AbortController | null>(null);
 
-  const {
-    isSpeaking,
-    speak,
-    stop: stopSpeaking,
-  } = useTextToSpeech();
+  const webSpeechSupported = typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
-  // Start camera
-  const startCamera = useCallback(async () => {
+  // --- ElevenLabs TTS (try first) then fallback to browser ---
+  const speakAsOscar = useCallback(async (text: string): Promise<void> => {
+    setIsOscarSpeaking(true);
+    setStatusText("Oscar parle...");
+
+    // Try ElevenLabs first
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
-        audio: false,
+      ttsAbortRef.current?.abort();
+      const abortController = new AbortController();
+      ttsAbortRef.current = abortController;
+
+      const truncated = text.length > 4000 ? text.substring(0, 4000) + "..." : text;
+
+      const response = await fetch(TTS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ text: truncated }),
+        signal: abortController.signal,
       });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-      toast.error("Impossible d'accéder à la caméra");
-      setIsVideoEnabled(false);
+
+      if (!response.ok) throw new Error("TTS failed");
+      const blob = await response.blob();
+      if (blob.size === 0) throw new Error("Empty audio");
+
+      const url = URL.createObjectURL(blob);
+      await new Promise<void>((resolve, reject) => {
+        const audio = new Audio(url);
+        currentAudioRef.current = audio;
+        audio.onended = () => { currentAudioRef.current = null; URL.revokeObjectURL(url); resolve(); };
+        audio.onerror = () => { currentAudioRef.current = null; URL.revokeObjectURL(url); reject(new Error("Audio error")); };
+        const playPromise = audio.play();
+        if (playPromise) playPromise.catch(reject);
+      });
+    } catch {
+      // Fallback to Web Speech API
+      await new Promise<void>((resolve) => {
+        if (!("speechSynthesis" in window)) { resolve(); return; }
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "fr-FR";
+        utterance.rate = 0.95;
+        utterance.onend = () => resolve();
+        utterance.onerror = () => resolve();
+        window.speechSynthesis.speak(utterance);
+      });
     }
+
+    setIsOscarSpeaking(false);
+    ttsAbortRef.current = null;
   }, []);
 
-  // Stop camera
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+  const stopOscarSpeech = useCallback(() => {
+    ttsAbortRef.current?.abort();
+    ttsAbortRef.current = null;
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
     }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setIsOscarSpeaking(false);
   }, []);
 
-  // Toggle video
-  const toggleVideo = useCallback(async () => {
-    if (isVideoEnabled) {
-      stopCamera();
-      setIsVideoEnabled(false);
-    } else {
-      await startCamera();
-      setIsVideoEnabled(true);
-    }
-  }, [isVideoEnabled, startCamera, stopCamera]);
+  // --- STT: Web Speech API with auto-restart ---
+  const startListeningInternal = useCallback(() => {
+    if (!webSpeechSupported) return;
 
-  // Toggle mute
-  const toggleMute = useCallback(() => {
-    if (isMuted) {
-      setIsMuted(false);
-      if (voiceSupported && !isListening) {
-        startListening();
-      }
-    } else {
-      setIsMuted(true);
-      if (isListening) {
-        stopListening();
-      }
-    }
-  }, [isMuted, voiceSupported, isListening, startListening, stopListening]);
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
 
-  // Process user speech and get Oscar's response
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscriptRef.current += result[0].transcript;
+        } else {
+          interim += result[0].transcript;
+        }
+      }
+      const fullText = finalTranscriptRef.current + interim;
+      setLiveTranscript(fullText);
+
+      // Reset silence timer — user is still speaking
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = setTimeout(() => {
+        // 2 seconds of silence → send the message
+        if (finalTranscriptRef.current.trim()) {
+          const text = finalTranscriptRef.current.trim();
+          finalTranscriptRef.current = "";
+          setLiveTranscript("");
+          wantListeningRef.current = false;
+          recognition.stop();
+          processUserSpeech(text);
+        }
+      }, 2000);
+    };
+
+    recognition.onend = () => {
+      if (wantListeningRef.current) {
+        try { recognition.start(); return; } catch { /* fall through */ }
+      }
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error === "no-speech" || event.error === "aborted") return;
+      wantListeningRef.current = false;
+      setIsListening(false);
+      if (event.error === "not-allowed") {
+        toast.error("Accès au microphone refusé.");
+      }
+    };
+
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsListening(true);
+      setStatusText("Oscar écoute...");
+    } catch { /* already running */ }
+  }, [webSpeechSupported]);
+
+  const startListening = useCallback(() => {
+    finalTranscriptRef.current = "";
+    setLiveTranscript("");
+    wantListeningRef.current = true;
+    startListeningInternal();
+  }, [startListeningInternal]);
+
+  const stopListening = useCallback(() => {
+    wantListeningRef.current = false;
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setIsListening(false);
+    setLiveTranscript("");
+    finalTranscriptRef.current = "";
+  }, []);
+
+  // --- Process user speech → Mistral → Oscar speaks ---
   const processUserSpeech = useCallback(async (userText: string) => {
     if (!userText.trim() || isProcessing) return;
 
     setIsProcessing(true);
-    
-    const newHistory: Message[] = [
-      ...conversationHistory,
+    setStatusText("Oscar réfléchit...");
+    setIsListening(false);
+
+    conversationRef.current = [
+      ...conversationRef.current,
       { role: "user", content: userText },
     ];
-    setConversationHistory(newHistory);
 
     let oscarResponse = "";
-    
+
     await streamChat({
-      messages: newHistory,
+      messages: conversationRef.current,
       onDelta: (chunk) => {
         oscarResponse += chunk;
       },
-      onDone: () => {
-        setConversationHistory(prev => [
-          ...prev,
+      onDone: async () => {
+        conversationRef.current = [
+          ...conversationRef.current,
           { role: "assistant", content: oscarResponse },
-        ]);
-        setIsOscarSpeaking(true);
-        speak(oscarResponse);
+        ];
         setIsProcessing(false);
+
+        // Oscar speaks the response
+        await speakAsOscar(oscarResponse);
+
+        // Resume listening after Oscar finishes
+        if (!isMuted && wantListeningRef.current !== false) {
+          setTimeout(() => startListening(), 300);
+        }
       },
       onError: (error) => {
         toast.error(error);
         setIsProcessing(false);
+        setStatusText("Erreur...");
+        // Resume listening even on error
+        if (!isMuted) {
+          setTimeout(() => startListening(), 500);
+        }
       },
     });
-  }, [conversationHistory, isProcessing, speak]);
+  }, [isProcessing, isMuted, speakAsOscar, startListening]);
 
-  // Handle transcript changes
-  useEffect(() => {
-    if (transcript && !isMuted && !isProcessing && !isSpeaking) {
-      // Wait a bit to ensure the user has finished speaking
-      const timeoutId = setTimeout(() => {
-        if (transcript.trim()) {
-          processUserSpeech(transcript);
-          resetTranscript();
-        }
-      }, 1500);
-      return () => clearTimeout(timeoutId);
+  // --- Toggle mute ---
+  const toggleMute = useCallback(() => {
+    if (isMuted) {
+      setIsMuted(false);
+      startListening();
+    } else {
+      setIsMuted(true);
+      stopListening();
+      setStatusText("Micro coupé");
     }
-  }, [transcript, isMuted, isProcessing, isSpeaking, processUserSpeech, resetTranscript]);
+  }, [isMuted, startListening, stopListening]);
 
-  // Update Oscar speaking state
-  useEffect(() => {
-    if (!isSpeaking) {
-      setIsOscarSpeaking(false);
-      // Resume listening after Oscar finishes speaking
-      if (voiceSupported && !isMuted && isOpen) {
-        setTimeout(() => {
-          startListening();
-        }, 500);
-      }
-    }
-  }, [isSpeaking, voiceSupported, isMuted, isOpen, startListening]);
-
-  // Initialize call
+  // --- Initialize / cleanup call ---
   useEffect(() => {
     if (isOpen) {
-      // Reset video state based on initial prop
-      setIsVideoEnabled(initialVideoEnabled);
-      
-      // Start call timer
+      // Reset state
+      conversationRef.current = [];
       setCallDuration(0);
+      setIsMuted(false);
+      setIsProcessing(false);
+      setIsOscarSpeaking(false);
+      setLiveTranscript("");
+      setStatusText("Connexion...");
+
+      // Start call timer
       callTimerRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
 
-      // Start camera only if video is enabled
-      if (initialVideoEnabled) {
-        startCamera();
-      }
+      // Oscar greeting after a short delay
+      const greetTimeout = setTimeout(async () => {
+        const greeting = "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider ?";
+        conversationRef.current = [{ role: "assistant", content: greeting }];
+        await speakAsOscar(greeting);
+        // Start listening after greeting
+        startListening();
+      }, 800);
 
-      // Start listening
-      if (voiceSupported && !isMuted) {
-        setTimeout(() => startListening(), 1000);
-      }
-
-      // Oscar greeting
-      setTimeout(() => {
-        const greeting = "Bonjour ! Je suis Oscar. Comment puis-je vous aider ?";
-        setConversationHistory([{ role: "assistant", content: greeting }]);
-        setIsOscarSpeaking(true);
-        speak(greeting);
-      }, 1500);
+      return () => {
+        clearTimeout(greetTimeout);
+      };
     } else {
       // Cleanup
-      if (callTimerRef.current) {
-        clearInterval(callTimerRef.current);
-      }
-      stopCamera();
+      if (callTimerRef.current) clearInterval(callTimerRef.current);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       stopListening();
-      stopSpeaking();
-      setConversationHistory([]);
+      stopOscarSpeech();
+      conversationRef.current = [];
       setCallDuration(0);
     }
+  }, [isOpen]);
 
-    return () => {
-      if (callTimerRef.current) {
-        clearInterval(callTimerRef.current);
-      }
-    };
-  }, [isOpen, initialVideoEnabled, voiceSupported, isMuted, startCamera, stopCamera, startListening, stopListening, stopSpeaking, speak]);
+  // --- End call ---
+  const handleEndCall = useCallback(() => {
+    stopListening();
+    stopOscarSpeech();
+    if (callTimerRef.current) clearInterval(callTimerRef.current);
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    onClose();
+  }, [stopListening, stopOscarSpeech, onClose]);
 
   // Format duration
   const formatDuration = (seconds: number) => {
@@ -212,33 +295,12 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Handle end call
-  const handleEndCall = () => {
-    stopSpeaking();
-    stopListening();
-    stopCamera();
-    onClose();
-  };
-
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Video/Avatar area */}
+      {/* Main area */}
       <div className="flex-1 relative bg-oscar-navy overflow-hidden">
-        {/* User video (small, corner) */}
-        {isVideoEnabled && (
-          <div className="absolute top-4 right-4 w-32 h-44 rounded-2xl overflow-hidden shadow-lg border-2 border-border z-10">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover mirror"
-            />
-          </div>
-        )}
-
         {/* Oscar avatar (center) */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex flex-col items-center gap-6">
@@ -250,10 +312,36 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
             </div>
             <div className="text-center">
               <h2 className="text-2xl font-bold text-primary-foreground">Oscar</h2>
-              <p className="text-primary-foreground/70">
-                {isOscarSpeaking ? "Parle..." : isListening ? "Écoute..." : "En appel"}
+              <p className="text-primary-foreground/70 text-lg">
+                {statusText}
               </p>
             </div>
+
+            {/* Audio waveform when listening */}
+            {isListening && !isMuted && (
+              <div className="flex gap-1.5 items-end h-8">
+                {[...Array(5)].map((_, i) => (
+                  <span
+                    key={i}
+                    className="w-2 bg-primary rounded-full animate-pulse"
+                    style={{
+                      height: `${12 + Math.random() * 20}px`,
+                      animationDelay: `${i * 150}ms`,
+                      animationDuration: "0.8s",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Processing indicator */}
+            {isProcessing && (
+              <div className="flex gap-2">
+                <span className="w-3 h-3 bg-primary rounded-full animate-bounce" />
+                <span className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -273,42 +361,19 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
           </span>
         </div>
 
-        {/* Listening indicator */}
-        {isListening && !isMuted && (
-          <div className="absolute bottom-32 left-1/2 -translate-x-1/2 bg-primary/90 px-4 py-2 rounded-full flex items-center gap-2">
-            <div className="flex gap-1">
-              <span className="w-1.5 h-4 bg-primary-foreground rounded-full animate-pulse" />
-              <span className="w-1.5 h-6 bg-primary-foreground rounded-full animate-pulse" style={{ animationDelay: "150ms" }} />
-              <span className="w-1.5 h-3 bg-primary-foreground rounded-full animate-pulse" style={{ animationDelay: "300ms" }} />
+        {/* Live transcript */}
+        {liveTranscript && (
+          <div className="absolute bottom-28 left-4 right-4">
+            <div className="bg-background/80 backdrop-blur-sm rounded-2xl px-5 py-3 text-center">
+              <p className="text-foreground text-base">{liveTranscript}</p>
             </div>
-            <span className="text-primary-foreground text-sm font-medium">
-              {transcript || "Parlez..."}
-            </span>
           </div>
         )}
       </div>
 
       {/* Controls */}
       <div className="bg-card border-t border-border p-6">
-        <div className="flex items-center justify-center gap-6">
-          {/* Video toggle */}
-          <button
-            onClick={toggleVideo}
-            className={cn(
-              "p-4 rounded-full transition-all",
-              isVideoEnabled
-                ? "bg-secondary text-foreground"
-                : "bg-destructive/20 text-destructive"
-            )}
-            aria-label={isVideoEnabled ? "Désactiver la vidéo" : "Activer la vidéo"}
-          >
-            {isVideoEnabled ? (
-              <Video className="w-6 h-6" />
-            ) : (
-              <VideoOff className="w-6 h-6" />
-            )}
-          </button>
-
+        <div className="flex items-center justify-center gap-8">
           {/* Mute toggle */}
           <button
             onClick={toggleMute}
