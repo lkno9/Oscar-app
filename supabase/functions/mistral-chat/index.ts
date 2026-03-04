@@ -440,6 +440,53 @@ function hasImageContent(messages: Array<{ role: string; content: unknown }>): b
   });
 }
 
+// Extract text from a PDF using Mistral OCR API
+async function extractPdfText(pdfBase64: string, apiKey: string): Promise<string> {
+  try {
+    console.log("Calling Mistral OCR for PDF extraction...");
+    const response = await fetch("https://api.mistral.ai/v1/ocr", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "mistral-ocr-latest",
+        document: {
+          type: "document_url",
+          document_url: pdfBase64, // data:application/pdf;base64,... format
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("OCR API error:", response.status);
+      return "[Impossible de lire ce document PDF. Veuillez réessayer.]";
+    }
+
+    const data = await response.json();
+
+    // OCR returns pages with markdown content
+    if (data.pages && Array.isArray(data.pages)) {
+      const allText = data.pages
+        .map((page: { markdown?: string; index?: number }) =>
+          page.markdown || ""
+        )
+        .join("\n\n---\n\n");
+      console.log(`OCR extracted ${data.pages.length} page(s), ${allText.length} chars`);
+      // Truncate to ~8000 chars to stay within token limits
+      return allText.length > 8000
+        ? allText.substring(0, 8000) + "\n\n[... document tronqué, trop long ...]"
+        : allText;
+    }
+
+    return "[Document PDF vide ou format non reconnu.]";
+  } catch (err) {
+    console.error("OCR extraction error:", err);
+    return "[Erreur lors de la lecture du document PDF.]";
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -467,23 +514,39 @@ serve(async (req) => {
     // Keep last 20 messages to stay within token limits
     const truncatedMessages = messages.slice(-20);
 
-    // Sanitize messages: normalize image_url format and handle PDFs
-    const sanitizedMessages = truncatedMessages.map((msg: { role: string; content: unknown }) => {
-      if (!Array.isArray(msg.content)) return msg;
-      const newContent = (msg.content as Array<{ type: string; image_url?: unknown; text?: string }>).map((part) => {
+    // Sanitize messages: normalize images + extract PDF text via OCR
+    const sanitizedMessages = [];
+    for (const msg of truncatedMessages as Array<{ role: string; content: unknown }>) {
+      if (!Array.isArray(msg.content)) {
+        sanitizedMessages.push(msg);
+        continue;
+      }
+      const newContent = [];
+      for (const part of msg.content as Array<{ type: string; image_url?: unknown; text?: string }>) {
         if (part.type === "image_url") {
           const url = getImageUrl(part.image_url);
-          // If it's a real image, normalize to Mistral string format
           if (url.startsWith("https://") || url.startsWith("data:image/")) {
-            return { type: "image_url", image_url: url };
+            // Real image → keep for Pixtral vision
+            newContent.push({ type: "image_url", image_url: url });
+          } else if (url.startsWith("data:application/pdf")) {
+            // PDF → extract text via Mistral OCR
+            const extractedText = await extractPdfText(url, MISTRAL_API_KEY);
+            newContent.push({
+              type: "text",
+              text: `📄 Contenu du document PDF :\n\n${extractedText}`,
+            });
+          } else {
+            newContent.push({
+              type: "text",
+              text: "[Document joint non reconnu. Formats acceptés : images (JPG, PNG) et PDF.]",
+            });
           }
-          // Otherwise (PDF, etc.), convert to a text description
-          return { type: "text", text: "[L'utilisateur a partagé un document (PDF). Dites-lui que vous ne pouvez pas lire les PDF directement, mais proposez de l'aider autrement.]" };
+        } else {
+          newContent.push(part);
         }
-        return part;
-      });
-      return { ...msg, content: newContent };
-    });
+      }
+      sanitizedMessages.push({ ...msg, content: newContent });
+    }
 
     // Choose model: pixtral-large for vision, mistral-large for text
     const useVision = hasImageContent(sanitizedMessages);
