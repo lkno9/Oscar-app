@@ -534,12 +534,17 @@ serve(async (req) => {
             // Real image → keep for Pixtral vision
             newContent.push({ type: "image_url", image_url: url });
           } else if (url.startsWith("data:application/pdf")) {
-            // PDF → extract text via Mistral OCR
+            // PDF → extract text via Mistral OCR (base64 direct method)
             const extractedText = await extractPdfText(url, MISTRAL_API_KEY);
-            newContent.push({
-              type: "text",
-              text: `📄 Contenu du document PDF :\n\n${extractedText}`,
-            });
+            if (extractedText === "[PDF_FALLBACK]") {
+              // OCR failed, pass as document_url to vision model directly
+              newContent.push({ type: "image_url", image_url: url });
+            } else {
+              newContent.push({
+                type: "text",
+                text: `📄 Contenu du document PDF :\n\n${extractedText}`,
+              });
+            }
           } else {
             newContent.push({
               type: "text",
