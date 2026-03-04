@@ -66,6 +66,7 @@ const NEWS_CATEGORY_STYLES: Record<string, { emoji: string; bg: string; text: st
   droits: { emoji: "📋", bg: "bg-secondary", text: "text-foreground" },
   seniors: { emoji: "👴", bg: "bg-accent", text: "text-accent-foreground" },
   securite: { emoji: "🛡️", bg: "bg-destructive/10", text: "text-destructive" },
+  activites: { emoji: "🎯", bg: "bg-primary/10", text: "text-primary" },
 };
 
 const NEWS_CACHE_KEY = "oscar_news_cache";

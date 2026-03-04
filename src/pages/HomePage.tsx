@@ -265,13 +265,13 @@ export function HomePage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <header className="px-4 py-4 bg-card border-b border-border">
+      <header className="px-4 py-3 bg-card border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <OscarAvatar size="md" />
             <div>
               <h1 className="text-lg font-bold text-foreground">Oscar</h1>
-              <p className="text-sm text-primary font-medium">En ligne</p>
+              <p className="text-xs text-muted-foreground capitalize">{format(new Date(), "EEEE d MMMM", { locale: fr })}</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
