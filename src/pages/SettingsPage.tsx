@@ -18,9 +18,16 @@ interface Profile {
 }
 
 const FAQ_ITEMS = [
-  { q: "Comment parler à Oscar ?", a: "Appuyez sur le micro sur la page d'accueil et parlez naturellement." },
-  { q: "Comment inviter ma famille ?", a: "Allez dans Paramètres > Accès Famille et envoyez un code d'invitation." },
-  { q: "Mes données sont-elles sécurisées ?", a: "Oui, toutes vos données sont chiffrées et accessibles uniquement par vous." },
+  { q: "Comment parler à Oscar ?", a: "Appuyez sur le micro en bas de la page d'accueil et parlez naturellement. Oscar comprend le français et répond immédiatement." },
+  { q: "Comment inviter ma famille ?", a: "Allez dans Paramètres > Accès Famille, choisissez le lien familial et générez un code d'invitation à partager." },
+  { q: "Mes données sont-elles sécurisées ?", a: "Oui, toutes vos données sont chiffrées et stockées de manière sécurisée. Seuls vous et les membres de famille que vous invitez y ont accès." },
+  { q: "Comment ajouter un médicament ?", a: "Rendez-vous dans Services > Santé, puis dans l'onglet Médicaments. Appuyez sur le bouton '+' pour ajouter un nouveau médicament avec sa posologie." },
+  { q: "Comment mettre un document en favori ?", a: "Dans Services > Documents, ouvrez le document et appuyez sur l'étoile pour l'ajouter aux favoris. Retrouvez-le ensuite dans l'onglet Favoris." },
+  { q: "Puis-je désactiver les rappels de médicaments ?", a: "Oui, dans Paramètres > Préférences, désactivez les Notifications. Vous pouvez aussi gérer chaque rappel individuellement depuis la page Santé." },
+  { q: "Comment signaler une arnaque ?", a: "Allez dans Services > Protection Arnaques. Vous pouvez vérifier un message suspect ou consulter les alertes récentes. Oscar vous guide pour porter plainte si nécessaire." },
+  { q: "Comment fonctionne le mode sombre ?", a: "Dans Paramètres > Préférences, activez le Mode sombre. L'écran passe en tons foncés pour réduire la fatigue oculaire, surtout le soir." },
+  { q: "Puis-je changer la langue de l'application ?", a: "Pour l'instant, Oscar est disponible uniquement en français. D'autres langues sont prévues dans les prochaines mises à jour." },
+  { q: "Comment contacter le support ?", a: "Appelez directement le support au +33 9 00 00 00 00 depuis Paramètres > Aide & Support, ou discutez avec Oscar qui peut vous orienter." },
 ];
 
 function FaqItem({ q, a }: { q: string; a: string }) {
