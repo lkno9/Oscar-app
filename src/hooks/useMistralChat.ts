@@ -8,7 +8,7 @@ export interface MistralMessage {
     | string
     | Array<
         | { type: "text"; text: string }
-        | { type: "image_url"; image_url: { url: string } }
+        | { type: "image_url"; image_url: string }
       >;
 }
 
@@ -37,21 +37,21 @@ export function useMistralChat({
 
   const sendMessage = useCallback(
     async (text: string, imageBase64?: string) => {
-      // Build user message content
-      let content: MistralMessage["content"];
+      // Build user message content for the API request
+      let contentForApi: MistralMessage["content"];
       if (imageBase64) {
-        content = [
+        contentForApi = [
           { type: "text", text },
-          { type: "image_url", image_url: { url: imageBase64 } },
+          { type: "image_url", image_url: imageBase64 },
         ];
       } else {
-        content = text;
+        contentForApi = text;
       }
 
-      // Add user message to history
+      // For history: store text only (no base64 blobs — they bloat subsequent requests)
       historyRef.current = [
         ...historyRef.current,
-        { role: "user", content },
+        { role: "user", content: imageBase64 ? `${text} [fichier joint analysé]` : text },
       ];
 
       // Cancel any in-flight request
@@ -60,13 +60,21 @@ export function useMistralChat({
       abortControllerRef.current = controller;
 
       try {
+        // Build messages: history (text only) + current message (with image if any)
+        const messagesToSend = imageBase64
+          ? [
+              ...historyRef.current.slice(0, -1), // previous history (text only)
+              { role: "user" as const, content: contentForApi }, // current msg with image
+            ]
+          : historyRef.current;
+
         const response = await fetch(MISTRAL_CHAT_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ messages: historyRef.current }),
+          body: JSON.stringify({ messages: messagesToSend }),
           signal: controller.signal,
         });
 

@@ -460,11 +460,21 @@ serve(async (req) => {
     const useVision = hasImageContent(truncatedMessages);
     const model = useVision ? "pixtral-large-latest" : "mistral-large-latest";
 
+    console.log(`Using model: ${model}, vision: ${useVision}, messages: ${truncatedMessages.length}`);
+
     // Build final messages array with system prompt
     const mistralMessages = [
       { role: "system", content: OSCAR_SYSTEM_PROMPT },
       ...truncatedMessages,
     ];
+
+    const requestBody = {
+      model,
+      messages: mistralMessages,
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 2048,
+    };
 
     const response = await fetch(
       "https://api.mistral.ai/v1/chat/completions",
@@ -474,13 +484,7 @@ serve(async (req) => {
           Authorization: `Bearer ${MISTRAL_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model,
-          messages: mistralMessages,
-          stream: true,
-          temperature: 0.7,
-          max_tokens: 1024,
-        }),
+        body: JSON.stringify(requestBody),
       }
     );
 

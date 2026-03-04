@@ -2,7 +2,7 @@ export type MessageContent =
   | string
   | Array<
       | { type: "text"; text: string }
-      | { type: "image_url"; image_url: { url: string } }
+      | { type: "image_url"; image_url: string }
     >;
 
 export type Message = { role: "user" | "assistant"; content: MessageContent };
