@@ -213,13 +213,82 @@ export function HomePage() {
   // --- STT via Web Speech API (gratuit, natif navigateur) ---
   const recognitionRef = useRef<any>(null);
   const [transcript, setTranscript] = useState("");
+  const wantRecordingRef = useRef(false);
+  const finalTranscriptRef = useRef("");
 
   const webSpeechSupported = typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
+  const startRecognition = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscriptRef.current += result[0].transcript;
+        } else {
+          interim += result[0].transcript;
+        }
+      }
+      setTranscript(finalTranscriptRef.current + interim);
+    };
+
+    recognition.onend = () => {
+      // If user still wants to record, restart automatically
+      // (Chrome stops after silences, this keeps it alive)
+      if (wantRecordingRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch {
+          // Fall through to stop
+        }
+      }
+      // Actually stopping
+      setIsRecording(false);
+      const text = finalTranscriptRef.current.trim();
+      setTranscript("");
+      finalTranscriptRef.current = "";
+      if (text) {
+        handleSend(text);
+      }
+      recognitionRef.current = null;
+    };
+
+    recognition.onerror = (event: any) => {
+      // "no-speech" and "aborted" are not fatal — let onend handle restart
+      if (event.error === "no-speech" || event.error === "aborted") {
+        return;
+      }
+      // Fatal errors — stop everything
+      wantRecordingRef.current = false;
+      setIsRecording(false);
+      setTranscript("");
+      finalTranscriptRef.current = "";
+      recognitionRef.current = null;
+      if (event.error === "not-allowed") {
+        toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
+      } else {
+        console.error("[Oscar STT] Erreur:", event.error);
+        toast.error("Erreur de reconnaissance vocale.");
+      }
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+  };
+
   const handleVoiceToggle = () => {
     if (isRecording) {
-      // Stop recording — final result will be handled by onresult/onend
+      // User wants to stop — send what we have
+      wantRecordingRef.current = false;
       recognitionRef.current?.stop();
       return;
     }
@@ -236,60 +305,13 @@ export function HomePage() {
     }
 
     try {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.lang = "fr-FR";
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
-
-      let finalTranscript = "";
-
-      recognition.onresult = (event: any) => {
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i];
-          if (result.isFinal) {
-            finalTranscript += result[0].transcript;
-          } else {
-            interim += result[0].transcript;
-          }
-        }
-        // Show real-time transcript in the input field
-        setTranscript(finalTranscript + interim);
-      };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-        const text = finalTranscript.trim();
-        setTranscript("");
-        if (text) {
-          handleSend(text);
-        } else {
-          toast.info("Aucune parole détectée, réessayez.");
-        }
-        recognitionRef.current = null;
-      };
-
-      recognition.onerror = (event: any) => {
-        setIsRecording(false);
-        setTranscript("");
-        recognitionRef.current = null;
-        if (event.error === "not-allowed") {
-          toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
-        } else if (event.error === "no-speech") {
-          toast.info("Aucune parole détectée, réessayez.");
-        } else {
-          console.error("[Oscar STT] Erreur:", event.error);
-          toast.error("Erreur de reconnaissance vocale.");
-        }
-      };
-
-      recognition.start();
-      recognitionRef.current = recognition;
+      finalTranscriptRef.current = "";
+      wantRecordingRef.current = true;
       setIsRecording(true);
       setTranscript("");
+      startRecognition();
     } catch (err) {
+      wantRecordingRef.current = false;
       setIsRecording(false);
       console.error("[Oscar STT] Init error:", err);
       toast.error("Impossible de démarrer la reconnaissance vocale.");
