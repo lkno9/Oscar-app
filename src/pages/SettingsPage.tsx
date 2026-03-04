@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Bell, Volume2, Moon, Shield, ChevronRight, CheckCircle2, Users, MessageSquare, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, User, Bell, Volume2, Moon, Shield, ChevronRight, CheckCircle2, Users, MessageSquare, MessageCircle, Phone, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
