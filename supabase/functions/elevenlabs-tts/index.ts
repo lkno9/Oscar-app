@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 // Oscar voice: Liam (natural French-compatible male voice)
+// To change voice: browse https://elevenlabs.io/voice-library and update the ID
 const VOICE_ID = "TX3LPaxmHKxFdv7VOQHJ";
 
 serve(async (req) => {
@@ -38,13 +39,13 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_multilingual_v2",
+          model_id: "eleven_flash_v2_5",
           voice_settings: {
-            stability: 0.6,
-            similarity_boost: 0.8,
-            style: 0.2,
+            stability: 0.4,
+            similarity_boost: 0.7,
+            style: 0.45,
             use_speaker_boost: true,
-            speed: 0.95,
+            speed: 0.92,
           },
         }),
       }

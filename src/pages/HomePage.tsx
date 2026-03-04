@@ -318,20 +318,108 @@ export function HomePage() {
     }
   };
 
+  // Read a file as text (for .txt, .csv, .md, etc.)
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+
+  // Read a file as base64 data URL (for images, PDFs)
+  const readFileAsBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleAttach = async (files: FileList, extraMessage?: string) => {
     const file = files[0];
     if (!file) return;
+
     const isImage = file.type.startsWith("image/");
     const isPdf = file.type === "application/pdf";
-    if (!isImage && !isPdf) { toast.info(`Fichier sélectionné : ${file.name}`); return; }
+    const isText = file.type === "text/plain" || file.name.endsWith(".txt");
+    const isCsv = file.type === "text/csv" || file.name.endsWith(".csv");
+    const isMarkdown = file.name.endsWith(".md");
+    const isTextFile = isText || isCsv || isMarkdown;
+    const isDocx = file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.name.endsWith(".docx");
+    const isDoc = file.type === "application/msword" || file.name.endsWith(".doc");
+
+    // Unsupported types
+    if (!isImage && !isPdf && !isTextFile && !isDocx && !isDoc) {
+      toast.error(`Format non supporté. Oscar peut lire : images, PDF, TXT, CSV et DOCX.`);
+      return;
+    }
+
+    // .doc (old Word format) — can't read client-side
+    if (isDoc && !isDocx) {
+      toast.error("Le format .doc ancien n'est pas supporté. Convertissez le fichier en .docx ou .pdf.");
+      return;
+    }
+
     setIsTyping(true);
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      // --- Text files (TXT, CSV, MD) — read as plain text ---
+      if (isTextFile) {
+        const textContent = await readFileAsText(file);
+        const truncated = textContent.length > 10000
+          ? textContent.substring(0, 10000) + "\n\n[... fichier tronqué, trop long ...]"
+          : textContent;
+
+        const contentLabel = `[Fichier texte : ${file.name}]`;
+        const userMsg: ChatMessageData = {
+          id: Date.now().toString(),
+          role: "user",
+          content: extraMessage ? `${contentLabel}\n${extraMessage}` : contentLabel,
+        };
+        setMessages(prev => [...prev, userMsg]);
+
+        const promptText = extraMessage
+          ? `${extraMessage}\n\nVoici le contenu du fichier "${file.name}" :\n\n${truncated}`
+          : `Peux-tu analyser ce fichier "${file.name}" ?\n\nVoici son contenu :\n\n${truncated}`;
+
+        sendToMistral(promptText);
+        return;
+      }
+
+      // --- DOCX — extract text from XML ---
+      if (isDocx) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const blob = new Blob([arrayBuffer]);
+          // DOCX is a ZIP containing XML. We send as base64 PDF-style to OCR
+          const base64 = await readFileAsBase64(file);
+
+          const contentLabel = `[Document Word : ${file.name}]`;
+          const userMsg: ChatMessageData = {
+            id: Date.now().toString(),
+            role: "user",
+            content: extraMessage ? `${contentLabel}\n${extraMessage}` : contentLabel,
+          };
+          setMessages(prev => [...prev, userMsg]);
+
+          const promptText = extraMessage
+            ? extraMessage
+            : `Peux-tu analyser ce document Word ? (${file.name})`;
+
+          // Send as base64 — edge function will handle it
+          sendToMistral(promptText, base64);
+          return;
+        } catch {
+          setIsTyping(false);
+          toast.error("Impossible de lire le fichier Word. Essayez de le convertir en PDF.");
+          return;
+        }
+      }
+
+      // --- Images & PDFs — read as base64 ---
+      const base64 = await readFileAsBase64(file);
 
       const contentLabel = isImage ? `[Image envoyée : ${file.name}]` : `[Document envoyé : ${file.name}]`;
       const userMsg: ChatMessageData = {

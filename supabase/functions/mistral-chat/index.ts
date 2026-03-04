@@ -545,10 +545,24 @@ serve(async (req) => {
                 text: `📄 Contenu du document PDF :\n\n${extractedText}`,
               });
             }
+          } else if (url.startsWith("data:application/vnd.openxmlformats")) {
+            // DOCX → try Mistral OCR (supports some document formats)
+            const extractedText = await extractPdfText(url, MISTRAL_API_KEY);
+            if (extractedText === "[PDF_FALLBACK]") {
+              newContent.push({
+                type: "text",
+                text: "[Impossible de lire ce document Word. Convertissez-le en PDF pour de meilleurs résultats.]",
+              });
+            } else {
+              newContent.push({
+                type: "text",
+                text: `📄 Contenu du document Word :\n\n${extractedText}`,
+              });
+            }
           } else {
             newContent.push({
               type: "text",
-              text: "[Document joint non reconnu. Formats acceptés : images (JPG, PNG) et PDF.]",
+              text: "[Document joint non reconnu. Formats acceptés : images (JPG, PNG), PDF, TXT, CSV et DOCX.]",
             });
           }
         } else {

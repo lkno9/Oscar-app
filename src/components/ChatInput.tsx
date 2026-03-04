@@ -105,7 +105,7 @@ export function ChatInput({
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">{pendingFile.file.name}</p>
             <p className="text-xs text-muted-foreground">
-              {pendingFile.type === "image" ? "Image" : "Document PDF"} · Vous pouvez ajouter un message
+              {pendingFile.type === "image" ? "Image" : "Document"} · Vous pouvez ajouter un message
             </p>
           </div>
           <button
@@ -135,7 +135,7 @@ export function ChatInput({
           ref={fileInputRef}
           type="file"
           multiple={false}
-          accept="image/*,application/pdf,.doc,.docx,.txt,audio/*"
+          accept="image/*,application/pdf,.docx,.txt,.csv,.md"
           onChange={handleFileChange}
           className="hidden"
         />
