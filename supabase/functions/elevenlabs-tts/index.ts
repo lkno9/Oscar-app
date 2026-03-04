@@ -5,9 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Oscar voice: Liam (natural French-compatible male voice)
+// Oscar voice: Antoine — warm, natural French male voice
 // To change voice: browse https://elevenlabs.io/voice-library and update the ID
-const VOICE_ID = "TX3LPaxmHKxFdv7VOQHJ";
+const VOICE_ID = "PjN1x5uqQvyU3DO0gdJz";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
