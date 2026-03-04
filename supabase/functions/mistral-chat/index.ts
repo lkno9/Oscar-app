@@ -417,14 +417,22 @@ Quand un utilisateur envoie une image ou un document, Oscar l'analyse attentivem
 - Signale les points d'attention (dates d'expiration proches, anomalies...)
 - Propose des actions concrètes si nécessaire`;
 
+// Extract URL string from image_url (Mistral format: string directly)
+function getImageUrl(imageUrl: unknown): string {
+  if (typeof imageUrl === "string") return imageUrl;
+  if (typeof imageUrl === "object" && imageUrl !== null && "url" in imageUrl) {
+    return (imageUrl as { url: string }).url || "";
+  }
+  return "";
+}
+
 // Detect if any message contains actual image content (not PDFs) for Pixtral vision model
 function hasImageContent(messages: Array<{ role: string; content: unknown }>): boolean {
   return messages.some((msg) => {
     if (Array.isArray(msg.content)) {
-      return msg.content.some((part: { type: string; image_url?: { url?: string } }) => {
+      return msg.content.some((part: { type: string; image_url?: unknown }) => {
         if (part.type !== "image_url") return false;
-        const url = part.image_url?.url || "";
-        // Only use vision model for actual images, not PDFs or other files
+        const url = getImageUrl(part.image_url);
         return url.startsWith("https://") || url.startsWith("data:image/");
       });
     }
@@ -459,18 +467,18 @@ serve(async (req) => {
     // Keep last 20 messages to stay within token limits
     const truncatedMessages = messages.slice(-20);
 
-    // Sanitize messages: convert non-image content (PDFs, etc.) in image_url parts to text
+    // Sanitize messages: normalize image_url format and handle PDFs
     const sanitizedMessages = truncatedMessages.map((msg: { role: string; content: unknown }) => {
       if (!Array.isArray(msg.content)) return msg;
-      const newContent = (msg.content as Array<{ type: string; image_url?: { url?: string }; text?: string }>).map((part) => {
+      const newContent = (msg.content as Array<{ type: string; image_url?: unknown; text?: string }>).map((part) => {
         if (part.type === "image_url") {
-          const url = part.image_url?.url || "";
-          // If it's a real image (URL or data:image/...), keep it
+          const url = getImageUrl(part.image_url);
+          // If it's a real image, normalize to Mistral string format
           if (url.startsWith("https://") || url.startsWith("data:image/")) {
-            return part;
+            return { type: "image_url", image_url: url };
           }
           // Otherwise (PDF, etc.), convert to a text description
-          return { type: "text", text: "[L'utilisateur a partagé un document (PDF). Dites-lui que vous ne pouvez pas lire les PDF directement, mais que vous pouvez l'aider à décrire son contenu manuellement.]" };
+          return { type: "text", text: "[L'utilisateur a partagé un document (PDF). Dites-lui que vous ne pouvez pas lire les PDF directement, mais proposez de l'aider autrement.]" };
         }
         return part;
       });
