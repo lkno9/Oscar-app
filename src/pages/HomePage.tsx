@@ -218,7 +218,7 @@ export function HomePage() {
     try { recognition.start(); } catch { toast.error("Impossible de démarrer la reconnaissance vocale"); }
   };
 
-  const handleAttach = async (files: FileList) => {
+  const handleAttach = async (files: FileList, extraMessage?: string) => {
     const file = files[0];
     if (!file) return;
     const isImage = file.type.startsWith("image/");
@@ -226,25 +226,27 @@ export function HomePage() {
     if (!isImage && !isPdf) { toast.info(`Fichier sélectionné : ${file.name}`); return; }
     setIsTyping(true);
     try {
-      // Convert to base64 data URL
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+
+      const contentLabel = isImage ? `[Image envoyée : ${file.name}]` : `[Document envoyé : ${file.name}]`;
       const userMsg: ChatMessageData = {
         id: Date.now().toString(),
         role: "user",
-        content: isImage ? `[Image envoyée : ${file.name}]` : `[Document envoyé : ${file.name}]`,
+        content: extraMessage ? `${contentLabel}\n${extraMessage}` : contentLabel,
         imageUrl: isImage ? base64 : undefined,
       };
       setMessages(prev => [...prev, userMsg]);
 
-      // Send to Mistral with vision (Pixtral) — image as base64 in message content
-      const promptText = isImage
-        ? `Peux-tu analyser cette image ? (${file.name})`
-        : `Peux-tu analyser ce document ? (${file.name})`;
+      const promptText = extraMessage
+        ? extraMessage
+        : isImage
+          ? `Peux-tu analyser cette image ? (${file.name})`
+          : `Peux-tu analyser ce document ? (${file.name})`;
 
       sendToMistral(promptText, base64);
     } catch {

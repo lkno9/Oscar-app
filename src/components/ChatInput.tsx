@@ -1,10 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { Mic, MicOff, Send, Paperclip, Square } from "lucide-react";
+import { Mic, MicOff, Send, Paperclip, Square, X, FileText, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface PendingFile {
+  file: File;
+  previewUrl?: string;
+  type: "image" | "pdf" | "other";
+}
 
 interface ChatInputProps {
   onSend: (message: string) => void;
-  onAttach?: (files: FileList) => void;
+  onAttach?: (files: FileList, message?: string) => void;
   onAudioRecorded?: (blob: Blob) => void;
   disabled?: boolean;
   isListening?: boolean;
@@ -26,6 +32,7 @@ export function ChatInput({
   voiceSupported = true,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
+  const [pendingFile, setPendingFile] = useState<PendingFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -36,7 +43,17 @@ export function ChatInput({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && !disabled) {
+    if (disabled) return;
+
+    if (pendingFile) {
+      // Send file (with optional text)
+      const dt = new DataTransfer();
+      dt.items.add(pendingFile.file);
+      onAttach?.(dt.files, message.trim() || undefined);
+      setPendingFile(null);
+      if (pendingFile.previewUrl) URL.revokeObjectURL(pendingFile.previewUrl);
+      setMessage("");
+    } else if (message.trim()) {
       onSend(message.trim());
       setMessage("");
     }
@@ -47,37 +64,77 @@ export function ChatInput({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0 && onAttach) {
-      onAttach(e.target.files);
-      e.target.value = "";
-    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith("image/");
+    const isPdf = file.type === "application/pdf";
+    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+
+    setPendingFile({
+      file,
+      previewUrl,
+      type: isImage ? "image" : isPdf ? "pdf" : "other",
+    });
+    e.target.value = "";
   };
 
-  const handleMicClick = () => {
-    if (onAudioRecorded) {
-      // ElevenLabs STT mode
-      onVoiceToggle?.();
-    } else {
-      onVoiceToggle?.();
-    }
+  const removePendingFile = () => {
+    if (pendingFile?.previewUrl) URL.revokeObjectURL(pendingFile.previewUrl);
+    setPendingFile(null);
   };
+
+  const canSend = !disabled && !isRecording && (pendingFile !== null || message.trim().length > 0);
 
   return (
     <form onSubmit={handleSubmit} className="p-4 bg-card border-t border-border">
+      {/* File preview */}
+      {pendingFile && (
+        <div className="mb-2 flex items-center gap-2 bg-secondary rounded-2xl p-2 pr-3">
+          {pendingFile.type === "image" && pendingFile.previewUrl ? (
+            <img
+              src={pendingFile.previewUrl}
+              alt="Aperçu"
+              className="w-12 h-12 rounded-xl object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <FileText className="w-6 h-6 text-primary" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">{pendingFile.file.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {pendingFile.type === "image" ? "Image" : "Document PDF"} · Vous pouvez ajouter un message
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={removePendingFile}
+            className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all flex-shrink-0"
+            aria-label="Supprimer le fichier"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 bg-secondary rounded-full p-1.5 pl-2">
         {/* Attach button */}
-        <button
-          type="button"
-          onClick={handleAttachClick}
-          className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all"
-          aria-label="Joindre un fichier"
-        >
-          <Paperclip className="w-5 h-5" />
-        </button>
+        {!pendingFile && (
+          <button
+            type="button"
+            onClick={handleAttachClick}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all"
+            aria-label="Joindre un fichier"
+          >
+            <Paperclip className="w-5 h-5" />
+          </button>
+        )}
         <input
           ref={fileInputRef}
           type="file"
-          multiple
+          multiple={false}
           accept="image/*,application/pdf,.doc,.docx,.txt,audio/*"
           onChange={handleFileChange}
           className="hidden"
@@ -87,16 +144,22 @@ export function ChatInput({
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder={isRecording ? "Enregistrement en cours..." : "Demandez à Oscar..."}
+          placeholder={
+            isRecording
+              ? "Enregistrement en cours..."
+              : pendingFile
+              ? "Ajouter un message (optionnel)..."
+              : "Demandez à Oscar..."
+          }
           className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground text-base"
           disabled={disabled || isRecording}
         />
         
         {/* Mic button */}
-        {voiceSupported && (
+        {voiceSupported && !pendingFile && (
           <button
             type="button"
-            onClick={handleMicClick}
+            onClick={() => onVoiceToggle?.()}
             className={cn(
               "p-2 rounded-full transition-all",
               isListening || isRecording
@@ -111,7 +174,7 @@ export function ChatInput({
 
         <button
           type="submit"
-          disabled={!message.trim() || disabled || isRecording}
+          disabled={!canSend}
           className="p-3 bg-primary text-primary-foreground rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
           aria-label="Envoyer"
         >
