@@ -440,11 +440,18 @@ function hasImageContent(messages: Array<{ role: string; content: unknown }>): b
   });
 }
 
-// Extract text from a PDF using Mistral OCR API
+// Extract text from a PDF using Mistral OCR API (direct base64 method)
 async function extractPdfText(pdfBase64: string, apiKey: string): Promise<string> {
   try {
-    console.log("Calling Mistral OCR for PDF extraction...");
-    const response = await fetch("https://api.mistral.ai/v1/ocr", {
+    console.log("Calling Mistral OCR for PDF extraction (base64 method)...");
+
+    // Ensure clean base64 data (strip data URI prefix if present)
+    const base64Data = pdfBase64.includes(",")
+      ? pdfBase64.split(",")[1]
+      : pdfBase64;
+
+    // Send directly as base64 document_url to Mistral OCR
+    const ocrResponse = await fetch("https://api.mistral.ai/v1/ocr", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -454,30 +461,28 @@ async function extractPdfText(pdfBase64: string, apiKey: string): Promise<string
         model: "mistral-ocr-latest",
         document: {
           type: "document_url",
-          document_url: pdfBase64, // data:application/pdf;base64,... format
+          document_url: `data:application/pdf;base64,${base64Data}`,
         },
       }),
     });
 
-    if (!response.ok) {
-      console.error("OCR API error:", response.status);
-      return "[Impossible de lire ce document PDF. Veuillez réessayer.]";
+    if (!ocrResponse.ok) {
+      const errText = await ocrResponse.text();
+      console.error("OCR API error:", ocrResponse.status, errText);
+      // Fallback: ask Mistral vision model to describe the PDF content
+      return "[PDF_FALLBACK]";
     }
 
-    const data = await response.json();
+    const ocrData = await ocrResponse.json();
 
-    // OCR returns pages with markdown content
-    if (data.pages && Array.isArray(data.pages)) {
-      const allText = data.pages
-        .map((page: { markdown?: string; index?: number }) =>
-          page.markdown || ""
-        )
+    if (ocrData.pages && Array.isArray(ocrData.pages) && ocrData.pages.length > 0) {
+      const allText = ocrData.pages
+        .map((page: { markdown?: string }) => page.markdown || "")
         .join("\n\n---\n\n");
-      console.log(`OCR extracted ${data.pages.length} page(s), ${allText.length} chars`);
-      // Truncate to ~8000 chars to stay within token limits
+      console.log(`OCR extracted ${ocrData.pages.length} page(s), ${allText.length} chars`);
       return allText.length > 8000
         ? allText.substring(0, 8000) + "\n\n[... document tronqué, trop long ...]"
-        : allText;
+        : allText || "[Document PDF sans texte extractible.]";
     }
 
     return "[Document PDF vide ou format non reconnu.]";
@@ -529,12 +534,17 @@ serve(async (req) => {
             // Real image → keep for Pixtral vision
             newContent.push({ type: "image_url", image_url: url });
           } else if (url.startsWith("data:application/pdf")) {
-            // PDF → extract text via Mistral OCR
+            // PDF → extract text via Mistral OCR (base64 direct method)
             const extractedText = await extractPdfText(url, MISTRAL_API_KEY);
-            newContent.push({
-              type: "text",
-              text: `📄 Contenu du document PDF :\n\n${extractedText}`,
-            });
+            if (extractedText === "[PDF_FALLBACK]") {
+              // OCR failed, pass as document_url to vision model directly
+              newContent.push({ type: "image_url", image_url: url });
+            } else {
+              newContent.push({
+                type: "text",
+                text: `📄 Contenu du document PDF :\n\n${extractedText}`,
+              });
+            }
           } else {
             newContent.push({
               type: "text",

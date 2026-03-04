@@ -27,19 +27,18 @@ const INITIAL_MESSAGE: ChatMessageData = {
   content: "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider aujourd'hui ? N'hésitez pas à me poser vos questions, nous ferons cela ensemble. 😊",
 };
 
-// ElevenLabs TTS — with timeout, abort, and play() error handling
+// ElevenLabs TTS — with abort, play() error handling, and truncation
 let currentAudio: HTMLAudioElement | null = null;
 let currentTtsAbort: AbortController | null = null;
 
 async function speakWithElevenLabs(text: string): Promise<void> {
   stopSpeech();
 
-  // Abort any in-flight TTS request
   currentTtsAbort?.abort();
   const abortController = new AbortController();
   currentTtsAbort = abortController;
 
-  // Truncate very long text to avoid ElevenLabs limits (max ~5000 chars)
+  // Truncate very long text to avoid ElevenLabs limits
   const truncatedText = text.length > 4000 ? text.substring(0, 4000) + "..." : text;
 
   const response = await fetch(TTS_URL, {
@@ -71,7 +70,6 @@ async function speakWithElevenLabs(text: string): Promise<void> {
     audio.onended = () => { cleanup(); resolve(); };
     audio.onerror = () => { cleanup(); reject(new Error("Erreur lecture audio")); };
 
-    // play() returns a Promise that can reject (autoplay policy, etc.)
     const playPromise = audio.play();
     if (playPromise) {
       playPromise.catch((err) => {
@@ -104,7 +102,6 @@ export function HomePage() {
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
-  const speechRecognitionRef = useRef<any>(null);
 
   const { user } = useAuth();
 
@@ -120,7 +117,6 @@ export function HomePage() {
             : m
         );
       }
-      // First token: create a new assistant message
       const id = Date.now().toString();
       lastAssistantIdRef.current = id;
       return [...prev, { id, role: "assistant" as const, content: token }];
@@ -175,6 +171,7 @@ export function HomePage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
+  // --- TTS ---
   const handleSpeak = async (text: string, messageId?: string) => {
     stopSpeech();
     if (messageId) setSpeakingMessageId(messageId);
@@ -182,7 +179,6 @@ export function HomePage() {
     try {
       await speakWithElevenLabs(text);
     } catch {
-      // Fallback to Web Speech API
       try {
         await fallbackSpeak(text);
       } catch {
@@ -214,94 +210,100 @@ export function HomePage() {
     setSpeakingMessageId(null);
   };
 
-  // Track if user intentionally stopped recording
-  const userStoppedRef = useRef(false);
+  // --- STT via MediaRecorder + ElevenLabs Scribe ---
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
 
-  const handleVoiceToggle = () => {
+  const handleVoiceToggle = async () => {
     if (isRecording) {
-      // User manually stops → send what we have
-      userStoppedRef.current = true;
-      speechRecognitionRef.current?.stop();
-      setIsRecording(false);
+      mediaRecorderRef.current?.stop();
       return;
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error("Reconnaissance vocale non supportée par ce navigateur");
-      return;
-    }
+    // Stop any ongoing speech first
+    stopSpeech();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setIsSpeakingState(false);
+    setSpeakingMessageId(null);
 
-    userStoppedRef.current = false;
-    const recognition = new SpeechRecognition();
-    recognition.lang = "fr-FR";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-
-    let finalText = "";
-    let lastInterim = "";
-
-    recognition.onstart = () => {
-      setIsRecording(true);
-      console.debug("Voice recognition started");
-    };
-
-    recognition.onresult = (e: any) => {
-      finalText = "";
-      lastInterim = "";
-      for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          finalText += e.results[i][0].transcript;
-        } else {
-          lastInterim += e.results[i][0].transcript;
-        }
-      }
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-      const textToSend = finalText.trim() || lastInterim.trim();
-
-      if (textToSend) {
-        handleSend(textToSend);
-        finalText = "";
-        lastInterim = "";
-      } else if (!userStoppedRef.current) {
-        // Browser stopped recognition unexpectedly (no speech detected)
-        // Don't show error — just silently end
-        console.debug("Voice recognition ended without text");
-      }
-    };
-
-    recognition.onerror = (e: any) => {
-      console.warn("Voice recognition error:", e.error);
-      setIsRecording(false);
-      if (e.error === "not-allowed") {
-        toast.error("Accès au microphone refusé. Autorisez le micro dans les paramètres.");
-      } else if (e.error === "network") {
-        toast.error("Erreur réseau — la reconnaissance vocale nécessite une connexion.");
-      } else if (e.error === "no-speech") {
-        // Common on mobile — don't scare the user
-        // Use whatever interim text we have
-        const textToSend = finalText.trim() || lastInterim.trim();
-        if (textToSend) handleSend(textToSend);
-      } else if (e.error === "audio-capture") {
-        toast.error("Aucun microphone détecté.");
-      } else if (e.error !== "aborted") {
-        toast.error(`Erreur vocale : ${e.error}`);
-      }
-    };
-
-    speechRecognitionRef.current = recognition;
     try {
-      recognition.start();
-    } catch {
-      toast.error("Impossible de démarrer la reconnaissance vocale");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "audio/mp4";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setIsRecording(false);
+
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        console.log(`[Oscar STT] Audio blob: ${blob.size} bytes, type: ${mimeType}, chunks: ${audioChunksRef.current.length}`);
+        if (blob.size < 100) {
+          console.warn("[Oscar STT] Audio trop court, ignoré");
+          return;
+        }
+
+        setIsTyping(true);
+        try {
+          const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+          const fd = new FormData();
+          fd.append("audio", blob, `voice.${ext}`);
+
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-stt`,
+            {
+              method: "POST",
+              headers: {
+                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: fd,
+            }
+          );
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.error("STT error:", res.status, errData);
+            throw new Error(errData.error || `STT erreur ${res.status}`);
+          }
+
+          const data = await res.json();
+          setIsTyping(false);
+
+          if (data.text?.trim()) {
+            handleSend(data.text.trim());
+          } else {
+            toast.info("Aucune parole détectée, réessayez.");
+          }
+        } catch (sttErr: any) {
+          setIsTyping(false);
+          console.error("[Oscar STT] Erreur:", sttErr);
+          toast.error(sttErr?.message || "Impossible de transcrire l'audio.");
+        }
+      };
+
+      recorder.start(250);
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+    } catch (err: any) {
+      setIsRecording(false);
+      if (err?.name === "NotAllowedError") {
+        toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
+      } else {
+        toast.error("Impossible d'accéder au microphone.");
+      }
     }
   };
 
-  const handleAttach = async (files: FileList) => {
+  const handleAttach = async (files: FileList, extraMessage?: string) => {
     const file = files[0];
     if (!file) return;
     const isImage = file.type.startsWith("image/");
@@ -309,25 +311,27 @@ export function HomePage() {
     if (!isImage && !isPdf) { toast.info(`Fichier sélectionné : ${file.name}`); return; }
     setIsTyping(true);
     try {
-      // Convert to base64 data URL
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+
+      const contentLabel = isImage ? `[Image envoyée : ${file.name}]` : `[Document envoyé : ${file.name}]`;
       const userMsg: ChatMessageData = {
         id: Date.now().toString(),
         role: "user",
-        content: isImage ? `[Image envoyée : ${file.name}]` : `[Document envoyé : ${file.name}]`,
+        content: extraMessage ? `${contentLabel}\n${extraMessage}` : contentLabel,
         imageUrl: isImage ? base64 : undefined,
       };
       setMessages(prev => [...prev, userMsg]);
 
-      // Send to Mistral with vision (Pixtral) — image as base64 in message content
-      const promptText = isImage
-        ? `Peux-tu analyser cette image ? (${file.name})`
-        : `Peux-tu analyser ce document ? (${file.name})`;
+      const promptText = extraMessage
+        ? extraMessage
+        : isImage
+          ? `Peux-tu analyser cette image ? (${file.name})`
+          : `Peux-tu analyser ce document ? (${file.name})`;
 
       sendToMistral(promptText, base64);
     } catch {
