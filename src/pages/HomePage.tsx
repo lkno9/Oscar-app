@@ -210,13 +210,17 @@ export function HomePage() {
     setSpeakingMessageId(null);
   };
 
-  // --- STT via MediaRecorder + ElevenLabs Scribe ---
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<BlobPart[]>([]);
+  // --- STT via Web Speech API (gratuit, natif navigateur) ---
+  const recognitionRef = useRef<any>(null);
+  const [transcript, setTranscript] = useState("");
 
-  const handleVoiceToggle = async () => {
+  const webSpeechSupported = typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+
+  const handleVoiceToggle = () => {
     if (isRecording) {
-      mediaRecorderRef.current?.stop();
+      // Stop recording — final result will be handled by onresult/onend
+      recognitionRef.current?.stop();
       return;
     }
 
@@ -226,80 +230,69 @@ export function HomePage() {
     setIsSpeakingState(false);
     setSpeakingMessageId(null);
 
+    if (!webSpeechSupported) {
+      toast.error("La reconnaissance vocale n'est pas supportée par ce navigateur.");
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : "audio/mp4";
-      const recorder = new MediaRecorder(stream, { mimeType });
-      audioChunksRef.current = [];
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = "fr-FR";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
 
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
-      };
+      let finalTranscript = "";
 
-      recorder.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        setIsRecording(false);
-
-        const blob = new Blob(audioChunksRef.current, { type: mimeType });
-        console.log(`[Oscar STT] Audio blob: ${blob.size} bytes, type: ${mimeType}, chunks: ${audioChunksRef.current.length}`);
-        if (blob.size < 100) {
-          console.warn("[Oscar STT] Audio trop court, ignoré");
-          return;
-        }
-
-        setIsTyping(true);
-        try {
-          const ext = mimeType.includes("mp4") ? "mp4" : "webm";
-          const fd = new FormData();
-          fd.append("audio", blob, `voice.${ext}`);
-
-          const res = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-stt`,
-            {
-              method: "POST",
-              headers: {
-                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              },
-              body: fd,
-            }
-          );
-
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            console.error("STT error:", res.status, errData);
-            throw new Error(errData.error || `STT erreur ${res.status}`);
-          }
-
-          const data = await res.json();
-          setIsTyping(false);
-
-          if (data.text?.trim()) {
-            handleSend(data.text.trim());
+      recognition.onresult = (event: any) => {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            finalTranscript += result[0].transcript;
           } else {
-            toast.info("Aucune parole détectée, réessayez.");
+            interim += result[0].transcript;
           }
-        } catch (sttErr: any) {
-          setIsTyping(false);
-          console.error("[Oscar STT] Erreur:", sttErr);
-          toast.error(sttErr?.message || "Impossible de transcrire l'audio.");
+        }
+        // Show real-time transcript in the input field
+        setTranscript(finalTranscript + interim);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+        const text = finalTranscript.trim();
+        setTranscript("");
+        if (text) {
+          handleSend(text);
+        } else {
+          toast.info("Aucune parole détectée, réessayez.");
+        }
+        recognitionRef.current = null;
+      };
+
+      recognition.onerror = (event: any) => {
+        setIsRecording(false);
+        setTranscript("");
+        recognitionRef.current = null;
+        if (event.error === "not-allowed") {
+          toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
+        } else if (event.error === "no-speech") {
+          toast.info("Aucune parole détectée, réessayez.");
+        } else {
+          console.error("[Oscar STT] Erreur:", event.error);
+          toast.error("Erreur de reconnaissance vocale.");
         }
       };
 
-      recorder.start(250);
-      mediaRecorderRef.current = recorder;
+      recognition.start();
+      recognitionRef.current = recognition;
       setIsRecording(true);
-    } catch (err: any) {
+      setTranscript("");
+    } catch (err) {
       setIsRecording(false);
-      if (err?.name === "NotAllowedError") {
-        toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
-      } else {
-        toast.error("Impossible d'accéder au microphone.");
-      }
+      console.error("[Oscar STT] Init error:", err);
+      toast.error("Impossible de démarrer la reconnaissance vocale.");
     }
   };
 
@@ -405,11 +398,11 @@ export function HomePage() {
         onAttach={handleAttach}
         onAudioRecorded={undefined}
         disabled={isTyping}
-        isListening={false}
+        isListening={isRecording}
         isRecording={isRecording}
-        transcript=""
+        transcript={transcript}
         onVoiceToggle={handleVoiceToggle}
-        voiceSupported={true}
+        voiceSupported={webSpeechSupported}
       />
 
       {/* Call Screen */}
