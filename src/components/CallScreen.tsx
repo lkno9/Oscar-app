@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { PhoneOff, Mic, MicOff, X } from "lucide-react";
+import { PhoneOff, Mic, MicOff, Video, VideoOff, X } from "lucide-react";
 import { OscarAvatar } from "./OscarAvatar";
 import { streamChat, Message } from "@/lib/oscarChat";
 import { cn } from "@/lib/utils";
@@ -13,8 +13,9 @@ interface CallScreenProps {
 
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
-export function CallScreen({ isOpen, onClose }: CallScreenProps) {
+export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: CallScreenProps) {
   const [isMuted, setIsMuted] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(initialVideoEnabled);
   const [callDuration, setCallDuration] = useState(0);
   const [isOscarSpeaking, setIsOscarSpeaking] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -30,6 +31,8 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const ttsAbortRef = useRef<AbortController | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const webSpeechSupported = typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
@@ -99,6 +102,43 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setIsOscarSpeaking(false);
   }, []);
+
+  // --- Camera for video calls ---
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setIsVideoEnabled(true);
+    } catch {
+      toast.error("Impossible d'accéder à la caméra.");
+      setIsVideoEnabled(false);
+    }
+  }, []);
+
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsVideoEnabled(false);
+  }, []);
+
+  const toggleVideo = useCallback(() => {
+    if (isVideoEnabled) {
+      stopCamera();
+    } else {
+      startCamera();
+    }
+  }, [isVideoEnabled, startCamera, stopCamera]);
 
   // --- STT: Web Speech API with auto-restart ---
   const startListeningInternal = useCallback(() => {
@@ -256,6 +296,11 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
         setCallDuration(prev => prev + 1);
       }, 1000);
 
+      // Start camera if video call
+      if (initialVideoEnabled) {
+        startCamera();
+      }
+
       // Oscar greeting after a short delay
       const greetTimeout = setTimeout(async () => {
         const greeting = "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider ?";
@@ -274,6 +319,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       stopListening();
       stopOscarSpeech();
+      stopCamera();
       conversationRef.current = [];
       setCallDuration(0);
     }
@@ -283,10 +329,11 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   const handleEndCall = useCallback(() => {
     stopListening();
     stopOscarSpeech();
+    stopCamera();
     if (callTimerRef.current) clearInterval(callTimerRef.current);
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     onClose();
-  }, [stopListening, stopOscarSpeech, onClose]);
+  }, [stopListening, stopOscarSpeech, stopCamera, onClose]);
 
   // Format duration
   const formatDuration = (seconds: number) => {
@@ -345,6 +392,20 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
           </div>
         </div>
 
+        {/* User video preview (small corner) */}
+        {isVideoEnabled && (
+          <div className="absolute top-4 right-4 w-32 h-44 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg bg-black">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover mirror"
+              style={{ transform: "scaleX(-1)" }}
+            />
+          </div>
+        )}
+
         {/* Close button */}
         <button
           onClick={handleEndCall}
@@ -389,6 +450,24 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
               <Mic className="w-6 h-6" />
             ) : (
               <MicOff className="w-6 h-6" />
+            )}
+          </button>
+
+          {/* Video toggle */}
+          <button
+            onClick={toggleVideo}
+            className={cn(
+              "p-4 rounded-full transition-all",
+              isVideoEnabled
+                ? "bg-secondary text-foreground"
+                : "bg-secondary/50 text-foreground/50"
+            )}
+            aria-label={isVideoEnabled ? "Désactiver la caméra" : "Activer la caméra"}
+          >
+            {isVideoEnabled ? (
+              <Video className="w-6 h-6" />
+            ) : (
+              <VideoOff className="w-6 h-6" />
             )}
           </button>
 
