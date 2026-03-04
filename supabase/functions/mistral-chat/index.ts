@@ -459,14 +459,32 @@ serve(async (req) => {
     // Keep last 20 messages to stay within token limits
     const truncatedMessages = messages.slice(-20);
 
+    // Sanitize messages: convert non-image content (PDFs, etc.) in image_url parts to text
+    const sanitizedMessages = truncatedMessages.map((msg: { role: string; content: unknown }) => {
+      if (!Array.isArray(msg.content)) return msg;
+      const newContent = (msg.content as Array<{ type: string; image_url?: { url?: string }; text?: string }>).map((part) => {
+        if (part.type === "image_url") {
+          const url = part.image_url?.url || "";
+          // If it's a real image (URL or data:image/...), keep it
+          if (url.startsWith("https://") || url.startsWith("data:image/")) {
+            return part;
+          }
+          // Otherwise (PDF, etc.), convert to a text description
+          return { type: "text", text: "[L'utilisateur a partagé un document (PDF). Dites-lui que vous ne pouvez pas lire les PDF directement, mais que vous pouvez l'aider à décrire son contenu manuellement.]" };
+        }
+        return part;
+      });
+      return { ...msg, content: newContent };
+    });
+
     // Choose model: pixtral-large for vision, mistral-large for text
-    const useVision = hasImageContent(truncatedMessages);
+    const useVision = hasImageContent(sanitizedMessages);
     const model = useVision ? "pixtral-large-latest" : "mistral-large-latest";
 
     // Build final messages array with system prompt
     const mistralMessages = [
       { role: "system", content: OSCAR_SYSTEM_PROMPT },
-      ...truncatedMessages,
+      ...sanitizedMessages,
     ];
 
     const response = await fetch(
