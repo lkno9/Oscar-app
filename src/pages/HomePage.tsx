@@ -239,15 +239,6 @@ export function HomePage() {
     startRecognition();
   };
 
-  const handleCatchErr = (err: any) => {
-    setIsRecording(false);
-    if (err?.name === "NotAllowedError") {
-        toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
-      } else {
-        toast.error("Impossible d'accéder au microphone.");
-      }
-    }
-  };
 
   const handleAttach = async (files: FileList, extraMessage?: string) => {
     const file = files[0];
