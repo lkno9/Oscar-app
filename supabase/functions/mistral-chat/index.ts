@@ -441,10 +441,56 @@ function hasImageContent(messages: Array<{ role: string; content: unknown }>): b
 }
 
 // Extract text from a PDF using Mistral OCR API
+// Workflow: 1) Upload PDF to Mistral Files API → 2) Get signed URL → 3) Run OCR
 async function extractPdfText(pdfBase64: string, apiKey: string): Promise<string> {
   try {
     console.log("Calling Mistral OCR for PDF extraction...");
-    const response = await fetch("https://api.mistral.ai/v1/ocr", {
+
+    // Step 1: Extract raw bytes from base64 data URI
+    const base64Data = pdfBase64.replace(/^data:application\/pdf;base64,/, "");
+    const binaryStr = atob(base64Data);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
+
+    // Step 2: Upload PDF to Mistral Files API
+    const formData = new FormData();
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    formData.append("file", blob, "document.pdf");
+    formData.append("purpose", "ocr");
+
+    const uploadResponse = await fetch("https://api.mistral.ai/v1/files", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      const errText = await uploadResponse.text();
+      console.error("Mistral file upload error:", uploadResponse.status, errText);
+      return "[Impossible d'envoyer le document. Veuillez réessayer.]";
+    }
+
+    const uploadData = await uploadResponse.json();
+    const fileId = uploadData.id;
+    console.log("PDF uploaded, file ID:", fileId);
+
+    // Step 3: Get signed URL for the uploaded file
+    const signedUrlResponse = await fetch(
+      `https://api.mistral.ai/v1/files/${fileId}/url?expiry=3600`,
+      { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
+
+    if (!signedUrlResponse.ok) {
+      console.error("Failed to get signed URL:", signedUrlResponse.status);
+      return "[Impossible d'accéder au document. Veuillez réessayer.]";
+    }
+
+    const { url: signedUrl } = await signedUrlResponse.json();
+
+    // Step 4: Run OCR on the signed URL
+    const ocrResponse = await fetch("https://api.mistral.ai/v1/ocr", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -452,32 +498,26 @@ async function extractPdfText(pdfBase64: string, apiKey: string): Promise<string
       },
       body: JSON.stringify({
         model: "mistral-ocr-latest",
-        document: {
-          type: "document_url",
-          document_url: pdfBase64, // data:application/pdf;base64,... format
-        },
+        document: { type: "document_url", document_url: signedUrl },
       }),
     });
 
-    if (!response.ok) {
-      console.error("OCR API error:", response.status);
+    if (!ocrResponse.ok) {
+      const errText = await ocrResponse.text();
+      console.error("OCR API error:", ocrResponse.status, errText);
       return "[Impossible de lire ce document PDF. Veuillez réessayer.]";
     }
 
-    const data = await response.json();
+    const ocrData = await ocrResponse.json();
 
-    // OCR returns pages with markdown content
-    if (data.pages && Array.isArray(data.pages)) {
-      const allText = data.pages
-        .map((page: { markdown?: string; index?: number }) =>
-          page.markdown || ""
-        )
+    if (ocrData.pages && Array.isArray(ocrData.pages)) {
+      const allText = ocrData.pages
+        .map((page: { markdown?: string }) => page.markdown || "")
         .join("\n\n---\n\n");
-      console.log(`OCR extracted ${data.pages.length} page(s), ${allText.length} chars`);
-      // Truncate to ~8000 chars to stay within token limits
+      console.log(`OCR extracted ${ocrData.pages.length} page(s), ${allText.length} chars`);
       return allText.length > 8000
         ? allText.substring(0, 8000) + "\n\n[... document tronqué, trop long ...]"
-        : allText;
+        : allText || "[Document PDF sans texte extractible.]";
     }
 
     return "[Document PDF vide ou format non reconnu.]";
