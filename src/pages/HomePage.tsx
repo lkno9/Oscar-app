@@ -71,7 +71,6 @@ export function HomePage() {
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
-  const speechRecognitionRef = useRef<any>(null);
 
   const { user } = useAuth();
 
