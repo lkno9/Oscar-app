@@ -62,7 +62,7 @@ function stopSpeech() {
 
 export function HomePage() {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<ChatMessageData[]>([]);
+  const [messages, setMessages] = useState<ChatMessageData[]>([INITIAL_MESSAGE]);
   const [isTyping, setIsTyping] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [isSpeakingState, setIsSpeakingState] = useState(false);
@@ -187,6 +187,12 @@ export function HomePage() {
       setIsRecording(false);
       return;
     }
+    // Stop any ongoing TTS before recording
+    stopSpeech();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setIsSpeakingState(false);
+    setSpeakingMessageId(null);
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast.error("Reconnaissance vocale non supportée par ce navigateur");
@@ -211,11 +217,17 @@ export function HomePage() {
     };
     recognition.onerror = (e: any) => {
       setIsRecording(false);
-      if (e.error === "not-allowed") toast.error("Accès au microphone refusé.");
+      if (e.error === "not-allowed") toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
+      else if (e.error === "no-speech") toast.info("Aucune parole détectée, réessayez.");
       else if (e.error !== "aborted") toast.error(`Erreur vocale : ${e.error}`);
     };
     speechRecognitionRef.current = recognition;
-    try { recognition.start(); } catch { toast.error("Impossible de démarrer la reconnaissance vocale"); }
+    try { 
+      recognition.start(); 
+    } catch (err) { 
+      setIsRecording(false);
+      toast.error("Impossible de démarrer la reconnaissance vocale"); 
+    }
   };
 
   const handleAttach = async (files: FileList, extraMessage?: string) => {
