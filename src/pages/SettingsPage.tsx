@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Bell, Volume2, Moon, Shield, HelpCircle, LogOut, ChevronRight, CheckCircle2, Users, MessageSquare, Phone, AlertTriangle, MapPin, MessageCircle } from "lucide-react";
+import { ArrowLeft, User, Bell, Volume2, Moon, Shield, ChevronRight, CheckCircle2, Users, MessageSquare, MessageCircle, Phone, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,16 @@ interface Profile {
 }
 
 const FAQ_ITEMS = [
-  { q: "Comment parler à Oscar ?", a: "Appuyez sur le micro sur la page d'accueil et parlez naturellement." },
-  { q: "Comment inviter ma famille ?", a: "Allez dans Paramètres > Accès Famille et envoyez un code d'invitation." },
-  { q: "Mes données sont-elles sécurisées ?", a: "Oui, toutes vos données sont chiffrées et accessibles uniquement par vous." },
+  { q: "Comment parler à Oscar ?", a: "Appuyez sur le micro en bas de la page d'accueil et parlez naturellement. Oscar comprend le français et répond immédiatement." },
+  { q: "Comment inviter ma famille ?", a: "Allez dans Paramètres > Accès Famille, choisissez le lien familial et générez un code d'invitation à partager." },
+  { q: "Mes données sont-elles sécurisées ?", a: "Oui, toutes vos données sont chiffrées et stockées de manière sécurisée. Seuls vous et les membres de famille que vous invitez y ont accès." },
+  { q: "Comment ajouter un médicament ?", a: "Rendez-vous dans Services > Santé, puis dans l'onglet Médicaments. Appuyez sur le bouton '+' pour ajouter un nouveau médicament avec sa posologie." },
+  { q: "Comment mettre un document en favori ?", a: "Dans Services > Documents, ouvrez le document et appuyez sur l'étoile pour l'ajouter aux favoris. Retrouvez-le ensuite dans l'onglet Favoris." },
+  { q: "Puis-je désactiver les rappels de médicaments ?", a: "Oui, dans Paramètres > Préférences, désactivez les Notifications. Vous pouvez aussi gérer chaque rappel individuellement depuis la page Santé." },
+  { q: "Comment signaler une arnaque ?", a: "Allez dans Services > Protection Arnaques. Vous pouvez vérifier un message suspect ou consulter les alertes récentes. Oscar vous guide pour porter plainte si nécessaire." },
+  { q: "Comment fonctionne le mode sombre ?", a: "Dans Paramètres > Préférences, activez le Mode sombre. L'écran passe en tons foncés pour réduire la fatigue oculaire, surtout le soir." },
+  { q: "Puis-je changer la langue de l'application ?", a: "Pour l'instant, Oscar est disponible uniquement en français. D'autres langues sont prévues dans les prochaines mises à jour." },
+  { q: "Comment contacter le support ?", a: "Appelez directement le support au +33 9 00 00 00 00 depuis Paramètres > Aide & Support, ou discutez avec Oscar qui peut vous orienter." },
 ];
 
 function FaqItem({ q, a }: { q: string; a: string }) {
@@ -182,45 +189,6 @@ export function SettingsPage() {
           </div>
 
           <div className="p-4 space-y-6">
-            {/* SOS Section — visually prominent */}
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Urgence</h3>
-              <div className="bg-destructive/10 border-2 border-destructive/30 rounded-2xl p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-destructive flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="w-6 h-6 text-destructive-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-destructive text-base">SOS — Urgence</p>
-                    <p className="text-sm text-muted-foreground">Contactez les secours rapidement</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-3">
-                  <button
-                    onClick={handleCallEmergency}
-                    className="flex items-center gap-4 bg-destructive text-destructive-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-destructive/90 transition-colors active:scale-95"
-                  >
-                    <Phone className="w-6 h-6 flex-shrink-0" />
-                    Appeler les secours (15)
-                  </button>
-                  <button
-                    onClick={handleCallFamily}
-                    className="flex items-center gap-4 bg-card border-2 border-destructive/30 text-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-destructive/5 transition-colors active:scale-95"
-                  >
-                    <Users className="w-6 h-6 flex-shrink-0 text-destructive" />
-                    Appeler ma famille
-                  </button>
-                  <button
-                    onClick={handleSendLocation}
-                    className="flex items-center gap-4 bg-card border-2 border-destructive/30 text-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-destructive/5 transition-colors active:scale-95"
-                  >
-                    <MapPin className="w-6 h-6 flex-shrink-0 text-destructive" />
-                    Envoyer ma position
-                  </button>
-                </div>
-              </div>
-            </section>
-
             {/* Help Section */}
             <section>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Aide & Support</h3>
