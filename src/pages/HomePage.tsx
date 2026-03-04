@@ -93,7 +93,7 @@ function stopSpeech() {
 
 export function HomePage() {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<ChatMessageData[]>([INITIAL_MESSAGE]);
+  const [messages, setMessages] = useState<ChatMessageData[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [isSpeakingState, setIsSpeakingState] = useState(false);
