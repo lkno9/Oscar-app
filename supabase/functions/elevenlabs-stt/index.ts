@@ -44,7 +44,14 @@ serve(async (req) => {
     if (!response.ok) {
       const err = await response.text();
       console.error("ElevenLabs STT error:", response.status, err);
-      throw new Error("Erreur transcription ElevenLabs");
+      // Surface the actual error to the client for debugging
+      if (response.status === 401) {
+        throw new Error("Clé ElevenLabs invalide ou expirée");
+      } else if (response.status === 429) {
+        throw new Error("Quota ElevenLabs dépassé, réessayez plus tard");
+      } else {
+        throw new Error(`Erreur ElevenLabs STT (${response.status}): ${err.substring(0, 200)}`);
+      }
     }
 
     const transcription = await response.json();
