@@ -9,6 +9,8 @@ import { useMistralChat } from "@/hooks/useMistralChat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 

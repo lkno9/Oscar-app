@@ -189,45 +189,6 @@ export function SettingsPage() {
           </div>
 
           <div className="p-4 space-y-6">
-            {/* SOS Section — visually prominent */}
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Urgence</h3>
-              <div className="bg-destructive/10 border-2 border-destructive/30 rounded-2xl p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-destructive flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="w-6 h-6 text-destructive-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-destructive text-base">SOS — Urgence</p>
-                    <p className="text-sm text-muted-foreground">Contactez les secours rapidement</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-3">
-                  <button
-                    onClick={handleCallEmergency}
-                    className="flex items-center gap-4 bg-destructive text-destructive-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-destructive/90 transition-colors active:scale-95"
-                  >
-                    <Phone className="w-6 h-6 flex-shrink-0" />
-                    Appeler les secours (15)
-                  </button>
-                  <button
-                    onClick={handleCallFamily}
-                    className="flex items-center gap-4 bg-card border-2 border-destructive/30 text-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-destructive/5 transition-colors active:scale-95"
-                  >
-                    <Users className="w-6 h-6 flex-shrink-0 text-destructive" />
-                    Appeler ma famille
-                  </button>
-                  <button
-                    onClick={handleSendLocation}
-                    className="flex items-center gap-4 bg-card border-2 border-destructive/30 text-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-destructive/5 transition-colors active:scale-95"
-                  >
-                    <MapPin className="w-6 h-6 flex-shrink-0 text-destructive" />
-                    Envoyer ma position
-                  </button>
-                </div>
-              </div>
-            </section>
-
             {/* Help Section */}
             <section>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Aide & Support</h3>

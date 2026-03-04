@@ -59,6 +59,7 @@ const NEWS_CATEGORIES = [
   { key: "droits", label: "Droits" },
   { key: "seniors", label: "Seniors" },
   { key: "securite", label: "Sécurité" },
+  { key: "activites", label: "Activités" },
 ] as const;
 
 const NEWS_CATEGORY_STYLES: Record<string, { emoji: string; bg: string; text: string }> = {
