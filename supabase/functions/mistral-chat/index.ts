@@ -417,13 +417,16 @@ Quand un utilisateur envoie une image ou un document, Oscar l'analyse attentivem
 - Signale les points d'attention (dates d'expiration proches, anomalies...)
 - Propose des actions concrètes si nécessaire`;
 
-// Detect if any message contains image content (for Pixtral vision model)
+// Detect if any message contains actual image content (not PDFs) for Pixtral vision model
 function hasImageContent(messages: Array<{ role: string; content: unknown }>): boolean {
   return messages.some((msg) => {
     if (Array.isArray(msg.content)) {
-      return msg.content.some(
-        (part: { type: string }) => part.type === "image_url"
-      );
+      return msg.content.some((part: { type: string; image_url?: { url?: string } }) => {
+        if (part.type !== "image_url") return false;
+        const url = part.image_url?.url || "";
+        // Only use vision model for actual images, not PDFs or other files
+        return url.startsWith("https://") || url.startsWith("data:image/");
+      });
     }
     return false;
   });
@@ -456,8 +459,26 @@ serve(async (req) => {
     // Keep last 20 messages to stay within token limits
     const truncatedMessages = messages.slice(-20);
 
+    // Sanitize messages: convert non-image content (PDFs, etc.) in image_url parts to text
+    const sanitizedMessages = truncatedMessages.map((msg: { role: string; content: unknown }) => {
+      if (!Array.isArray(msg.content)) return msg;
+      const newContent = (msg.content as Array<{ type: string; image_url?: { url?: string }; text?: string }>).map((part) => {
+        if (part.type === "image_url") {
+          const url = part.image_url?.url || "";
+          // If it's a real image (URL or data:image/...), keep it
+          if (url.startsWith("https://") || url.startsWith("data:image/")) {
+            return part;
+          }
+          // Otherwise (PDF, etc.), convert to a text description
+          return { type: "text", text: "[L'utilisateur a partagé un document (PDF). Dites-lui que vous ne pouvez pas lire les PDF directement, mais que vous pouvez l'aider à décrire son contenu manuellement.]" };
+        }
+        return part;
+      });
+      return { ...msg, content: newContent };
+    });
+
     // Choose model: pixtral-large for vision, mistral-large for text
-    const useVision = hasImageContent(truncatedMessages);
+    const useVision = hasImageContent(sanitizedMessages);
     const model = useVision ? "pixtral-large-latest" : "mistral-large-latest";
 
     console.log(`Using model: ${model}, vision: ${useVision}, messages: ${truncatedMessages.length}`);
@@ -465,7 +486,7 @@ serve(async (req) => {
     // Build final messages array with system prompt
     const mistralMessages = [
       { role: "system", content: OSCAR_SYSTEM_PROMPT },
-      ...truncatedMessages,
+      ...sanitizedMessages,
     ];
 
     const requestBody = {
