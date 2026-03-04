@@ -5,9 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Oscar voice: Antoine — warm, natural French male voice
+// Oscar voice: George — warm, raspy pre-made voice (works for French)
 // To change voice: browse https://elevenlabs.io/voice-library and update the ID
-const VOICE_ID = "PjN1x5uqQvyU3DO0gdJz";
+const VOICE_ID = "JBFqnCBsd6RMkjVDRZzb";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,13 +39,13 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_flash_v2_5",
+          model_id: "eleven_multilingual_v2",
           voice_settings: {
-            stability: 0.4,
-            similarity_boost: 0.7,
-            style: 0.45,
+            stability: 0.45,
+            similarity_boost: 0.75,
+            style: 0.4,
             use_speaker_boost: true,
-            speed: 0.92,
+            speed: 0.9,
           },
         }),
       }
