@@ -440,56 +440,17 @@ function hasImageContent(messages: Array<{ role: string; content: unknown }>): b
   });
 }
 
-// Extract text from a PDF using Mistral OCR API
-// Workflow: 1) Upload PDF to Mistral Files API → 2) Get signed URL → 3) Run OCR
+// Extract text from a PDF using Mistral OCR API (direct base64 method)
 async function extractPdfText(pdfBase64: string, apiKey: string): Promise<string> {
   try {
-    console.log("Calling Mistral OCR for PDF extraction...");
+    console.log("Calling Mistral OCR for PDF extraction (base64 method)...");
 
-    // Step 1: Extract raw bytes from base64 data URI
-    const base64Data = pdfBase64.replace(/^data:application\/pdf;base64,/, "");
-    const binaryStr = atob(base64Data);
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) {
-      bytes[i] = binaryStr.charCodeAt(i);
-    }
+    // Ensure clean base64 data (strip data URI prefix if present)
+    const base64Data = pdfBase64.includes(",")
+      ? pdfBase64.split(",")[1]
+      : pdfBase64;
 
-    // Step 2: Upload PDF to Mistral Files API
-    const formData = new FormData();
-    const blob = new Blob([bytes], { type: "application/pdf" });
-    formData.append("file", blob, "document.pdf");
-    formData.append("purpose", "ocr");
-
-    const uploadResponse = await fetch("https://api.mistral.ai/v1/files", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}` },
-      body: formData,
-    });
-
-    if (!uploadResponse.ok) {
-      const errText = await uploadResponse.text();
-      console.error("Mistral file upload error:", uploadResponse.status, errText);
-      return "[Impossible d'envoyer le document. Veuillez réessayer.]";
-    }
-
-    const uploadData = await uploadResponse.json();
-    const fileId = uploadData.id;
-    console.log("PDF uploaded, file ID:", fileId);
-
-    // Step 3: Get signed URL for the uploaded file
-    const signedUrlResponse = await fetch(
-      `https://api.mistral.ai/v1/files/${fileId}/url?expiry=3600`,
-      { headers: { Authorization: `Bearer ${apiKey}` } }
-    );
-
-    if (!signedUrlResponse.ok) {
-      console.error("Failed to get signed URL:", signedUrlResponse.status);
-      return "[Impossible d'accéder au document. Veuillez réessayer.]";
-    }
-
-    const { url: signedUrl } = await signedUrlResponse.json();
-
-    // Step 4: Run OCR on the signed URL
+    // Send directly as base64 document_url to Mistral OCR
     const ocrResponse = await fetch("https://api.mistral.ai/v1/ocr", {
       method: "POST",
       headers: {
@@ -498,19 +459,23 @@ async function extractPdfText(pdfBase64: string, apiKey: string): Promise<string
       },
       body: JSON.stringify({
         model: "mistral-ocr-latest",
-        document: { type: "document_url", document_url: signedUrl },
+        document: {
+          type: "document_url",
+          document_url: `data:application/pdf;base64,${base64Data}`,
+        },
       }),
     });
 
     if (!ocrResponse.ok) {
       const errText = await ocrResponse.text();
       console.error("OCR API error:", ocrResponse.status, errText);
-      return "[Impossible de lire ce document PDF. Veuillez réessayer.]";
+      // Fallback: ask Mistral vision model to describe the PDF content
+      return "[PDF_FALLBACK]";
     }
 
     const ocrData = await ocrResponse.json();
 
-    if (ocrData.pages && Array.isArray(ocrData.pages)) {
+    if (ocrData.pages && Array.isArray(ocrData.pages) && ocrData.pages.length > 0) {
       const allText = ocrData.pages
         .map((page: { markdown?: string }) => page.markdown || "")
         .join("\n\n---\n\n");
@@ -569,12 +534,17 @@ serve(async (req) => {
             // Real image → keep for Pixtral vision
             newContent.push({ type: "image_url", image_url: url });
           } else if (url.startsWith("data:application/pdf")) {
-            // PDF → extract text via Mistral OCR
+            // PDF → extract text via Mistral OCR (base64 direct method)
             const extractedText = await extractPdfText(url, MISTRAL_API_KEY);
-            newContent.push({
-              type: "text",
-              text: `📄 Contenu du document PDF :\n\n${extractedText}`,
-            });
+            if (extractedText === "[PDF_FALLBACK]") {
+              // OCR failed, pass as document_url to vision model directly
+              newContent.push({ type: "image_url", image_url: url });
+            } else {
+              newContent.push({
+                type: "text",
+                text: `📄 Contenu du document PDF :\n\n${extractedText}`,
+              });
+            }
           } else {
             newContent.push({
               type: "text",
