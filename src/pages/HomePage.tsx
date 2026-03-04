@@ -71,7 +71,6 @@ export function HomePage() {
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
-  const speechRecognitionRef = useRef<any>(null);
 
   const { user } = useAuth();
 
@@ -181,52 +180,78 @@ export function HomePage() {
     setSpeakingMessageId(null);
   };
 
-  const handleVoiceToggle = () => {
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+
+  const handleVoiceToggle = async () => {
     if (isRecording) {
-      speechRecognitionRef.current?.stop();
-      setIsRecording(false);
+      // Stop recording → will trigger onstop → transcription
+      mediaRecorderRef.current?.stop();
       return;
     }
+
     // Stop any ongoing TTS before recording
     stopSpeech();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setIsSpeakingState(false);
     setSpeakingMessageId(null);
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error("Reconnaissance vocale non supportée par ce navigateur");
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.lang = "fr-FR";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-    let finalText = "";
-    recognition.onstart = () => setIsRecording(true);
-    recognition.onresult = (e: any) => {
-      finalText = "";
-      for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setIsRecording(false);
+
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        if (blob.size < 1000) return; // too short, ignore
+
+        setIsTyping(true);
+        try {
+          const fd = new FormData();
+          fd.append("audio", blob, `voice.${mimeType.includes("webm") ? "webm" : "mp4"}`);
+
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-stt`,
+            {
+              method: "POST",
+              headers: {
+                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: fd,
+            }
+          );
+          const data = await res.json();
+          setIsTyping(false);
+          if (data.text?.trim()) {
+            handleSend(data.text.trim());
+          } else {
+            toast.info("Aucune parole détectée, réessayez.");
+          }
+        } catch {
+          setIsTyping(false);
+          toast.error("Impossible de transcrire l'audio. Réessayez.");
+        }
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+    } catch (err: any) {
+      setIsRecording(false);
+      if (err?.name === "NotAllowedError") {
+        toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
+      } else {
+        toast.error("Impossible d'accéder au microphone.");
       }
-    };
-    recognition.onend = () => {
-      setIsRecording(false);
-      if (finalText.trim()) { handleSend(finalText.trim()); finalText = ""; }
-    };
-    recognition.onerror = (e: any) => {
-      setIsRecording(false);
-      if (e.error === "not-allowed") toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
-      else if (e.error === "no-speech") toast.info("Aucune parole détectée, réessayez.");
-      else if (e.error !== "aborted") toast.error(`Erreur vocale : ${e.error}`);
-    };
-    speechRecognitionRef.current = recognition;
-    try { 
-      recognition.start(); 
-    } catch (err) { 
-      setIsRecording(false);
-      toast.error("Impossible de démarrer la reconnaissance vocale"); 
     }
   };
 
