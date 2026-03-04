@@ -27,11 +27,21 @@ const INITIAL_MESSAGE: ChatMessageData = {
   content: "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider aujourd'hui ? N'hésitez pas à me poser vos questions, nous ferons cela ensemble. 😊",
 };
 
-// ElevenLabs TTS
+// ElevenLabs TTS — with timeout, abort, and play() error handling
 let currentAudio: HTMLAudioElement | null = null;
+let currentTtsAbort: AbortController | null = null;
 
 async function speakWithElevenLabs(text: string): Promise<void> {
   stopSpeech();
+
+  // Abort any in-flight TTS request
+  currentTtsAbort?.abort();
+  const abortController = new AbortController();
+  currentTtsAbort = abortController;
+
+  // Truncate very long text to avoid ElevenLabs limits (max ~5000 chars)
+  const truncatedText = text.length > 4000 ? text.substring(0, 4000) + "..." : text;
+
   const response = await fetch(TTS_URL, {
     method: "POST",
     headers: {
@@ -39,23 +49,46 @@ async function speakWithElevenLabs(text: string): Promise<void> {
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text: truncatedText }),
+    signal: abortController.signal,
   });
+
   if (!response.ok) throw new Error("TTS échoué");
   const blob = await response.blob();
+  if (blob.size === 0) throw new Error("Audio vide");
+
   const url = URL.createObjectURL(blob);
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const audio = new Audio(url);
     currentAudio = audio;
-    audio.onended = () => { currentAudio = null; URL.revokeObjectURL(url); resolve(); };
-    audio.onerror = () => { currentAudio = null; URL.revokeObjectURL(url); resolve(); };
-    audio.play();
+
+    const cleanup = () => {
+      currentAudio = null;
+      currentTtsAbort = null;
+      URL.revokeObjectURL(url);
+    };
+
+    audio.onended = () => { cleanup(); resolve(); };
+    audio.onerror = () => { cleanup(); reject(new Error("Erreur lecture audio")); };
+
+    // play() returns a Promise that can reject (autoplay policy, etc.)
+    const playPromise = audio.play();
+    if (playPromise) {
+      playPromise.catch((err) => {
+        console.warn("Audio play() rejected:", err.message);
+        cleanup();
+        reject(err);
+      });
+    }
   });
 }
 
 function stopSpeech() {
+  currentTtsAbort?.abort();
+  currentTtsAbort = null;
   if (currentAudio) {
     currentAudio.pause();
+    currentAudio.currentTime = 0;
     currentAudio = null;
   }
 }
@@ -181,41 +214,91 @@ export function HomePage() {
     setSpeakingMessageId(null);
   };
 
+  // Track if user intentionally stopped recording
+  const userStoppedRef = useRef(false);
+
   const handleVoiceToggle = () => {
     if (isRecording) {
+      // User manually stops → send what we have
+      userStoppedRef.current = true;
       speechRecognitionRef.current?.stop();
       setIsRecording(false);
       return;
     }
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast.error("Reconnaissance vocale non supportée par ce navigateur");
       return;
     }
+
+    userStoppedRef.current = false;
     const recognition = new SpeechRecognition();
     recognition.lang = "fr-FR";
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
+
     let finalText = "";
-    recognition.onstart = () => setIsRecording(true);
+    let lastInterim = "";
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+      console.debug("Voice recognition started");
+    };
+
     recognition.onresult = (e: any) => {
       finalText = "";
+      lastInterim = "";
       for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          finalText += e.results[i][0].transcript;
+        } else {
+          lastInterim += e.results[i][0].transcript;
+        }
       }
     };
+
     recognition.onend = () => {
       setIsRecording(false);
-      if (finalText.trim()) { handleSend(finalText.trim()); finalText = ""; }
+      const textToSend = finalText.trim() || lastInterim.trim();
+
+      if (textToSend) {
+        handleSend(textToSend);
+        finalText = "";
+        lastInterim = "";
+      } else if (!userStoppedRef.current) {
+        // Browser stopped recognition unexpectedly (no speech detected)
+        // Don't show error — just silently end
+        console.debug("Voice recognition ended without text");
+      }
     };
+
     recognition.onerror = (e: any) => {
+      console.warn("Voice recognition error:", e.error);
       setIsRecording(false);
-      if (e.error === "not-allowed") toast.error("Accès au microphone refusé.");
-      else if (e.error !== "aborted") toast.error(`Erreur vocale : ${e.error}`);
+      if (e.error === "not-allowed") {
+        toast.error("Accès au microphone refusé. Autorisez le micro dans les paramètres.");
+      } else if (e.error === "network") {
+        toast.error("Erreur réseau — la reconnaissance vocale nécessite une connexion.");
+      } else if (e.error === "no-speech") {
+        // Common on mobile — don't scare the user
+        // Use whatever interim text we have
+        const textToSend = finalText.trim() || lastInterim.trim();
+        if (textToSend) handleSend(textToSend);
+      } else if (e.error === "audio-capture") {
+        toast.error("Aucun microphone détecté.");
+      } else if (e.error !== "aborted") {
+        toast.error(`Erreur vocale : ${e.error}`);
+      }
     };
+
     speechRecognitionRef.current = recognition;
-    try { recognition.start(); } catch { toast.error("Impossible de démarrer la reconnaissance vocale"); }
+    try {
+      recognition.start();
+    } catch {
+      toast.error("Impossible de démarrer la reconnaissance vocale");
+    }
   };
 
   const handleAttach = async (files: FileList) => {
