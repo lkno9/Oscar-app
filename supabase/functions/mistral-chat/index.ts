@@ -417,13 +417,16 @@ Quand un utilisateur envoie une image ou un document, Oscar l'analyse attentivem
 - Signale les points d'attention (dates d'expiration proches, anomalies...)
 - Propose des actions concrètes si nécessaire`;
 
-// Detect if any message contains image content (for Pixtral vision model)
+// Detect if any message contains actual image content (not PDFs) for Pixtral vision model
 function hasImageContent(messages: Array<{ role: string; content: unknown }>): boolean {
   return messages.some((msg) => {
     if (Array.isArray(msg.content)) {
-      return msg.content.some(
-        (part: { type: string }) => part.type === "image_url"
-      );
+      return msg.content.some((part: { type: string; image_url?: { url?: string } }) => {
+        if (part.type !== "image_url") return false;
+        const url = part.image_url?.url || "";
+        // Only use vision model for actual images, not PDFs or other files
+        return url.startsWith("https://") || url.startsWith("data:image/");
+      });
     }
     return false;
   });
