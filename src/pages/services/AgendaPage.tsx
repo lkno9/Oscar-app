@@ -25,6 +25,7 @@ const EVENT_TYPES = [
   { value: "general", label: "Général", emoji: "📅" },
   { value: "medical", label: "Médical", emoji: "🏥" },
   { value: "family", label: "Famille", emoji: "👨‍👩‍👧" },
+  { value: "birthday", label: "Anniversaire", emoji: "🎂" },
   { value: "admin", label: "Administratif", emoji: "📋" },
   { value: "leisure", label: "Loisir", emoji: "🎉" },
 ];
@@ -203,6 +204,31 @@ export function AgendaPage() {
           onSelectDate={(d) => setSelectedDate(isSameDay(d, selectedDate ?? new Date(0)) ? null : d)}
           onMonthChange={setCurrentMonth}
         />
+
+        {/* Upcoming birthdays */}
+        {!selectedDate && (() => {
+          const upcomingBirthdays = events
+            .filter(e => e.event_type === "birthday" && e.event_date >= today)
+            .sort((a, b) => a.event_date.localeCompare(b.event_date))
+            .slice(0, 5);
+          if (upcomingBirthdays.length === 0) return null;
+          return (
+            <div className="bg-pink-50 dark:bg-pink-900/20 rounded-2xl p-4 border border-pink-200 dark:border-pink-800">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">🎂</span>
+                <p className="font-bold text-pink-700 dark:text-pink-400">Prochains anniversaires</p>
+              </div>
+              <div className="space-y-2">
+                {upcomingBirthdays.map(ev => (
+                  <div key={ev.id} className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-pink-600 dark:text-pink-400 w-20">{format(new Date(ev.event_date + "T00:00:00"), "d MMM", { locale: fr })}</span>
+                    <span className="text-sm text-foreground">{ev.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Add button */}
         {!showForm ? (

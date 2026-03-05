@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, Smile, CalendarDays, Lightbulb } from "lucide-react";
+import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, Smile, CalendarDays, Lightbulb, ExternalLink, Dumbbell, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +51,36 @@ const WELLNESS_TIPS = [
   "Prendre l'air chaque jour réduit le stress et améliore le moral.",
   "Les activités sociales contribuent à une bonne santé mentale.",
   "Manger des fruits et légumes colorés chaque jour.",
+];
+
+const HEALTH_PLATFORMS = [
+  { name: "Mon Espace Santé", desc: "Dossier médical partagé (DMP), ordonnances, résultats", url: "https://www.monespacesante.fr", emoji: "🏥" },
+  { name: "Ameli.fr", desc: "Assurance maladie, remboursements, attestations", url: "https://www.ameli.fr", emoji: "💳" },
+  { name: "Doctolib", desc: "Prendre un rendez-vous médical en ligne", url: "https://www.doctolib.fr", emoji: "📅" },
+  { name: "Pharmacie en ligne", desc: "Commander vos médicaments (1001Pharmacies)", url: "https://www.1001pharmacies.com", emoji: "💊" },
+  { name: "Service-Public Santé", desc: "Vos droits santé, aides et démarches", url: "https://www.service-public.fr/particuliers/vosdroits/N17", emoji: "📋" },
+  { name: "Pour les personnes âgées", desc: "Guide officiel des aides et droits seniors", url: "https://www.pour-les-personnes-agees.gouv.fr", emoji: "🤝" },
+];
+
+const NEARBY_HEALTH = [
+  { name: "Pharmacie de garde", desc: "Trouver une pharmacie ouverte près de chez vous", url: "https://www.3237.fr", emoji: "💊" },
+  { name: "Maisons de santé", desc: "Trouver un centre ou maison médicale", url: "https://annuaire.sante.fr", emoji: "🏥" },
+  { name: "Médecin près de chez moi", desc: "Annuaire des professionnels de santé", url: "https://annuaire.sante.fr/web/site-pro/recherche-avancee", emoji: "👨‍⚕️" },
+];
+
+const SPORT_LINKS = [
+  { name: "FFEPGV", desc: "Fédération sport pour tous, gym volontaire", url: "https://www.sport-sante.fr", emoji: "🤸" },
+  { name: "Randonnée France", desc: "Clubs et parcours de randonnée", url: "https://www.ffrandonnee.fr", emoji: "🥾" },
+  { name: "Gym seniors", desc: "Trouver un cours adapté près de chez vous", url: "https://www.pagesjaunes.fr/annuaire/chercherdans?quoiqui=gym+seniors&ou=", emoji: "💪" },
+];
+
+const EXERCISES = [
+  { name: "Marche douce", desc: "20-30 min de marche à votre rythme, idéal chaque matin", emoji: "🚶", level: "Facile" },
+  { name: "Gymnastique douce", desc: "Étirements et mouvements articulaires en douceur", emoji: "🤸", level: "Facile" },
+  { name: "Yoga adapté", desc: "Postures simples pour souplesse et équilibre", emoji: "🧘", level: "Modéré" },
+  { name: "Aquagym", desc: "Exercices en piscine, doux pour les articulations", emoji: "🏊", level: "Modéré" },
+  { name: "Vélo d'appartement", desc: "Cardio doux, à adapter selon votre forme", emoji: "🚴", level: "Modéré" },
+  { name: "Tai Chi", desc: "Mouvements lents pour équilibre et relaxation", emoji: "🥋", level: "Facile" },
 ];
 
 export function HealthPage() {
@@ -160,20 +190,30 @@ export function HealthPage() {
 
       <div className="flex-1 overflow-hidden flex flex-col">
         <Tabs defaultValue="medications" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="mx-4 mt-4 grid grid-cols-3 flex-shrink-0">
-            <TabsTrigger value="medications" className="flex items-center gap-1.5 text-sm">
-              <Pill className="w-4 h-4" />
-              Médicaments
-            </TabsTrigger>
-            <TabsTrigger value="mood" className="flex items-center gap-1.5 text-sm">
-              <Smile className="w-4 h-4" />
-              Humeur
-            </TabsTrigger>
-            <TabsTrigger value="wellness" className="flex items-center gap-1.5 text-sm">
-              <Lightbulb className="w-4 h-4" />
-              Conseils
-            </TabsTrigger>
-          </TabsList>
+          <div className="mx-4 mt-4 flex-shrink-0 overflow-x-auto scrollbar-hide">
+            <TabsList className="inline-flex w-auto min-w-full">
+              <TabsTrigger value="medications" className="flex items-center gap-1 text-xs px-3">
+                <Pill className="w-3.5 h-3.5" />
+                Médic.
+              </TabsTrigger>
+              <TabsTrigger value="mood" className="flex items-center gap-1 text-xs px-3">
+                <Smile className="w-3.5 h-3.5" />
+                Humeur
+              </TabsTrigger>
+              <TabsTrigger value="platforms" className="flex items-center gap-1 text-xs px-3">
+                <Link className="w-3.5 h-3.5" />
+                Services
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="flex items-center gap-1 text-xs px-3">
+                <Dumbbell className="w-3.5 h-3.5" />
+                Activité
+              </TabsTrigger>
+              <TabsTrigger value="wellness" className="flex items-center gap-1 text-xs px-3">
+                <Lightbulb className="w-3.5 h-3.5" />
+                Conseils
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* MEDICATIONS TAB */}
           <TabsContent value="medications" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
@@ -316,6 +356,116 @@ export function HealthPage() {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          {/* PLATFORMS TAB */}
+          <TabsContent value="platforms" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
+            {/* Oscar banner */}
+            <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-start gap-3">
+              <span className="text-lg mt-0.5">💡</span>
+              <p className="text-sm text-foreground leading-relaxed">
+                <span className="font-semibold text-primary">Oscar peut aussi vous aider !</span>{" "}
+                Dites-lui : « Oscar, explique-moi mon relevé Ameli »
+              </p>
+            </div>
+            <p className="text-sm text-muted-foreground">Accédez directement à vos services de santé en ligne.</p>
+            <div className="space-y-3">
+              {HEALTH_PLATFORMS.map((p, i) => (
+                <button
+                  key={i}
+                  onClick={() => window.open(p.url, "_blank")}
+                  className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-primary transition-all text-left"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
+                    {p.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground">{p.name}</h3>
+                    <p className="text-sm text-muted-foreground">{p.desc}</p>
+                  </div>
+                  <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                </button>
+              ))}
+            </div>
+
+            {/* Nearby health facilities */}
+            <div className="flex items-center gap-3 pt-2">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Trouver autour de moi</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <div className="space-y-3">
+              {NEARBY_HEALTH.map((p, i) => (
+                <button
+                  key={i}
+                  onClick={() => window.open(p.url, "_blank")}
+                  className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-primary transition-all text-left"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-2xl flex-shrink-0">
+                    {p.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground">{p.name}</h3>
+                    <p className="text-sm text-muted-foreground">{p.desc}</p>
+                  </div>
+                  <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                </button>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* ACTIVITY TAB */}
+          <TabsContent value="activity" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
+            <div className="bg-accent rounded-2xl p-4 border border-border">
+              <div className="flex items-center gap-3 mb-2">
+                <Dumbbell className="w-6 h-6 text-accent-foreground" />
+                <p className="font-bold text-accent-foreground">Restez actif, à votre rythme</p>
+              </div>
+              <p className="text-sm text-foreground">L'activité physique adaptée améliore l'équilibre, le moral et la santé. Choisissez ce qui vous convient.</p>
+            </div>
+            <div className="space-y-3">
+              {EXERCISES.map((ex, i) => (
+                <div key={i} className="bg-card rounded-xl p-4 border border-border flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
+                    {ex.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground">{ex.name}</h3>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${ex.level === "Facile" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}>
+                        {ex.level}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">{ex.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Sport links */}
+            <div className="flex items-center gap-3 pt-2">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Bouger près de chez moi</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <div className="space-y-3">
+              {SPORT_LINKS.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => window.open(s.url, "_blank")}
+                  className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-primary transition-all text-left"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
+                    {s.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground">{s.name}</h3>
+                    <p className="text-sm text-muted-foreground">{s.desc}</p>
+                  </div>
+                  <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                </button>
+              ))}
+            </div>
           </TabsContent>
 
           {/* WELLNESS TIPS TAB */}

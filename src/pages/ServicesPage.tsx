@@ -3,7 +3,7 @@ import {
   CalendarDays,
   Cloud,
   Image,
-  Music,
+  Ticket,
   Gamepad2,
   Sparkles,
   ShieldAlert,
@@ -14,16 +14,20 @@ import {
   HelpCircle,
   Settings,
   ChevronRight,
+  Navigation,
+  Wrench,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 
 const PRIMARY_SERVICES = [
   { icon: <CalendarDays className="w-8 h-8" />, label: "Agenda & rendez-vous", path: "/services/agenda" },
-  { icon: <Cloud className="w-8 h-8" />, label: "Stockage & fichiers", path: "/services/storage" },
+  { icon: <Heart className="w-8 h-8" />, label: "Santé & bien-être", path: "/services/health" },
   { icon: <Image className="w-8 h-8" />, label: "Photos & souvenirs", path: "/services/photos" },
   { icon: <MessageCircle className="w-8 h-8" />, label: "Communication", path: "/services/communication" },
-  { icon: <Heart className="w-8 h-8" />, label: "Santé & bien-être", path: "/services/health" },
-  { icon: <Music className="w-8 h-8" />, label: "Musique & radio", path: "/services/music" },
+  { icon: <Navigation className="w-8 h-8" />, label: "Déplacements", path: "/services/transport" },
+  { icon: <Ticket className="w-8 h-8" />, label: "Sorties & loisirs", path: "/services/entertainment" },
+  { icon: <Wrench className="w-8 h-8" />, label: "Outils pratiques", path: "/services/tools" },
+  { icon: <Cloud className="w-8 h-8" />, label: "Stockage & fichiers", path: "/services/storage" },
   { icon: <Gamepad2 className="w-8 h-8" />, label: "Jeux & mémoire", path: "/services/games" },
   { icon: <Sparkles className="w-8 h-8" />, label: "Bons plans seniors", path: "/services/partners" },
   { icon: <ShieldAlert className="w-8 h-8" />, label: "Protection arnaques", path: "/services/scam-protection" },
