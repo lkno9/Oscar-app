@@ -1,4 +1,5 @@
 import { useRef, useCallback } from "react";
+import type { RichCard } from "@/types/chat";
 
 const MISTRAL_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mistral-chat`;
 
@@ -16,12 +17,14 @@ interface UseMistralChatOptions {
   onDelta: (token: string) => void;
   onDone: (fullText: string) => void;
   onError: (error: string) => void;
+  onToolResult?: (card: RichCard) => void;
 }
 
 export function useMistralChat({
   onDelta,
   onDone,
   onError,
+  onToolResult,
 }: UseMistralChatOptions) {
   // Conversation history in ref (no re-renders on update)
   const historyRef = useRef<MistralMessage[]>([]);
@@ -34,6 +37,8 @@ export function useMistralChat({
   onDoneRef.current = onDone;
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  const onToolResultRef = useRef(onToolResult);
+  onToolResultRef.current = onToolResult;
 
   const sendMessage = useCallback(
     async (text: string, imageBase64?: string) => {
@@ -86,7 +91,7 @@ export function useMistralChat({
           return;
         }
 
-        // Parse SSE stream
+        // Parse SSE stream (supports custom tool_result events)
         const reader = response.body?.getReader();
         if (!reader) {
           onErrorRef.current("Impossible de lire la réponse.");
@@ -96,6 +101,7 @@ export function useMistralChat({
         const decoder = new TextDecoder();
         let fullText = "";
         let buffer = "";
+        let currentEventType = ""; // Track SSE event type
 
         while (true) {
           const { done, value } = await reader.read();
@@ -109,13 +115,35 @@ export function useMistralChat({
 
           for (const line of lines) {
             const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith("data: ")) continue;
+
+            // Empty line = end of SSE event block
+            if (!trimmed) {
+              currentEventType = "";
+              continue;
+            }
+
+            // Detect custom event type (e.g. "event: tool_result")
+            if (trimmed.startsWith("event: ")) {
+              currentEventType = trimmed.slice(7).trim();
+              continue;
+            }
+
+            if (!trimmed.startsWith("data: ")) continue;
 
             const data = trimmed.slice(6); // Remove "data: " prefix
             if (data === "[DONE]") continue;
 
             try {
               const parsed = JSON.parse(data);
+
+              // Handle tool_result custom events
+              if (currentEventType === "tool_result" && onToolResultRef.current) {
+                onToolResultRef.current(parsed as RichCard);
+                currentEventType = "";
+                continue;
+              }
+
+              // Handle normal SSE delta (text streaming)
               const token = parsed.choices?.[0]?.delta?.content;
               if (token) {
                 fullText += token;

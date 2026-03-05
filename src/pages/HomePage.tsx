@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Phone, Settings } from "lucide-react";
+import { Phone, Settings, Languages, Cloud, FileText, HelpCircle, PenLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import type { RichCard } from "@/types/chat";
 
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
@@ -19,6 +20,7 @@ interface ChatMessageData {
   role: "user" | "assistant";
   content: string;
   imageUrl?: string;
+  richCards?: RichCard[];
 }
 
 const INITIAL_MESSAGE: ChatMessageData = {
@@ -26,6 +28,14 @@ const INITIAL_MESSAGE: ChatMessageData = {
   role: "assistant",
   content: "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider aujourd'hui ? N'hésitez pas à me poser vos questions, nous ferons cela ensemble. 😊",
 };
+
+const SUGGESTION_CHIPS = [
+  { label: "Traduire un texte", icon: Languages, message: "Peux-tu me traduire ce texte en anglais : " },
+  { label: "Météo du jour", icon: Cloud, message: "Quel temps fait-il aujourd'hui ?" },
+  { label: "Analyser un document", icon: FileText, message: "Peux-tu m'aider à comprendre ce document ?" },
+  { label: "Mes droits & aides", icon: HelpCircle, message: "Quelles aides suis-je éligible en tant que senior ?" },
+  { label: "Écrire un message", icon: PenLine, message: "Aide-moi à écrire un message pour " },
+];
 
 // ElevenLabs TTS — with abort, play() error handling, and truncation
 let currentAudio: HTMLAudioElement | null = null;
@@ -134,10 +144,31 @@ export function HomePage() {
     toast.error(error);
   }, []);
 
+  // Handle rich card tool results from Mistral function calling
+  const handleToolResult = useCallback((card: RichCard) => {
+    setIsTyping(false);
+    setMessages(prev => {
+      // Find or create the current assistant message to attach the card
+      const last = prev[prev.length - 1];
+      if (last?.role === "assistant" && last.id === lastAssistantIdRef.current) {
+        return prev.map(m =>
+          m.id === lastAssistantIdRef.current
+            ? { ...m, richCards: [...(m.richCards || []), card] }
+            : m
+        );
+      }
+      // Create new assistant message with card (text will follow via delta)
+      const id = Date.now().toString();
+      lastAssistantIdRef.current = id;
+      return [...prev, { id, role: "assistant" as const, content: "", richCards: [card] }];
+    });
+  }, []);
+
   const { sendMessage: sendToMistral } = useMistralChat({
     onDelta: handleStreamDelta,
     onDone: handleStreamDone,
     onError: handleStreamError,
+    onToolResult: handleToolResult,
   });
 
   // Medication reminders
@@ -494,6 +525,7 @@ export function HomePage() {
             role={message.role}
             content={message.content}
             imageUrl={message.imageUrl}
+            richCards={message.richCards}
             messageId={message.id}
             onSpeak={(text) => handleSpeak(text, message.id)}
             onStopSpeaking={handleStopSpeaking}
@@ -504,6 +536,25 @@ export function HomePage() {
         {isTyping && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Suggestion chips — visible when conversation is empty */}
+      {messages.length === 0 && !isTyping && (
+        <div className="px-4 pb-2 pt-1 bg-card border-t border-border">
+          <p className="text-xs text-muted-foreground mb-2">Oscar peut vous aider avec :</p>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            {SUGGESTION_CHIPS.map((chip, i) => (
+              <button
+                key={i}
+                onClick={() => handleSend(chip.message)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-border bg-secondary text-foreground text-sm font-medium whitespace-nowrap hover:border-primary hover:bg-primary/5 transition-all flex-shrink-0"
+              >
+                <chip.icon className="w-3.5 h-3.5 text-primary" />
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Input */}
       <ChatInput

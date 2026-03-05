@@ -401,21 +401,69 @@ If the user is lost, Oscar guides.
 📋 FONCTIONNALITÉS DE L'APPLICATION
 Oscar sait que l'application dispose de ces fonctionnalités, et peut guider l'utilisateur pour les utiliser :
 
-- **Documents & Démarches** (/services/documents) : l'utilisateur peut ajouter des documents (carte d'identité, passeport, ordonnances...), suivre les dates d'expiration, et recevoir des rappels. Oscar peut guider pas à pas pour ajouter un document.
-- **Santé** (/services/health) : suivi des médicaments, rendez-vous, mesures de santé.
-- **Agenda** (/services/agenda) : gestion des événements et rappels.
-- **Famille** (/services/family) : messagerie et partage avec les proches.
-- **Photos** (/services/photos) : albums photos personnels.
+**Pages principales :**
+- **Documents & Démarches** (/services/documents) : ajouter des documents (carte d'identité, passeport, ordonnances...), suivre les dates d'expiration, recevoir des rappels.
+- **Santé & Bien-être** (/services/health) : suivi des médicaments, humeur du jour, rendez-vous médicaux, plateformes santé (Mon Espace Santé, Ameli, Doctolib), trouver une pharmacie de garde ou un médecin, exercices adaptés (marche douce, yoga, tai chi), conseils bien-être.
+- **Agenda** (/services/agenda) : gestion des événements, rappels, section anniversaires des proches.
+- **Famille** (/services/family) : messagerie et partage avec les proches, contacts d'urgence.
+- **Jardin Secret** (/services/photos) : journal intime, poèmes, souvenirs personnels et photos.
 - **Paiements** (/services/payments) : suivi des dépenses.
+- **Urgence / SOS** (/services/emergency) : 31 numéros essentiels (SAMU 15, Pompiers 18, Police 17, SOS Médecins, Centre antipoison, Solitud'écoute, maltraitance 3977, arnaques, transports...), contacts d'urgence personnels.
+- **Déplacements & Transport** (/services/transport) : RATP, SNCF, Mappy, taxis, Carte Avantage Senior, transport adapté.
+- **Sorties & Loisirs** (/services/entertainment) : billetterie spectacles, cinéma AlloCiné, radios (France Inter, Nostalgie...), playlists musicales.
+- **Jeux** (/services/games) : jeux de mémoire et quiz pour stimuler l'esprit.
+- **Outils & Utilitaires** (/services/tools) : traducteur intégré, météo en temps réel, minuteur, localisation avec adresse précise, annuaire inversé, comparateur de prix Idealo, assurances.
 
-Quand un utilisateur demande de "créer" ou "ajouter" quelque chose, Oscar l'oriente vers la bonne section de l'app et l'accompagne étape par étape. Oscar ne peut pas directement modifier la base de données, mais il guide l'utilisateur dans l'interface.
+**Capacités directes d'Oscar (pas besoin d'aller sur une autre page) :**
+- **Traduction** : Oscar peut traduire n'importe quel texte en anglais, espagnol, allemand, italien, portugais ou arabe. Il suffit de demander.
+- **Explication de documents** : Oscar peut lire et expliquer un document (courrier, facture, relevé), extraire les dates et montants importants, et proposer des actions.
+- **Aide administrative** : Oscar connaît les démarches courantes (Ameli, impôts, retraite, CAF) et peut guider l'utilisateur pas à pas.
+- **Rédaction** : Oscar peut aider à écrire un message, une lettre, un email.
+- **Questions quotidiennes** : Oscar répond aux questions sur la santé, les droits des seniors, les aides sociales, etc.
+
+**Comportement :**
+Quand un utilisateur demande quelque chose, Oscar évalue d'abord s'il peut répondre directement (traduction, explication, rédaction, conseil). Si la demande nécessite une fonctionnalité de l'app (ajouter un médicament, voir l'agenda, appeler un numéro d'urgence...), Oscar oriente vers la bonne page et explique comment l'utiliser étape par étape. Oscar ne peut pas directement modifier la base de données, mais il guide l'utilisateur dans l'interface.
+
+Quand l'utilisateur ne sait pas quoi demander, Oscar peut suggérer : "Vous pouvez me demander de traduire un texte, d'expliquer un courrier, de vous aider dans vos démarches, ou simplement de discuter !"
 
 📷 ANALYSE D'IMAGES ET DOCUMENTS
 Quand un utilisateur envoie une image ou un document, Oscar l'analyse attentivement et :
 - Décrit ce qu'il voit clairement
 - Extrait les informations importantes (dates, noms, montants...)
 - Signale les points d'attention (dates d'expiration proches, anomalies...)
-- Propose des actions concrètes si nécessaire`;
+- Propose des actions concrètes si nécessaire
+
+🌐 NAVIGATION WEB & WEBVIEW — RÈGLE IMPORTANTE
+
+Oscar dispose d'un outil open_webpage qui affiche une page web DIRECTEMENT dans le chat, comme un mini-navigateur intégré. C'est une fonctionnalité clé de l'application.
+
+**QUAND UTILISER open_webpage (OBLIGATOIRE) :**
+Oscar DOIT utiliser open_webpage dans ces situations :
+- L'utilisateur demande d'accéder à un site (Ameli, Doctolib, SNCF, impôts, CAF, etc.)
+- L'utilisateur veut voir, consulter, ou vérifier quelque chose en ligne
+- Oscar mentionne un site officiel dans sa réponse → il OUVRE le site en même temps
+- L'utilisateur pose une question dont la réponse se trouve sur un site web spécifique
+- L'utilisateur veut prendre rendez-vous, faire une simulation, ou une démarche en ligne
+- L'utilisateur cherche des horaires, des tarifs, un programme, une actualité
+
+**EXEMPLES :**
+- "Comment accéder à Ameli ?" → open_webpage("https://www.ameli.fr", "Ameli - Assurance Maladie") + explication
+- "Je veux voir les trains pour Lyon" → open_webpage("https://www.sncf-connect.com", "SNCF Connect - Réservation") + guide
+- "C'est quoi l'APA ?" → open_webpage("https://www.service-public.fr/particuliers/vosdroits/F10009", "Service Public - APA") + explication simple
+- "Quel film voir ce soir ?" → open_webpage("https://www.allocine.fr", "AlloCiné - Films à l'affiche") + suggestion
+- "Prendre RDV médecin" → open_webpage("https://www.doctolib.fr", "Doctolib - Prendre rendez-vous") + guide
+- "Simuler mes aides" → open_webpage("https://www.mesdroitssociaux.gouv.fr", "Mes Droits Sociaux") + explication
+- "Voir la météo" → utiliser get_weather ET open_webpage("https://meteofrance.com", "Météo France")
+
+**PRINCIPE :** Ne jamais juste donner un lien texte quand on peut MONTRER la page. Oscar préfère TOUJOURS ouvrir la page plutôt que simplement mentionner l'URL. C'est plus visuel, plus simple, et plus rassurant pour les seniors.
+
+**URLs RECOMMANDÉES PAR THÈME :**
+- Santé : ameli.fr, doctolib.fr, monespacedesante.fr, vidal.fr
+- Administration : service-public.fr, impots.gouv.fr, caf.fr, mesdroitssociaux.gouv.fr
+- Transport : sncf-connect.com, ratp.fr, mappy.com
+- Loisirs : allocine.fr, francetvinfo.fr, radiofrance.fr
+- Seniors : pour-les-personnes-agees.gouv.fr, france-services.gouv.fr
+- Recherche : fr.wikipedia.org (pour les questions de culture générale)`;
 
 // Extract URL string from image_url (Mistral format: string directly)
 function getImageUrl(imageUrl: unknown): string {
@@ -584,69 +632,368 @@ serve(async (req) => {
       ...sanitizedMessages,
     ];
 
-    const requestBody = {
+    // ─── Tool definitions (text model only, not vision) ─────
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "get_weather",
+          description: "Obtenir la météo actuelle et les prévisions pour une ville. Utilise quand l'utilisateur demande la météo, le temps qu'il fait, ou s'il doit prendre un parapluie.",
+          parameters: {
+            type: "object",
+            properties: {
+              city: { type: "string", description: "Nom de la ville (défaut: Paris)" },
+            },
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "translate_text",
+          description: "Traduire un texte dans une autre langue. Utilise quand l'utilisateur demande une traduction.",
+          parameters: {
+            type: "object",
+            properties: {
+              text: { type: "string", description: "Le texte à traduire" },
+              target_lang: { type: "string", description: "Langue cible : Anglais, Espagnol, Allemand, Italien, Portugais, Arabe" },
+            },
+            required: ["text", "target_lang"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "show_map",
+          description: "Afficher une carte avec un lieu ou une adresse. Utilise quand l'utilisateur cherche un endroit, une adresse, une pharmacie, un médecin, ou demande comment aller quelque part.",
+          parameters: {
+            type: "object",
+            properties: {
+              address: { type: "string", description: "L'adresse ou le lieu à afficher sur la carte" },
+            },
+            required: ["address"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "search_emergency",
+          description: "Chercher un numéro d'urgence ou de service utile (SAMU, pompiers, pharmacie de garde, SOS médecins, arnaques, police, etc.)",
+          parameters: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Ce que l'utilisateur cherche (ex: pharmacie, médecin, arnaque, pompier)" },
+            },
+            required: ["query"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "open_webpage",
+          description: "IMPORTANT: Ouvrir une page web directement dans le chat comme un mini-navigateur. TOUJOURS utiliser quand tu mentionnes un site web, quand l'utilisateur veut accéder à un service en ligne, faire une démarche, consulter des informations, prendre RDV, voir des horaires/tarifs/films, ou quand la réponse se trouve sur un site. Ne jamais juste donner un lien texte — MONTRE la page. Exemples: Ameli, Doctolib, SNCF, impots.gouv.fr, CAF, AlloCiné, Wikipedia, Météo France, service-public.fr, etc.",
+          parameters: {
+            type: "object",
+            properties: {
+              url: { type: "string", description: "L'URL complète de la page web à afficher (ex: https://www.ameli.fr)" },
+              title: { type: "string", description: "Titre court et clair pour l'utilisateur (ex: Ameli - Assurance Maladie)" },
+            },
+            required: ["url", "title"],
+          },
+        },
+      },
+    ];
+
+    // ─── Emergency numbers database for search_emergency tool ─────
+    const EMERGENCY_DB = [
+      { name: "SAMU", number: "15", description: "Urgences médicales" },
+      { name: "Pompiers", number: "18", description: "Incendie, accident" },
+      { name: "Police secours", number: "17", description: "Police nationale" },
+      { name: "Urgences Europe", number: "112", description: "Numéro européen unique" },
+      { name: "Urgence SMS", number: "114", description: "Pour personnes sourdes ou malentendantes" },
+      { name: "Pharmacie de garde", number: "3237", description: "Trouver une pharmacie ouverte (0.35€/min)" },
+      { name: "SOS Médecins", number: "3624", description: "Médecin à domicile, jour et nuit" },
+      { name: "Centre antipoison", number: "01 40 05 48 48", description: "En cas d'intoxication" },
+      { name: "Urgences dentaires", number: "01 43 37 51 00", description: "SOS Dentaire" },
+      { name: "Solitud'écoute", number: "0 800 47 47 88", description: "Solitude des personnes âgées (gratuit)" },
+      { name: "Maltraitance personnes âgées", number: "3977", description: "Signaler une situation de maltraitance" },
+      { name: "SOS Amitié", number: "09 72 39 40 50", description: "Écoute et soutien moral 24h/24" },
+      { name: "Croix-Rouge écoute", number: "0 800 858 858", description: "Soutien psychologique gratuit" },
+      { name: "Info Escroqueries", number: "0 805 805 817", description: "Signaler une arnaque (gratuit)" },
+      { name: "Cybermalveillance", number: "0 800 730 340", description: "Aide en cas de piratage" },
+      { name: "SNCF", number: "3635", description: "Trains, réservations, information" },
+      { name: "Info Service Public", number: "3939", description: "Questions administratives" },
+      { name: "Assurance Maladie", number: "3646", description: "Ameli, remboursements, droits" },
+      { name: "Violences conjugales", number: "3919", description: "Écoute, information, orientation" },
+      { name: "Enfance en danger", number: "119", description: "Signaler un enfant en danger" },
+      { name: "CAF", number: "3230", description: "Caisse d'Allocations Familiales" },
+      { name: "Impôts", number: "0 809 401 401", description: "Questions fiscales (gratuit)" },
+    ];
+
+    // ─── Tool execution functions ─────
+    async function executeGetWeather(args: { city?: string }) {
+      const city = args.city || "Paris";
+      try {
+        const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1&lang=fr`);
+        if (!res.ok) throw new Error("Weather API failed");
+        const data = await res.json();
+        const current = data.current_condition?.[0] || {};
+        const weatherEmojis: Record<string, string> = {
+          "Sunny": "☀️", "Clear": "🌙", "Partly cloudy": "⛅", "Cloudy": "☁️",
+          "Overcast": "☁️", "Mist": "🌫️", "Fog": "🌫️", "Light rain": "🌦️",
+          "Rain": "🌧️", "Heavy rain": "🌧️", "Light snow": "🌨️", "Snow": "❄️",
+          "Thunderstorm": "⛈️", "Patchy rain possible": "🌦️",
+        };
+        const condDesc = current.lang_fr?.[0]?.value || current.weatherDesc?.[0]?.value || "Inconnu";
+        const condCode = current.weatherDesc?.[0]?.value || "";
+        const emoji = weatherEmojis[condCode] || "🌤️";
+        const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+        const forecast = (data.weather || []).slice(0, 3).map((d: any) => {
+          const date = new Date(d.date);
+          const fCondCode = d.hourly?.[4]?.weatherDesc?.[0]?.value || "";
+          return {
+            day: dayNames[date.getDay()],
+            min: parseInt(d.mintempC),
+            max: parseInt(d.maxtempC),
+            emoji: weatherEmojis[fCondCode] || "🌤️",
+          };
+        });
+        return {
+          toolResult: { type: "weather", data: { city, temp: parseInt(current.temp_C || "0"), condition: condDesc, emoji, forecast } },
+          textForMistral: `Météo à ${city} : ${current.temp_C}°C, ${condDesc}. Prévisions 3 jours : ${forecast.map((f: any) => `${f.day}: ${f.min}°-${f.max}°`).join(", ")}.`,
+        };
+      } catch {
+        return { toolResult: null, textForMistral: `Impossible de récupérer la météo pour ${city}. Le service est temporairement indisponible.` };
+      }
+    }
+
+    async function executeTranslate(args: { text: string; target_lang: string }) {
+      try {
+        const res = await fetch(`https://api.mistral.ai/v1/chat/completions`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${MISTRAL_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "mistral-large-latest",
+            messages: [
+              { role: "system", content: `Tu es un traducteur professionnel. Traduis le texte suivant du Français vers le ${args.target_lang}. Renvoie UNIQUEMENT la traduction, sans explication, sans commentaire, sans guillemets.` },
+              { role: "user", content: args.text },
+            ],
+            temperature: 0.1,
+            max_tokens: 1024,
+          }),
+        });
+        const data = await res.json();
+        const result = data.choices?.[0]?.message?.content?.trim() || "";
+        return {
+          toolResult: { type: "translation", data: { source: args.text, result, sourceLang: "Français", targetLang: args.target_lang } },
+          textForMistral: `Traduction de "${args.text}" en ${args.target_lang} : "${result}"`,
+        };
+      } catch {
+        return { toolResult: null, textForMistral: `Erreur lors de la traduction. Veuillez réessayer.` };
+      }
+    }
+
+    function executeShowMap(args: { address: string }) {
+      const q = encodeURIComponent(args.address);
+      return {
+        toolResult: { type: "map", data: { address: args.address, embedUrl: `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${q}&zoom=15`, mapsUrl: `https://www.google.com/maps/search/?api=1&query=${q}` } },
+        textForMistral: `Carte affichée pour : ${args.address}. L'utilisateur peut voir la carte dans le chat.`,
+      };
+    }
+
+    function executeSearchEmergency(args: { query: string }) {
+      const q = args.query.toLowerCase();
+      const match = EMERGENCY_DB.find(
+        (e) => e.name.toLowerCase().includes(q) || e.description.toLowerCase().includes(q) || q.includes(e.name.toLowerCase().split(" ")[0])
+      );
+      if (match) {
+        return {
+          toolResult: { type: "emergency", data: match },
+          textForMistral: `Numéro trouvé : ${match.name} → ${match.number} (${match.description})`,
+        };
+      }
+      // Try broader match
+      const keywords = q.split(/\s+/);
+      const broader = EMERGENCY_DB.find((e) =>
+        keywords.some((k) => e.name.toLowerCase().includes(k) || e.description.toLowerCase().includes(k))
+      );
+      if (broader) {
+        return {
+          toolResult: { type: "emergency", data: broader },
+          textForMistral: `Numéro trouvé : ${broader.name} → ${broader.number} (${broader.description})`,
+        };
+      }
+      return { toolResult: null, textForMistral: `Pas de numéro trouvé pour "${args.query}". Suggérez le 112 (numéro d'urgence européen).` };
+    }
+
+    function executeOpenWebpage(args: { url: string; title: string }) {
+      return {
+        toolResult: { type: "webview", data: { url: args.url, title: args.title } },
+        textForMistral: `Page web affichée : ${args.title} (${args.url}). L'utilisateur peut voir la page dans le chat.`,
+      };
+    }
+
+    // ─── Mistral API call helper ─────
+    async function callMistral(body: Record<string, unknown>) {
+      const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${MISTRAL_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const status = res.status;
+        if (status === 429) throw { status: 429, message: "Trop de demandes. Veuillez réessayer dans un moment." };
+        if (status === 401) throw { status: 401, message: "Clé API Mistral invalide." };
+        const errorText = await res.text();
+        console.error("Mistral API error:", status, errorText);
+        throw { status: 500, message: "Erreur de connexion à l'IA. Veuillez réessayer." };
+      }
+      return res;
+    }
+
+    // ─── Vision model: passthrough (no tools) ─────
+    if (useVision) {
+      const response = await callMistral({
+        model,
+        messages: mistralMessages,
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
+      return new Response(response.body, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
+      });
+    }
+
+    // ─── Text model: tool calling flow ─────
+    // Step 1: Non-streaming call with tools
+    const step1Response = await callMistral({
       model,
       messages: mistralMessages,
+      stream: false,
+      temperature: 0.7,
+      max_tokens: 2048,
+      tools,
+      tool_choice: "auto",
+    });
+
+    const step1Data = await step1Response.json();
+    const assistantMessage = step1Data.choices?.[0]?.message;
+
+    // No tool calls → stream the text directly
+    if (!assistantMessage?.tool_calls || assistantMessage.tool_calls.length === 0) {
+      // If there's a direct text response, wrap it as SSE
+      const text = assistantMessage?.content || "";
+      const encoder = new TextEncoder();
+      const body = new ReadableStream({
+        start(controller) {
+          // Send the full text as one SSE chunk (already complete)
+          const chunk = JSON.stringify({ choices: [{ delta: { content: text } }] });
+          controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        },
+      });
+      return new Response(body, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
+      });
+    }
+
+    // Step 2: Execute tools
+    console.log(`Tool calls: ${assistantMessage.tool_calls.map((tc: any) => tc.function.name).join(", ")}`);
+
+    const toolResults: Array<{ type: string; data: unknown }> = [];
+    const toolMessages: Array<{ role: string; content: string; tool_call_id?: string }> = [];
+
+    for (const toolCall of assistantMessage.tool_calls) {
+      const fn = toolCall.function;
+      let args: Record<string, unknown> = {};
+      try { args = JSON.parse(fn.arguments || "{}"); } catch { /* empty args */ }
+
+      let execResult: { toolResult: { type: string; data: unknown } | null; textForMistral: string };
+
+      switch (fn.name) {
+        case "get_weather":
+          execResult = await executeGetWeather(args as { city?: string });
+          break;
+        case "translate_text":
+          execResult = await executeTranslate(args as { text: string; target_lang: string });
+          break;
+        case "show_map":
+          execResult = executeShowMap(args as { address: string });
+          break;
+        case "search_emergency":
+          execResult = executeSearchEmergency(args as { query: string });
+          break;
+        case "open_webpage":
+          execResult = executeOpenWebpage(args as { url: string; title: string });
+          break;
+        default:
+          execResult = { toolResult: null, textForMistral: `Outil inconnu : ${fn.name}` };
+      }
+
+      if (execResult.toolResult) {
+        toolResults.push(execResult.toolResult as { type: string; data: unknown });
+      }
+
+      toolMessages.push({
+        role: "tool",
+        content: execResult.textForMistral,
+        tool_call_id: toolCall.id,
+      });
+    }
+
+    // Step 3: Second call to Mistral with tool results (streaming)
+    const step3Messages = [
+      ...mistralMessages,
+      assistantMessage, // assistant message with tool_calls
+      ...toolMessages,  // tool results
+    ];
+
+    const step3Response = await callMistral({
+      model,
+      messages: step3Messages,
       stream: true,
       temperature: 0.7,
       max_tokens: 2048,
-    };
+    });
 
-    const response = await fetch(
-      "https://api.mistral.ai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${MISTRAL_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      }
-    );
+    // Step 4: Build custom SSE response with tool results + streamed text
+    const encoder = new TextEncoder();
+    const mistralBody = step3Response.body;
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({
-            error:
-              "Trop de demandes. Veuillez réessayer dans un moment.",
-          }),
-          {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      if (response.status === 401) {
-        return new Response(
-          JSON.stringify({ error: "Clé API Mistral invalide." }),
-          {
-            status: 401,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      const errorText = await response.text();
-      console.error("Mistral API error:", response.status, errorText);
-      return new Response(
-        JSON.stringify({
-          error: "Erreur de connexion à l'IA. Veuillez réessayer.",
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const body = new ReadableStream({
+      async start(controller) {
+        // Send tool results as custom events FIRST
+        for (const tr of toolResults) {
+          const eventData = JSON.stringify(tr);
+          controller.enqueue(encoder.encode(`event: tool_result\ndata: ${eventData}\n\n`));
         }
-      );
-    }
 
-    // Stream SSE response directly to client (passthrough)
-    return new Response(response.body, {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        // Then pipe the Mistral SSE stream through
+        if (mistralBody) {
+          const reader = mistralBody.getReader();
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              controller.enqueue(value);
+            }
+          } catch (e) {
+            console.error("Stream read error:", e);
+          } finally {
+            reader.releaseLock();
+          }
+        }
+        controller.close();
       },
+    });
+
+    return new Response(body, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
     });
   } catch (e) {
     console.error("Mistral chat error:", e);
