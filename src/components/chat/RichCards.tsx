@@ -163,12 +163,23 @@ function EmergencyCard({ data }: { data: EmergencyData }) {
 
 // ─── Sites known to block iframes (X-Frame-Options / CSP) ───
 const IFRAME_BLOCKED_DOMAINS = [
+  // Government / health
   "ameli.fr", "impots.gouv.fr", "caf.fr", "doctolib.fr",
   "monespacedesante.fr", "mesdroitssociaux.gouv.fr",
   "pour-les-personnes-agees.gouv.fr", "france-services.gouv.fr",
-  "service-public.fr", "google.com", "google.fr",
+  "service-public.fr",
+  // Search / video / major platforms (block or render blank in iframes)
+  "google.com", "google.fr", "youtube.com", "youtu.be",
+  "dailymotion.com", "vimeo.com",
+  // Social media
   "facebook.com", "instagram.com", "twitter.com", "x.com",
-  "linkedin.com", "tiktok.com",
+  "linkedin.com", "tiktok.com", "snapchat.com", "pinterest.com",
+  // Transport / lifestyle (commonly block iframes)
+  "sncf-connect.com", "ratp.fr", "allocine.fr",
+  "meteofrance.com", "leboncoin.fr", "amazon.fr", "amazon.com",
+  // Banking / sensitive
+  "labanquepostale.fr", "credit-agricole.fr", "bnpparibas.fr",
+  "societegenerale.fr", "lcl.fr", "boursorama.com",
 ];
 
 function isDomainBlocked(domain: string): boolean {
