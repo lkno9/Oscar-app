@@ -26,7 +26,7 @@ const Index = () => {
       case "oscar":
         return <HomePage />;
       case "accueil":
-        return <RecapPage />;
+        return <RecapPage onGoToOscar={() => setActiveTab("oscar")} />;
       case "services":
         return <ServicesPage />;
     }

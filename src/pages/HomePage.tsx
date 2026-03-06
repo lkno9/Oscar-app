@@ -1,16 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Phone, Settings, Languages, Cloud, FileText, HelpCircle, PenLine } from "lucide-react";
+import { Phone, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
-import { ChatInput } from "@/components/ChatInput";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { CallScreen } from "@/components/CallScreen";
 import { useMistralChat } from "@/hooks/useMistralChat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import type { RichCard } from "@/types/chat";
 
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
@@ -23,19 +20,18 @@ interface ChatMessageData {
   richCards?: RichCard[];
 }
 
-const INITIAL_MESSAGE: ChatMessageData = {
-  id: "welcome",
-  role: "assistant",
-  content: "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider aujourd'hui ? N'hésitez pas à me poser vos questions, nous ferons cela ensemble. 😊",
-};
-
-const SUGGESTION_CHIPS = [
-  { label: "Traduire un texte", icon: Languages, message: "Peux-tu me traduire ce texte en anglais : " },
-  { label: "Météo du jour", icon: Cloud, message: "Quel temps fait-il aujourd'hui ?" },
-  { label: "Analyser un document", icon: FileText, message: "Peux-tu m'aider à comprendre ce document ?" },
-  { label: "Mes droits & aides", icon: HelpCircle, message: "Quelles aides suis-je éligible en tant que senior ?" },
-  { label: "Écrire un message", icon: PenLine, message: "Aide-moi à écrire un message pour " },
+const SUGGESTIONS = [
+  "Comment renouveler ma carte vitale ?",
+  "Je me sens seul aujourd'hui",
+  "Aide-moi avec ma mutuelle",
 ];
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "ce matin";
+  if (h < 18) return "cet après-midi";
+  return "ce soir";
+}
 
 // ElevenLabs TTS — with abort, play() error handling, and truncation
 let currentAudio: HTMLAudioElement | null = null;
@@ -48,7 +44,6 @@ async function speakWithElevenLabs(text: string): Promise<void> {
   const abortController = new AbortController();
   currentTtsAbort = abortController;
 
-  // Truncate very long text to avoid ElevenLabs limits
   const truncatedText = text.length > 4000 ? text.substring(0, 4000) + "..." : text;
 
   const response = await fetch(TTS_URL, {
@@ -101,6 +96,12 @@ function stopSpeech() {
   }
 }
 
+interface PendingFile {
+  file: File;
+  previewUrl?: string;
+  type: "image" | "pdf" | "other";
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessageData[]>([INITIAL_MESSAGE]);
@@ -110,10 +111,15 @@ export function HomePage() {
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [callType, setCallType] = useState<"audio" | "video">("audio");
   const [isRecording, setIsRecording] = useState(false);
+  const [input, setInput] = useState("");
+  const [pendingFile, setPendingFile] = useState<PendingFile | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { user } = useAuth();
+  const started = messages.length > 0;
 
   // Real SSE streaming: accumulate tokens into assistant message
   const handleStreamDelta = useCallback((token: string) => {
@@ -144,11 +150,9 @@ export function HomePage() {
     toast.error(error);
   }, []);
 
-  // Handle rich card tool results from Mistral function calling
   const handleToolResult = useCallback((card: RichCard) => {
     setIsTyping(false);
     setMessages(prev => {
-      // Find or create the current assistant message to attach the card
       const last = prev[prev.length - 1];
       if (last?.role === "assistant" && last.id === lastAssistantIdRef.current) {
         return prev.map(m =>
@@ -157,7 +161,6 @@ export function HomePage() {
             : m
         );
       }
-      // Create new assistant message with card (text will follow via delta)
       const id = Date.now().toString();
       lastAssistantIdRef.current = id;
       return [...prev, { id, role: "assistant" as const, content: "", richCards: [card] }];
@@ -210,8 +213,6 @@ export function HomePage() {
     try {
       await speakWithElevenLabs(text);
     } catch {
-      // ElevenLabs TTS failed, falling back to browser speech
-      // Don't silently fallback — show a toast so we know ElevenLabs is failing
       toast.info("Voix ElevenLabs indisponible, utilisation de la voix du navigateur.");
       try {
         await fallbackSpeak(text);
@@ -244,7 +245,7 @@ export function HomePage() {
     setSpeakingMessageId(null);
   };
 
-  // --- STT via Web Speech API (gratuit, natif navigateur) ---
+  // --- STT via Web Speech API ---
   const recognitionRef = useRef<any>(null);
   const [transcript, setTranscript] = useState("");
   const wantRecordingRef = useRef(false);
@@ -275,8 +276,6 @@ export function HomePage() {
     };
 
     recognition.onend = () => {
-      // If user still wants to record, restart automatically
-      // (Chrome stops after silences, this keeps it alive)
       if (wantRecordingRef.current) {
         try {
           recognition.start();
@@ -285,7 +284,6 @@ export function HomePage() {
           // Fall through to stop
         }
       }
-      // Actually stopping
       setIsRecording(false);
       const text = finalTranscriptRef.current.trim();
       setTranscript("");
@@ -297,11 +295,7 @@ export function HomePage() {
     };
 
     recognition.onerror = (event: any) => {
-      // "no-speech" and "aborted" are not fatal — let onend handle restart
-      if (event.error === "no-speech" || event.error === "aborted") {
-        return;
-      }
-      // Fatal errors — stop everything
+      if (event.error === "no-speech" || event.error === "aborted") return;
       wantRecordingRef.current = false;
       setIsRecording(false);
       setTranscript("");
@@ -321,13 +315,11 @@ export function HomePage() {
 
   const handleVoiceToggle = () => {
     if (isRecording) {
-      // User wants to stop — send what we have
       wantRecordingRef.current = false;
       recognitionRef.current?.stop();
       return;
     }
 
-    // Stop any ongoing speech first
     stopSpeech();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setIsSpeakingState(false);
@@ -352,7 +344,12 @@ export function HomePage() {
     }
   };
 
-  // Read a file as text (for .txt, .csv, .md, etc.)
+  // Update input with transcript
+  useEffect(() => {
+    if (transcript) setInput(transcript);
+  }, [transcript]);
+
+  // File reading helpers
   const readFileAsText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -362,7 +359,6 @@ export function HomePage() {
     });
   };
 
-  // Read a file as base64 data URL (for images, PDFs)
   const readFileAsBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -372,10 +368,25 @@ export function HomePage() {
     });
   };
 
-  const handleAttach = async (files: FileList, extraMessage?: string) => {
-    const file = files[0];
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
+    const isImage = file.type.startsWith("image/");
+    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+    setPendingFile({
+      file,
+      previewUrl,
+      type: isImage ? "image" : file.type === "application/pdf" ? "pdf" : "other",
+    });
+    e.target.value = "";
+  };
 
+  const removePendingFile = () => {
+    if (pendingFile?.previewUrl) URL.revokeObjectURL(pendingFile.previewUrl);
+    setPendingFile(null);
+  };
+
+  const handleAttach = async (file: File, extraMessage?: string) => {
     const isImage = file.type.startsWith("image/");
     const isPdf = file.type === "application/pdf";
     const isText = file.type === "text/plain" || file.name.endsWith(".txt");
@@ -385,13 +396,11 @@ export function HomePage() {
     const isDocx = file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.name.endsWith(".docx");
     const isDoc = file.type === "application/msword" || file.name.endsWith(".doc");
 
-    // Unsupported types
     if (!isImage && !isPdf && !isTextFile && !isDocx && !isDoc) {
       toast.error(`Format non supporté. Oscar peut lire : images, PDF, TXT, CSV et DOCX.`);
       return;
     }
 
-    // .doc (old Word format) — can't read client-side
     if (isDoc && !isDocx) {
       toast.error("Le format .doc ancien n'est pas supporté. Convertissez le fichier en .docx ou .pdf.");
       return;
@@ -399,7 +408,6 @@ export function HomePage() {
 
     setIsTyping(true);
     try {
-      // --- Text files (TXT, CSV, MD) — read as plain text ---
       if (isTextFile) {
         const textContent = await readFileAsText(file);
         const truncated = textContent.length > 10000
@@ -422,12 +430,10 @@ export function HomePage() {
         return;
       }
 
-      // --- DOCX — extract text from XML ---
       if (isDocx) {
         try {
           // Send DOCX as base64 for server-side processing
           const base64 = await readFileAsBase64(file);
-
           const contentLabel = `[Document Word : ${file.name}]`;
           const userMsg: ChatMessageData = {
             id: Date.now().toString(),
@@ -435,12 +441,7 @@ export function HomePage() {
             content: extraMessage ? `${contentLabel}\n${extraMessage}` : contentLabel,
           };
           setMessages(prev => [...prev, userMsg]);
-
-          const promptText = extraMessage
-            ? extraMessage
-            : `Peux-tu analyser ce document Word ? (${file.name})`;
-
-          // Send as base64 — edge function will handle it
+          const promptText = extraMessage ? extraMessage : `Peux-tu analyser ce document Word ? (${file.name})`;
           sendToMistral(promptText, base64);
           return;
         } catch {
@@ -450,9 +451,7 @@ export function HomePage() {
         }
       }
 
-      // --- Images & PDFs — read as base64 ---
       const base64 = await readFileAsBase64(file);
-
       const contentLabel = isImage ? `[Image envoyée : ${file.name}]` : `[Document envoyé : ${file.name}]`;
       const userMsg: ChatMessageData = {
         id: Date.now().toString(),
@@ -461,13 +460,11 @@ export function HomePage() {
         imageUrl: isImage ? base64 : undefined,
       };
       setMessages(prev => [...prev, userMsg]);
-
       const promptText = extraMessage
         ? extraMessage
         : isImage
           ? `Peux-tu analyser cette image ? (${file.name})`
           : `Peux-tu analyser ce document ? (${file.name})`;
-
       sendToMistral(promptText, base64);
     } catch {
       setIsTyping(false);
@@ -477,95 +474,226 @@ export function HomePage() {
 
   const handleSend = async (content: string) => {
     setIsRecording(false);
-
     const userMessage: ChatMessageData = { id: Date.now().toString(), role: "user", content };
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
     sendToMistral(content);
   };
 
+  const handleSubmit = () => {
+    if (isTyping || isRecording) return;
+
+    if (pendingFile) {
+      handleAttach(pendingFile.file, input.trim() || undefined);
+      if (pendingFile.previewUrl) URL.revokeObjectURL(pendingFile.previewUrl);
+      setPendingFile(null);
+      setInput("");
+    } else if (input.trim()) {
+      handleSend(input.trim());
+      setInput("");
+    }
+  };
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const canSend = !isTyping && !isRecording && (pendingFile !== null || input.trim().length > 0);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden" style={{ fontFamily: "'Inter', 'Nunito', sans-serif" }}>
       {/* Header */}
-      <header className="px-4 py-3 bg-card border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <OscarAvatar size="md" />
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Oscar</h1>
-              <p className="text-xs text-muted-foreground capitalize">{format(new Date(), "EEEE d MMMM", { locale: fr })}</p>
-            </div>
+      <header
+        className="flex items-center justify-between flex-shrink-0 bg-white dark:bg-card"
+        style={{
+          padding: "16px 20px 14px",
+          borderBottom: started ? "1px solid #f1f5f9" : "none",
+        }}
+      >
+        <div className="flex items-center gap-2.5">
+          <OscarAvatar size="sm" className="w-9 h-9 shadow-[0_2px_8px_rgba(72,162,158,0.3)]" />
+          <div className="flex flex-col gap-px">
+            <span className="font-bold text-slate-800 dark:text-foreground" style={{ fontSize: "15.5px", letterSpacing: "-0.2px", lineHeight: 1.2 }}>Oscar</span>
+            <span className="text-xs font-medium text-[#48A29E]">En ligne</span>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
-              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
-              aria-label="Appel audio"
-            >
-              <Phone className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => navigate("/settings")}
-              className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
-              aria-label="Paramètres"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+            aria-label="Appel audio"
+          >
+            <Phone className="w-[18px] h-[18px]" />
+          </button>
+          <button
+            onClick={() => navigate("/settings")}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+            aria-label="Paramètres"
+          >
+            <Settings className="w-[18px] h-[18px]" />
+          </button>
         </div>
       </header>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-        {messages.map((message) => (
-          <ChatMessage
-            key={message.id}
-            role={message.role}
-            content={message.content}
-            imageUrl={message.imageUrl}
-            richCards={message.richCards}
-            messageId={message.id}
-            onSpeak={(text) => handleSpeak(text, message.id)}
-            onStopSpeaking={handleStopSpeaking}
-            isSpeaking={isSpeakingState}
-            speakingMessageId={speakingMessageId || undefined}
-          />
-        ))}
-        {isTyping && <TypingIndicator />}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Suggestion chips — visible when conversation is empty */}
-      {messages.length === 0 && !isTyping && (
-        <div className="px-4 pb-2 pt-1 bg-card border-t border-border">
-          <p className="text-xs text-muted-foreground mb-2">Oscar peut vous aider avec :</p>
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-            {SUGGESTION_CHIPS.map((chip, i) => (
+      {/* Welcome Screen (no messages) */}
+      {!started && (
+        <div className="flex-1 flex flex-col items-center justify-center px-7 pb-10 animate-fade-in">
+          <h1
+            className="font-playfair text-center text-slate-800 dark:text-foreground animate-fade-in"
+            style={{
+              fontSize: 32,
+              fontWeight: 500,
+              lineHeight: 1.3,
+              letterSpacing: "-0.5px",
+              marginBottom: 36,
+              animationDelay: "0.15s",
+              animationFillMode: "both",
+            }}
+          >
+            Comment puis-je<br />vous aider {getGreeting()} ?
+          </h1>
+          <div
+            className="flex flex-col gap-2.5 w-full animate-fade-in"
+            style={{ animationDelay: "0.35s", animationFillMode: "both" }}
+          >
+            {SUGGESTIONS.map((s, i) => (
               <button
                 key={i}
-                onClick={() => handleSend(chip.message)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-border bg-secondary text-foreground text-sm font-medium whitespace-nowrap hover:border-primary hover:bg-primary/5 transition-all flex-shrink-0"
+                className="suggestion-btn"
+                onClick={() => handleSend(s)}
               >
-                <chip.icon className="w-3.5 h-3.5 text-primary" />
-                {chip.label}
+                {s}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Input */}
-      <ChatInput
-        onSend={handleSend}
-        onAttach={handleAttach}
-        onAudioRecorded={undefined}
-        disabled={isTyping}
-        isListening={isRecording}
-        isRecording={isRecording}
-        transcript={transcript}
-        onVoiceToggle={handleVoiceToggle}
-        voiceSupported={webSpeechSupported}
-      />
+      {/* Messages */}
+      {started && (
+        <div className="flex-1 overflow-y-auto px-4 py-5 thin-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {messages.map((message) => (
+            <ChatMessage
+              key={message.id}
+              role={message.role}
+              content={message.content}
+              imageUrl={message.imageUrl}
+              richCards={message.richCards}
+              messageId={message.id}
+              onSpeak={(text) => handleSpeak(text, message.id)}
+              onStopSpeaking={handleStopSpeaking}
+              isSpeaking={isSpeakingState}
+              speakingMessageId={speakingMessageId || undefined}
+            />
+          ))}
+          {isTyping && <TypingIndicator />}
+          <div ref={messagesEndRef} />
+        </div>
+      )}
+
+      {/* Input Bar */}
+      <div className="flex-shrink-0 bg-white dark:bg-card" style={{ padding: "10px 16px 24px" }}>
+        {/* File preview */}
+        {pendingFile && (
+          <div className="mb-2 flex items-center gap-2 bg-slate-50 dark:bg-secondary rounded-2xl p-2 pr-3">
+            {pendingFile.type === "image" && pendingFile.previewUrl ? (
+              <img src={pendingFile.previewUrl} alt="Aperçu" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-[#48A29E]/10 flex items-center justify-center flex-shrink-0">
+                <FileTextIcon className="w-6 h-6 text-[#48A29E]" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-800 dark:text-foreground truncate">{pendingFile.file.name}</p>
+              <p className="text-xs text-slate-400">Vous pouvez ajouter un message</p>
+            </div>
+            <button onClick={removePendingFile} className="p-1 rounded-full text-slate-400 hover:text-slate-600 transition-all flex-shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        <div className="glass-input">
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder={isRecording ? "Enregistrement en cours..." : "Demandez à Oscar..."}
+            rows={1}
+            disabled={isTyping || isRecording}
+            className="w-full border-none bg-transparent outline-none text-slate-800 dark:text-foreground placeholder:text-slate-400 resize-none"
+            style={{
+              fontSize: 15,
+              lineHeight: 1.5,
+              maxHeight: 120,
+              overflowY: "auto",
+              marginBottom: 10,
+              fontFamily: "'Inter', 'Nunito', sans-serif",
+            }}
+          />
+          <div className="flex items-center justify-between gap-2">
+            {/* Plus/attach button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#48A29E] hover:bg-[#48A29E]/5 transition-all"
+            >
+              <Paperclip className="w-[18px] h-[18px]" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple={false}
+              accept="image/*,application/pdf,.docx,.txt,.csv,.md"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            <div className="flex items-center gap-2.5">
+              {/* Mic button */}
+              {webSpeechSupported && (
+                <button
+                  type="button"
+                  onClick={handleVoiceToggle}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                    isRecording
+                      ? "bg-red-500 text-white animate-pulse"
+                      : "text-slate-400 hover:text-[#48A29E] hover:bg-[#48A29E]/5"
+                  }`}
+                  aria-label={isRecording ? "Arrêter" : "Parler"}
+                >
+                  {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-[18px] h-[18px]" />}
+                </button>
+              )}
+
+              {/* Send button */}
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!canSend}
+                className="w-9 h-9 rounded-full flex items-center justify-center transition-all disabled:opacity-30"
+                style={{
+                  background: canSend
+                    ? "linear-gradient(135deg, #48A29E 0%, #38b2ac 100%)"
+                    : "#e2e8f0",
+                }}
+                aria-label="Envoyer"
+              >
+                <Send className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          </div>
+        </div>
+        {isRecording && (
+          <p className="text-xs text-center text-slate-400 mt-2 animate-pulse">
+            Parlez... Appuyez à nouveau pour envoyer
+          </p>
+        )}
+      </div>
 
       {/* Call Screen */}
       <CallScreen

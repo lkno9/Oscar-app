@@ -3,18 +3,14 @@ import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
   Pill,
-  MessageSquare,
-  ShieldAlert,
   ChevronRight,
-  Smile,
   FileText,
   Bell,
-  Newspaper,
-  ExternalLink,
-  RefreshCw,
-  BellRing,
   X,
   Check,
+  Heart,
+  Lock,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,643 +25,611 @@ interface SenderProfile { id: string; full_name: string | null; }
 interface CalendarEvent { id: string; title: string; event_date: string; event_time: string | null; event_type: string | null; }
 interface Medication { id: string; name: string; dosage: string | null; }
 interface UrgentDocument { id: string; name: string; expiration_date: string; }
-interface ScamAlert { id: string; title: string; danger_level: string; }
 interface Reminder { id: string; label: string; date: string; type: "medication" | "document"; }
 interface AppNotification { id: string; title: string; message: string | null; type: string; created_at: string; is_read: boolean | null; }
 
-interface NewsArticle {
-  title: string;
-  description: string;
-  link: string;
-  pubDate: string;
-  source: string;
-  category: "droits" | "seniors" | "securite";
-}
+interface Weather { temp: number; icon: string; label: string; }
 
-const MOODS = [
-  { level: 1, emoji: "😢", label: "Triste", color: "text-muted-foreground" },
-  { level: 2, emoji: "😕", label: "Pas bien", color: "text-muted-foreground" },
-  { level: 3, emoji: "😐", label: "Correct", color: "text-foreground" },
-  { level: 4, emoji: "🙂", label: "Bien", color: "text-primary" },
-  { level: 5, emoji: "😊", label: "Très bien", color: "text-primary" },
+// Weather icon/label maps
+const WEATHER_ICONS: Record<number, string> = {
+  0: "\u2600\ufe0f", 1: "\ud83c\udf24\ufe0f", 2: "\u26c5", 3: "\u2601\ufe0f",
+  45: "\ud83c\udf2b\ufe0f", 48: "\ud83c\udf2b\ufe0f",
+  51: "\ud83c\udf26\ufe0f", 53: "\ud83c\udf26\ufe0f", 55: "\ud83c\udf27\ufe0f",
+  61: "\ud83c\udf27\ufe0f", 63: "\ud83c\udf27\ufe0f", 65: "\ud83c\udf27\ufe0f",
+  71: "\ud83c\udf28\ufe0f", 73: "\ud83c\udf28\ufe0f", 75: "\ud83c\udf28\ufe0f",
+  80: "\ud83c\udf26\ufe0f", 81: "\ud83c\udf27\ufe0f", 82: "\ud83c\udf27\ufe0f",
+  95: "\u26c8\ufe0f", 96: "\u26c8\ufe0f", 99: "\u26c8\ufe0f",
+};
+const WEATHER_LABELS: Record<number, string> = {
+  0: "Ensoleill\u00e9", 1: "Peu nuageux", 2: "Partiellement nuageux", 3: "Nuageux",
+  45: "Brouillard", 48: "Brouillard givrant",
+  51: "Bruine l\u00e9g\u00e8re", 53: "Bruine", 55: "Bruine forte",
+  61: "Pluie l\u00e9g\u00e8re", 63: "Pluie", 65: "Forte pluie",
+  71: "Neige l\u00e9g\u00e8re", 73: "Neige", 75: "Forte neige",
+  80: "Averses", 81: "Averses", 82: "Fortes averses",
+  95: "Orage", 96: "Orage gr\u00eale", 99: "Orage fort",
+};
+
+const ACTU_CATEGORIES = ["Tout", "Droits", "Senior", "S\u00e9curit\u00e9", "Activit\u00e9"];
+
+const ARTICLES = [
+  { emoji: "\ud83d\udcb0", cat: "Droits", title: "Revalorisation des petites retraites en 2025", src: "Service-Public.fr", date: "Il y a 2h" },
+  { emoji: "\ud83c\udfe5", cat: "Senior", title: "T\u00e9l\u00e9consultation : comment \u00e7a marche pour les seniors", src: "Ameli.fr", date: "Il y a 5h" },
+  { emoji: "\ud83d\udee1\ufe0f", cat: "S\u00e9curit\u00e9", title: "Attention aux faux conseillers bancaires", src: "Signal-Arnaques", date: "Hier" },
+  { emoji: "\ud83c\udfad", cat: "Activit\u00e9", title: "Ateliers gratuits dans votre ville", src: "Mairie", date: "Hier" },
+  { emoji: "\ud83d\udcdd", cat: "Droits", title: "Nouveau ch\u00e8que \u00e9nergie : \u00eates-vous \u00e9ligible ?", src: "Gouv.fr", date: "Il y a 3j" },
+  { emoji: "\ud83e\uddd1\u200d\u2695\ufe0f", cat: "Senior", title: "Les bienfaits de la marche apr\u00e8s 60 ans", src: "Sant\u00e9 Magazine", date: "Il y a 3j" },
 ];
 
-const EVENT_ICONS: Record<string, string> = {
-  medical: "🏥", health: "💊", family: "👨‍👩‍👧", admin: "📋", leisure: "🎉", general: "📅",
-};
+const RAPPEL_STATUSES = ["Tout", "\u00c0 faire", "En cours", "En attente"];
 
-const NEWS_CATEGORIES = [
-  { key: "all", label: "Tout" },
-  { key: "droits", label: "Droits" },
-  { key: "seniors", label: "Seniors" },
-  { key: "securite", label: "Sécurité" },
-  { key: "activites", label: "Activités" },
-] as const;
+const RAPPELS_DATA = [
+  { icon: "\ud83d\udcbc", label: "Renouveler la carte vitale", sub: "Expire le 15 avril", status: "\u00c0 faire", color: "#ef4444", bg: "rgba(239,68,68,0.08)" },
+  { icon: "\ud83d\udce6", label: "Colis en attente", sub: "Point relais Carrefour", status: "En attente", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
+  { icon: "\ud83d\udcde", label: "Rappeler le Dr. Martin", sub: "Prise de rendez-vous", status: "En cours", color: "#48A29E", bg: "rgba(72,162,158,0.08)" },
+  { icon: "\ud83d\udcc4", label: "Formulaire APL \u00e0 remplir", sub: "Date limite : 20 mars", status: "\u00c0 faire", color: "#ef4444", bg: "rgba(239,68,68,0.08)" },
+];
 
-const NEWS_CATEGORY_STYLES: Record<string, { emoji: string; bg: string; text: string }> = {
-  droits: { emoji: "📋", bg: "bg-secondary", text: "text-foreground" },
-  seniors: { emoji: "👴", bg: "bg-accent", text: "text-accent-foreground" },
-  securite: { emoji: "🛡️", bg: "bg-destructive/10", text: "text-destructive" },
-  activites: { emoji: "🎯", bg: "bg-primary/10", text: "text-primary" },
-};
+interface QuickAction {
+  label: string;
+  icon: React.ReactNode;
+}
 
-const NEWS_CACHE_KEY = "oscar_news_cache";
-const NEWS_CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours
+const ALL_ACTIONS: QuickAction[] = [
+  { label: "Mon calendrier", icon: <CalendarDays className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mes papiers", icon: <FileText className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Ma sant\u00e9", icon: <Heart className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mes rappels", icon: <Bell className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mon coffre-fort", icon: <Lock className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mes m\u00e9dicaments", icon: <Pill className="w-5 h-5 text-[#48A29E]" /> },
+];
 
-export function RecapPage() {
+const DEFAULT_NOTIFS = [
+  { id: "n1", icon: "\ud83d\udcde", title: "Appel manqu\u00e9", sub: "Dr. Martin a essay\u00e9 de vous joindre", info: "Il y a 2h", color: "#48A29E" },
+  { id: "n2", icon: "\ud83d\udcb3", title: "Carte vitale", sub: "Votre carte expire bient\u00f4t", info: "Renouveler", color: "#ef4444" },
+  { id: "n3", icon: "\ud83d\udcac", title: "Message non lu", sub: "Sophie vous a envoy\u00e9 un message", info: "Famille", color: "#6366f1" },
+  { id: "n4", icon: "\ud83d\udc8a", title: "M\u00e9dicaments", sub: "N'oubliez pas votre traitement du soir", info: "Sant\u00e9", color: "#f59e0b" },
+];
+
+interface RecapPageProps {
+  onGoToOscar?: () => void;
+}
+
+export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ full_name: string | null }>({ full_name: null });
-  const [todayMood, setTodayMood] = useState<MoodEntry | null>(null);
-  const [unreadMessages, setUnreadMessages] = useState<UnreadMessage[]>([]);
-  const [senderNames, setSenderNames] = useState<Record<string, string>>({});
-  const [nextEvents, setNextEvents] = useState<CalendarEvent[]>([]);
-  const [activeMeds, setActiveMeds] = useState<Medication[]>([]);
-  const [urgentDocs, setUrgentDocs] = useState<UrgentDocument[]>([]);
-  const [scamAlerts, setScamAlerts] = useState<ScamAlert[]>([]);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [weather, setWeather] = useState<Weather | null>(null);
+  const [actuCat, setActuCat] = useState("Tout");
+  const [rappelCat, setRappelCat] = useState("Tout");
+  const [selectedActions, setSelectedActions] = useState<string[]>(["Mon calendrier", "Mes papiers", "Ma sant\u00e9", "Mes rappels"]);
+  const [showPersonnaliser, setShowPersonnaliser] = useState(false);
+  const [notifs, setNotifs] = useState(DEFAULT_NOTIFS);
 
-  // News state
-  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
-  const [newsLoading, setNewsLoading] = useState(true);
-  const [newsFilter, setNewsFilter] = useState<string>("all");
-  const [showAllNews, setShowAllNews] = useState(false);
-
-  // ⏱ Horloge temps réel — mise à jour chaque seconde
+  // Fetch weather
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    const fetchWeather = async (lat: number, lon: number) => {
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`);
+        const data = await res.json();
+        const code = data.current.weather_code;
+        setWeather({
+          temp: Math.round(data.current.temperature_2m),
+          icon: WEATHER_ICONS[code] || "\ud83c\udf21\ufe0f",
+          label: WEATHER_LABELS[code] || "Variable",
+        });
+      } catch {
+        setWeather({ temp: 17, icon: "\u26c5", label: "Nuageux" });
+      }
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+        () => fetchWeather(48.8566, 2.3522),
+        { timeout: 5000 }
+      );
+    } else {
+      fetchWeather(48.8566, 2.3522);
+    }
   }, []);
 
+  // Fetch profile
   useEffect(() => {
-    if (user) {
-      fetchData();
-      fetchNews();
-    }
+    if (!user) return;
+    const fetchProfile = async () => {
+      const { data } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+      if (data) setProfile(data);
+      setLoading(false);
+    };
+    fetchProfile();
   }, [user]);
 
-  const fetchData = async () => {
-    if (!user) return;
-    const today = new Date().toISOString().split("T")[0];
-    const in30Days = new Date();
-    in30Days.setDate(in30Days.getDate() + 30);
-    const in30DaysStr = in30Days.toISOString().split("T")[0];
+  const getFirstName = () => profile.full_name ? profile.full_name.split(" ")[0] : "Jean";
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon apr\u00e8s-midi" : "Bonsoir";
+  const dateStr = format(new Date(), "EEEE d MMMM yyyy", { locale: fr });
 
-    const [profileRes, moodRes, messagesRes, eventsRes, medsRes, docsRes, alertsRes, remindersRes, notifsRes] = await Promise.all([
-      supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
-      supabase.from("mood_entries").select("mood_level").eq("user_id", user.id).eq("entry_date", today).maybeSingle(),
-      supabase.from("family_messages").select("id, content, created_at, sender_id").eq("receiver_id", user.id).eq("is_read", false).order("created_at", { ascending: false }).limit(5),
-      supabase.from("events").select("id, title, event_date, event_time, event_type").eq("user_id", user.id).gte("event_date", today).order("event_date").limit(3),
-      supabase.from("medications").select("id, name, dosage").eq("user_id", user.id).eq("is_active", true).order("name").limit(5),
-      supabase.from("documents").select("id, name, expiration_date").eq("user_id", user.id).gte("expiration_date", today).lte("expiration_date", in30DaysStr).order("expiration_date"),
-      supabase.from("scam_alerts").select("id, title, danger_level").eq("is_active", true).limit(3),
-      supabase.from("document_reminders").select("id, reminder_date, reminder_type, document_id, documents(name)").eq("user_id", user.id).eq("is_sent", false).gte("reminder_date", today).order("reminder_date").limit(5),
-      supabase.from("family_notifications").select("id, title, message, type, created_at, is_read").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
-    ]);
+  const filteredArticles = actuCat === "Tout" ? ARTICLES : ARTICLES.filter(a => a.cat === actuCat);
+  const filteredRappels = rappelCat === "Tout" ? RAPPELS_DATA : RAPPELS_DATA.filter(r => r.status === rappelCat);
 
-    if (profileRes.data) setProfile(profileRes.data);
-    if (moodRes.data) setTodayMood(moodRes.data);
-    if (messagesRes.data) {
-      setUnreadMessages(messagesRes.data);
-      const senderIds = [...new Set(messagesRes.data.map((m) => m.sender_id))];
-      if (senderIds.length > 0) {
-        const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", senderIds);
-        if (profiles) {
-          const names: Record<string, string> = {};
-          (profiles as SenderProfile[]).forEach((p) => { names[p.id] = p.full_name || "Famille"; });
-          setSenderNames(names);
-        }
-      }
-    }
-    if (eventsRes.data) setNextEvents(eventsRes.data);
-    if (medsRes.data) setActiveMeds(medsRes.data);
-    if (docsRes.data) setUrgentDocs(docsRes.data);
-    if (alertsRes.data) setScamAlerts(alertsRes.data);
+  const dismissNotif = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id));
 
-    // Build reminders list: document reminders + medication time windows
-    const builtReminders: Reminder[] = [];
-    if (remindersRes.data) {
-      remindersRes.data.forEach((r: any) => {
-        builtReminders.push({
-          id: r.id,
-          label: r.documents?.name ? `Renouveler "${r.documents.name}"` : `Rappel document`,
-          date: r.reminder_date,
-          type: "document",
-        });
-      });
-    }
-    if (medsRes.data && medsRes.data.length > 0) {
-      builtReminders.push({
-        id: "med-today",
-        label: `Prendre vos médicaments du jour (${medsRes.data.length})`,
-        date: today,
-        type: "medication",
-      });
-    }
-    setReminders(builtReminders);
-
-    if (notifsRes.data) setNotifications(notifsRes.data as AppNotification[]);
-    setLoading(false);
+  const toggleAction = (label: string) => {
+    setSelectedActions(prev => {
+      if (prev.includes(label)) return prev.filter(l => l !== label);
+      if (prev.length >= 4) return prev;
+      return [...prev, label];
+    });
   };
-
-  const fetchNews = async (forceRefresh = false) => {
-    // Check localStorage cache first
-    if (!forceRefresh) {
-      try {
-        const cached = localStorage.getItem(NEWS_CACHE_KEY);
-        if (cached) {
-          const { articles, fetchedAt } = JSON.parse(cached);
-          const age = Date.now() - new Date(fetchedAt).getTime();
-          if (age < NEWS_CACHE_DURATION && articles?.length > 0) {
-            setNewsArticles(articles);
-            setNewsLoading(false);
-            return;
-          }
-        }
-      } catch {
-        // Ignore cache errors
-      }
-    }
-
-    setNewsLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("fetch-senior-news");
-      if (error) throw error;
-      if (data?.articles?.length > 0) {
-        setNewsArticles(data.articles);
-        // Cache the results
-        localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify({
-          articles: data.articles,
-          fetchedAt: new Date().toISOString(),
-        }));
-      }
-    } catch {
-      // If fetch fails, try to use stale cache
-      try {
-        const cached = localStorage.getItem(NEWS_CACHE_KEY);
-        if (cached) {
-          const { articles } = JSON.parse(cached);
-          if (articles?.length > 0) setNewsArticles(articles);
-        }
-      } catch {
-        // No cache available
-      }
-    } finally {
-      setNewsLoading(false);
-    }
-  };
-
-  const getFirstName = () => profile.full_name ? profile.full_name.split(" ")[0] : "vous";
-  const moodInfo = todayMood ? MOODS.find((m) => m.level === todayMood.mood_level) : null;
-  const hour = currentTime.getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
-  const totalAlerts = scamAlerts.length + urgentDocs.length;
-
-  const filteredNews = newsFilter === "all"
-    ? newsArticles
-    : newsArticles.filter((a) => a.category === newsFilter);
-  const displayedNews = showAllNews ? filteredNews : filteredNews.slice(0, 4);
-
-  const formatNewsDate = (dateStr: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: fr });
-    } catch {
-      return "";
-    }
-  };
-
-  // Rappels médicaments du jour
-  const currentMedWindow = hour >= 7 && hour < 10 ? "matin" : hour >= 12 && hour < 14 ? "midi" : hour >= 18 && hour < 21 ? "soir" : null;
-  const [dismissedReminder, setDismissedReminder] = useState<string | null>(null);
-  const showMedReminder = currentMedWindow && dismissedReminder !== currentMedWindow && activeMeds.length > 0;
-
-  const QUICK_ACTIONS = [
-    {
-      label: "Agenda",
-      path: "/services/agenda",
-      icon: <CalendarDays className="w-7 h-7 text-primary" />,
-      bg: "bg-primary/10",
-    },
-    {
-      label: "Santé",
-      path: "/services/health",
-      icon: <Pill className="w-7 h-7 text-pink-500" />,
-      bg: "bg-pink-100",
-    },
-    {
-      label: "Famille",
-      path: "/services/communication",
-      icon: <MessageSquare className="w-7 h-7 text-muted-foreground" />,
-      bg: "bg-secondary",
-      badge: unreadMessages.length,
-    },
-    {
-      label: "Urgence",
-      path: "/services/emergency",
-      icon: (
-        <span className="text-destructive-foreground text-base font-extrabold leading-none">
-          SOS
-        </span>
-      ),
-      bg: "bg-destructive",
-    },
-  ];
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/80 px-5 pt-6 pb-10">
-        {/* Decorative circles */}
-        <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full bg-white/10 translate-y-1/2 -translate-x-1/4" />
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide" style={{ background: "#f8fafc", fontFamily: "'Inter', 'Nunito', sans-serif" }}>
 
-        <div className="relative">
-          {/* Date + heure */}
-          <div className="flex items-start justify-between mb-5">
+      {/* HEADER */}
+      <div className="flex-shrink-0 bg-white dark:bg-card" style={{ padding: "22px 20px 18px" }}>
+        <p className="capitalize" style={{ fontSize: 13, color: "#94a3b8", marginBottom: 4 }}>{dateStr}</p>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1e293b", letterSpacing: "-0.5px", marginBottom: 16 }}>
+          {greeting}, {getFirstName()}
+        </h1>
+
+        {/* Weather widget */}
+        {weather && (
+          <div
+            className="flex items-center gap-3"
+            style={{
+              background: "rgba(72,162,158,0.12)",
+              borderRadius: 18,
+              padding: "12px 16px",
+            }}
+          >
+            <span style={{ fontSize: 28 }}>{weather.icon}</span>
             <div>
-              <p className="text-primary-foreground/75 text-sm font-medium capitalize">
-                {format(currentTime, "EEEE d MMMM", { locale: fr })}
-              </p>
-              <h1 className="text-2xl font-bold text-primary-foreground mt-0.5 leading-tight">
-                {greeting}, {getFirstName()} 👋
-              </h1>
+              <span style={{ fontSize: 22, fontWeight: 700, color: "#1e293b" }}>{weather.temp}\u00b0C</span>
+              <span style={{ fontSize: 13.5, color: "#64748b", marginLeft: 8 }}>{weather.label}</span>
             </div>
-            <div className="text-right">
-              <p className="text-primary-foreground text-3xl font-bold tabular-nums leading-none">
-                {format(currentTime, "HH:mm")}
-              </p>
-            </div>
-          </div>
-
-          {/* Mood strip */}
-          <div className="flex items-center gap-3 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3">
-            {moodInfo ? (
-              <>
-                <span className="text-3xl">{moodInfo.emoji}</span>
-                <div>
-                  <p className="text-primary-foreground/80 text-xs font-medium">Votre humeur aujourd'hui</p>
-                  <p className="text-primary-foreground font-bold text-base">{moodInfo.label}</p>
-                </div>
-              </>
-            ) : (
-              <>
-                <Smile className="w-7 h-7 text-primary-foreground/70 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-primary-foreground text-sm font-medium">Comment vous sentez-vous ?</p>
-                </div>
-                <button
-                  onClick={() => navigate("/services/health")}
-                  className="bg-white text-primary text-xs font-bold px-4 py-2 rounded-xl shadow-sm hover:bg-white/90 active:scale-95 transition-all"
-                >
-                  Indiquer
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <OscarAvatar size="md" />
-            <p className="text-muted-foreground text-sm">Chargement...</p>
-          </div>
-        ) : (
-          <div className="px-4 pb-6 space-y-4">
-
-            {/* 💊 Rappel médicaments */}
-            {showMedReminder && (
-              <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
-                  <BellRing className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Rappel médicaments du {currentMedWindow}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {activeMeds.length} médicament{activeMeds.length > 1 ? "s" : ""} à prendre · {activeMeds.slice(0, 2).map(m => m.name).join(", ")}{activeMeds.length > 2 ? "..." : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => navigate("/services/health")}
-                    className="p-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 active:scale-95 transition-all"
-                    aria-label="Voir médicaments"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setDismissedReminder(currentMedWindow!)}
-                    className="p-2 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-all"
-                    aria-label="Ignorer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ============================================ */}
-            {/* === ACTUALITÉS SENIORS (real RSS content) === */}
-            {/* ============================================ */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Newspaper className="w-5 h-5 text-primary" />
-                  <h2 className="text-sm font-semibold text-foreground">Actualités</h2>
-                </div>
-                <button
-                  onClick={() => fetchNews(true)}
-                  className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
-                  aria-label="Rafraîchir les actualités"
-                >
-                  <RefreshCw className={`w-4 h-4 text-muted-foreground ${newsLoading ? "animate-spin" : ""}`} />
-                </button>
-              </div>
-
-              {/* Category filters */}
-              <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide">
-                {NEWS_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.key}
-                    onClick={() => { setNewsFilter(cat.key); setShowAllNews(false); }}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                      newsFilter === cat.key
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Articles */}
-              {newsLoading && newsArticles.length === 0 ? (
-                <div className="bg-card border border-border rounded-2xl p-6 text-center">
-                  <RefreshCw className="w-6 h-6 text-muted-foreground mx-auto mb-2 animate-spin" />
-                  <p className="text-sm text-muted-foreground">Chargement des actualités...</p>
-                </div>
-              ) : filteredNews.length > 0 ? (
-                <div className="space-y-2.5">
-                  {displayedNews.map((article, i) => {
-                    const style = NEWS_CATEGORY_STYLES[article.category] || NEWS_CATEGORY_STYLES.droits;
-                    return (
-                      <a
-                        key={`${article.link}-${i}`}
-                        href={article.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block bg-card border border-border rounded-2xl p-3.5 hover:shadow-md active:scale-[0.99] transition-all"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`w-10 h-10 rounded-xl ${style.bg} flex items-center justify-center flex-shrink-0 text-lg`}>
-                            {style.emoji}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className={`text-xs font-medium ${style.text}`}>{article.source}</span>
-                              <span className="text-xs text-muted-foreground">{formatNewsDate(article.pubDate)}</span>
-                            </div>
-                            <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
-                              {article.title}
-                            </h3>
-                            {article.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                                {article.description}
-                              </p>
-                            )}
-                          </div>
-                          <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
-                        </div>
-                      </a>
-                    );
-                  })}
-                  {!showAllNews && filteredNews.length > 4 && (
-                    <button
-                      onClick={() => setShowAllNews(true)}
-                      className="w-full py-2.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                    >
-                      Voir plus d'actualités ({filteredNews.length - 4} de plus)
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-card border border-border rounded-2xl p-6 text-center">
-                  <Newspaper className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                  <p className="text-sm text-muted-foreground">Aucune actualité disponible</p>
-                  <button
-                    onClick={() => fetchNews(true)}
-                    className="mt-2 text-xs text-primary font-medium"
-                  >
-                    Réessayer
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Messages famille */}
-            {unreadMessages.length > 0 && (
-              <SectionCard
-                title="Messages famille"
-                emoji="💬"
-                badge={unreadMessages.length}
-                onMore={() => navigate("/services/communication")}
-              >
-                <div className="space-y-3">
-                  {unreadMessages.slice(0, 2).map((msg) => (
-                    <div key={msg.id} className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold text-primary">
-                          {(senderNames[msg.sender_id] || "?")[0].toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-foreground">{senderNames[msg.sender_id] || "Famille"}</p>
-                        <p className="text-sm text-muted-foreground truncate">{msg.content}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground flex-shrink-0 mt-0.5">
-                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: fr })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-            )}
-
-            {/* Agenda */}
-            <SectionCard
-              title="Rendez-vous à venir"
-              emoji="📅"
-              onMore={() => navigate("/services/agenda")}
-            >
-              {nextEvents.length > 0 ? (
-                <div className="space-y-2">
-                  {nextEvents.map((ev) => (
-                    <div key={ev.id} className="flex items-center gap-3 py-1">
-                      <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center flex-shrink-0 text-xl">
-                        {EVENT_ICONS[ev.event_type || "general"] || "📅"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{ev.title}</p>
-                        {ev.event_time && <p className="text-xs text-muted-foreground">{ev.event_time}</p>}
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-primary">
-                          {format(new Date(ev.event_date), "d MMM", { locale: fr })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground py-1">Aucun rendez-vous prévu. Appuyez pour en ajouter.</p>
-              )}
-            </SectionCard>
-
-            {/* Médicaments */}
-            {activeMeds.length > 0 && (
-              <SectionCard
-                title="Mes médicaments"
-                emoji="💊"
-                onMore={() => navigate("/services/health")}
-              >
-                <div className="flex flex-wrap gap-2">
-                  {activeMeds.slice(0, 4).map((med) => (
-                    <span key={med.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent rounded-xl text-sm font-medium text-accent-foreground">
-                      💊 {med.name}
-                    </span>
-                  ))}
-                  {activeMeds.length > 4 && (
-                    <span className="inline-flex items-center px-3 py-1.5 bg-secondary rounded-xl text-sm text-muted-foreground">
-                      +{activeMeds.length - 4}
-                    </span>
-                  )}
-                </div>
-              </SectionCard>
-            )}
-
-            {/* Documents urgents */}
-            {urgentDocs.length > 0 && (
-              <SectionCard
-                title="Documents à renouveler"
-                emoji="📄"
-                badge={urgentDocs.length}
-                onMore={() => navigate("/services/documents")}
-              >
-                <div className="space-y-2">
-                  {urgentDocs.slice(0, 2).map((doc) => (
-                    <div key={doc.id} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-destructive" />
-                      </div>
-                      <p className="flex-1 text-sm text-foreground truncate">{doc.name}</p>
-                      <span className="text-xs font-semibold text-destructive">
-                        {format(new Date(doc.expiration_date), "d MMM", { locale: fr })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-            )}
-
-            {/* Rappels */}
-            <SectionCard
-              title="Rappels"
-              emoji="🔔"
-              badge={reminders.length > 0 ? reminders.length : undefined}
-              onMore={() => navigate("/services/agenda")}
-            >
-              {reminders.length > 0 ? (
-                <div className="space-y-2">
-                  {reminders.map((r) => (
-                    <div key={r.id} className="flex items-center gap-3 py-1">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${r.type === "medication" ? "bg-accent" : "bg-primary/10"}`}>
-                        {r.type === "medication" ? <Pill className="w-4 h-4 text-accent-foreground" /> : <Bell className="w-4 h-4 text-primary" />}
-                      </div>
-                      <p className="flex-1 text-sm text-foreground truncate">{r.label}</p>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {r.date === new Date().toISOString().split("T")[0] ? "Aujourd'hui" : format(new Date(r.date), "d MMM", { locale: fr })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground py-1">Aucun rappel pour le moment.</p>
-              )}
-            </SectionCard>
-
-            {/* Notifications */}
-            <SectionCard
-              title="Notifications"
-              emoji="📬"
-              badge={notifications.filter(n => !n.is_read).length || undefined}
-              onMore={() => navigate("/services/communication")}
-            >
-              {notifications.length > 0 ? (
-                <div className="space-y-2">
-                  {notifications.map((n) => (
-                    <div key={n.id} className="flex items-center gap-3 py-1">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${!n.is_read ? "bg-primary/10" : "bg-secondary"}`}>
-                        <Bell className={`w-4 h-4 ${!n.is_read ? "text-primary" : "text-muted-foreground"}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm truncate ${!n.is_read ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{n.title}</p>
-                        {n.message && <p className="text-xs text-muted-foreground truncate">{n.message}</p>}
-                      </div>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground py-1">Aucune notification.</p>
-              )}
-            </SectionCard>
-
-
-
           </div>
         )}
       </div>
+
+      {/* OSCAR WIDGET */}
+      <div style={{ padding: "0 16px", marginTop: 16 }}>
+        <button
+          onClick={onGoToOscar}
+          className="w-full text-left"
+          style={{
+            background: "linear-gradient(135deg, #48A29E 0%, #2d9e99 100%)",
+            borderRadius: 22,
+            padding: "18px 20px",
+            boxShadow: "0 8px 28px rgba(72,162,158,0.25)",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            border: "none",
+            cursor: "pointer",
+            transition: "transform 0.18s",
+          }}
+        >
+          <OscarAvatar size="sm" className="w-9 h-9 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Oscar</span>
+              <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.75)", background: "rgba(255,255,255,0.18)", borderRadius: 99, padding: "2px 8px", fontWeight: 500 }}>En ligne</span>
+            </div>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Posez-moi vos questions, je suis l\u00e0 pour vous aider !</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-white/70 flex-shrink-0" />
+        </button>
+      </div>
+
+      {/* \u00c0 SAVOIR - Articles */}
+      <div style={{ padding: "24px 16px 0" }}>
+        <SectionHeader title="\u00c0 savoir" />
+        {/* Category pills */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12 }}>
+          {ACTU_CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActuCat(cat)}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 99,
+                fontSize: 12.5,
+                fontWeight: 500,
+                border: "none",
+                cursor: "pointer",
+                flexShrink: 0,
+                background: actuCat === cat ? "#48A29E" : "#f1f5f9",
+                color: actuCat === cat ? "#fff" : "#64748b",
+                transition: "all 0.15s",
+              }}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        {/* Horizontal scroll articles */}
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+          {filteredArticles.map((a, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0"
+              style={{
+                minWidth: 220,
+                background: "#fff",
+                border: "1.5px solid #eef2f7",
+                borderRadius: 18,
+                padding: "16px 14px 14px",
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span style={{ fontSize: 20 }}>{a.emoji}</span>
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 600,
+                    color: "#48A29E",
+                    background: "rgba(72,162,158,0.08)",
+                    borderRadius: 99,
+                    padding: "2px 8px",
+                  }}
+                >
+                  {a.cat}
+                </span>
+              </div>
+              <p style={{ fontSize: 13.5, fontWeight: 600, color: "#1e293b", lineHeight: 1.4, marginBottom: 8 }}>{a.title}</p>
+              <div className="flex items-center justify-between">
+                <span style={{ fontSize: 11, color: "#94a3b8" }}>{a.src}</span>
+                <span style={{ fontSize: 11, color: "#94a3b8" }}>{a.date}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* MES RAPPELS */}
+      <div style={{ padding: "24px 16px 0" }}>
+        <SectionHeader title="Mes rappels" />
+        {/* Status pills */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12 }}>
+          {RAPPEL_STATUSES.map(s => (
+            <button
+              key={s}
+              onClick={() => setRappelCat(s)}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 99,
+                fontSize: 12.5,
+                fontWeight: 500,
+                border: "none",
+                cursor: "pointer",
+                flexShrink: 0,
+                background: rappelCat === s ? "#48A29E" : "#f1f5f9",
+                color: rappelCat === s ? "#fff" : "#64748b",
+                transition: "all 0.15s",
+              }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        {/* Rappels list */}
+        <div
+          style={{
+            background: "#fff",
+            border: "1.5px solid #eef2f7",
+            borderRadius: 18,
+            overflow: "hidden",
+          }}
+        >
+          {filteredRappels.map((r, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3"
+              style={{
+                padding: "14px 16px",
+                borderBottom: i < filteredRappels.length - 1 ? "1px solid #f1f5f9" : "none",
+              }}
+            >
+              <div
+                className="flex items-center justify-center flex-shrink-0"
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  background: r.bg,
+                  fontSize: 20,
+                }}
+              >
+                {r.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p style={{ fontSize: 13.5, fontWeight: 600, color: "#1e293b" }}>{r.label}</p>
+                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{r.sub}</p>
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: r.color,
+                  background: r.bg,
+                  borderRadius: 99,
+                  padding: "3px 10px",
+                  flexShrink: 0,
+                }}
+              >
+                {r.status}
+              </span>
+            </div>
+          ))}
+          {filteredRappels.length === 0 && (
+            <div style={{ padding: "20px 16px", textAlign: "center" }}>
+              <p style={{ fontSize: 13, color: "#94a3b8" }}>Aucun rappel dans cette cat\u00e9gorie</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ACTIONS RAPIDES */}
+      <div style={{ padding: "24px 16px 0" }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
+          <SectionHeader title="Actions rapides" noMargin />
+          <button
+            onClick={() => setShowPersonnaliser(true)}
+            style={{
+              fontSize: 12,
+              color: "#48A29E",
+              fontWeight: 500,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Personnaliser
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {selectedActions.slice(0, 4).map(label => {
+            const action = ALL_ACTIONS.find(a => a.label === label);
+            if (!action) return null;
+            return (
+              <button
+                key={label}
+                onClick={() => {
+                  const pathMap: Record<string, string> = {
+                    "Mon calendrier": "/services/agenda",
+                    "Mes papiers": "/services/documents",
+                    "Ma sant\u00e9": "/services/health",
+                    "Mes rappels": "/services/agenda",
+                    "Mon coffre-fort": "/services/vault",
+                    "Mes m\u00e9dicaments": "/services/health",
+                  };
+                  navigate(pathMap[label] || "/services/agenda");
+                }}
+                className="flex items-center gap-3 text-left"
+                style={{
+                  background: "#fff",
+                  border: "1.5px solid #eef2f7",
+                  borderRadius: 16,
+                  padding: "14px 14px",
+                  cursor: "pointer",
+                  transition: "all 0.18s",
+                }}
+              >
+                <div
+                  className="flex items-center justify-center flex-shrink-0"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: "rgba(72,162,158,0.08)",
+                  }}
+                >
+                  {action.icon}
+                </div>
+                <span style={{ fontSize: 12.5, fontWeight: 500, color: "#334155" }}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* NOTIFICATIONS */}
+      <div style={{ padding: "24px 16px 32px" }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
+          <SectionHeader title="Notifications" noMargin />
+          {notifs.length > 0 && (
+            <button
+              onClick={() => setNotifs([])}
+              style={{
+                fontSize: 12,
+                color: "#ef4444",
+                fontWeight: 500,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Tout effacer
+            </button>
+          )}
+        </div>
+        {notifs.length > 0 ? (
+          <div className="flex flex-col gap-2.5">
+            {notifs.map(n => (
+              <div
+                key={n.id}
+                className="flex items-center gap-3"
+                style={{
+                  background: "#fff",
+                  border: "1.5px solid #eef2f7",
+                  borderRadius: 16,
+                  padding: "12px 14px",
+                }}
+              >
+                <div
+                  className="flex items-center justify-center flex-shrink-0"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "50%",
+                    background: `${n.color}12`,
+                    fontSize: 20,
+                  }}
+                >
+                  {n.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p style={{ fontSize: 13.5, fontWeight: 600, color: "#1e293b" }}>{n.title}</p>
+                  <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 1 }}>{n.sub}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 500,
+                      color: n.color,
+                      background: `${n.color}12`,
+                      borderRadius: 99,
+                      padding: "2px 8px",
+                    }}
+                  >
+                    {n.info}
+                  </span>
+                  <button
+                    onClick={() => dismissNotif(n.id)}
+                    className="flex items-center justify-center"
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "#f1f5f9",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <X className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div
+            className="flex flex-col items-center justify-center"
+            style={{
+              background: "#fff",
+              border: "1.5px solid #eef2f7",
+              borderRadius: 18,
+              padding: "28px 16px",
+            }}
+          >
+            <span style={{ fontSize: 32, marginBottom: 8 }}>{"\ud83d\udd14"}</span>
+            <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Aucune notification</p>
+          </div>
+        )}
+      </div>
+
+      {/* PERSONNALISER MODAL */}
+      {showPersonnaliser && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowPersonnaliser(false)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 480,
+              background: "#fff",
+              borderRadius: "24px 24px 0 0",
+              padding: "24px 20px 32px",
+              maxHeight: "70vh",
+              overflowY: "auto",
+            }}
+          >
+            <div className="flex items-center justify-between" style={{ marginBottom: 18 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b" }}>Personnaliser</h3>
+              <span style={{ fontSize: 13, color: "#94a3b8" }}>{selectedActions.length}/4</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {ALL_ACTIONS.map(action => {
+                const isSelected = selectedActions.includes(action.label);
+                return (
+                  <button
+                    key={action.label}
+                    onClick={() => toggleAction(action.label)}
+                    className="flex items-center gap-3 w-full text-left"
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: 14,
+                      border: `1.5px solid ${isSelected ? "rgba(72,162,158,0.3)" : "#eef2f7"}`,
+                      background: isSelected ? "rgba(72,162,158,0.04)" : "#fff",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    <div
+                      className="flex items-center justify-center flex-shrink-0"
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: "rgba(72,162,158,0.08)",
+                      }}
+                    >
+                      {action.icon}
+                    </div>
+                    <span className="flex-1" style={{ fontSize: 14, fontWeight: 500, color: "#1e293b" }}>{action.label}</span>
+                    <div
+                      className="flex items-center justify-center flex-shrink-0"
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: "50%",
+                        background: isSelected ? "#48A29E" : "#e2e8f0",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setShowPersonnaliser(false)}
+              className="w-full"
+              style={{
+                marginTop: 20,
+                padding: "14px",
+                borderRadius: 14,
+                background: "linear-gradient(135deg, #48A29E 0%, #2d9e99 100%)",
+                color: "#fff",
+                fontSize: 15,
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Confirmer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// --- Sub-components ---
-interface SectionCardProps {
-  title: string;
-  emoji: string;
-  badge?: number;
-  onMore?: () => void;
-  children?: React.ReactNode;
-}
-
-function SectionCard({ title, emoji, badge, onMore, children }: SectionCardProps) {
+// --- Section header ---
+function SectionHeader({ title, noMargin }: { title: string; noMargin?: boolean }) {
   return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">{emoji}</span>
-          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-          {badge ? (
-            <span className="w-5 h-5 bg-primary text-primary-foreground text-xs font-bold rounded-full flex items-center justify-center">
-              {badge}
-            </span>
-          ) : null}
-        </div>
-        {onMore && (
-          <button onClick={onMore} className="flex items-center gap-0.5 text-xs text-primary font-medium">
-            Voir <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-      {children && <div className="px-4 py-3">{children}</div>}
+    <div className="flex items-center gap-3" style={{ marginBottom: noMargin ? 0 : 14 }}>
+      <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+      <span style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: 1.5, textTransform: "uppercase" }}>{title}</span>
+      <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
     </div>
   );
 }

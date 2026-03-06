@@ -1,4 +1,4 @@
-import { Home, MessageCircle, Grid2x2 } from "lucide-react";
+import { Home, MessageCircle, Menu } from "lucide-react";
 
 interface BottomNavProps {
   active: "oscar" | "accueil" | "services";
@@ -7,22 +7,25 @@ interface BottomNavProps {
 
 export function BottomNav({ active, onNavigate }: BottomNavProps) {
   return (
-    <nav className="h-16 bg-card border-t border-border flex shadow-soft">
+    <nav
+      className="flex items-center flex-shrink-0 bg-white dark:bg-card"
+      style={{ borderTop: "1px solid #f1f5f9", padding: "10px 0 16px" }}
+    >
       <NavButton
-        icon={<MessageCircle className="w-6 h-6" />}
-        label="Oscar"
-        active={active === "oscar"}
-        onClick={() => onNavigate("oscar")}
-      />
-      <NavButton
-        icon={<Home className="w-6 h-6" />}
+        icon={<Home className="w-5 h-5" />}
         label="Accueil"
         active={active === "accueil"}
         onClick={() => onNavigate("accueil")}
       />
       <NavButton
-        icon={<Grid2x2 className="w-6 h-6" />}
-        label="Services"
+        icon={<MessageCircle className="w-5 h-5" />}
+        label="Oscar"
+        active={active === "oscar"}
+        onClick={() => onNavigate("oscar")}
+      />
+      <NavButton
+        icon={<Menu className="w-5 h-5" />}
+        label="Menu"
         active={active === "services"}
         onClick={() => onNavigate("services")}
       />
@@ -38,17 +41,15 @@ interface NavButtonProps {
 }
 
 function NavButton({ icon, label, active, onClick }: NavButtonProps) {
+  const color = active ? "#48A29E" : "#94a3b8";
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors ${
-        active
-          ? "text-primary"
-          : "text-muted-foreground hover:text-foreground"
-      }`}
+      className="flex-1 flex flex-col items-center justify-center gap-1 border-none bg-transparent cursor-pointer"
+      style={{ padding: "4px 0", color }}
     >
       {icon}
-      <span className="text-xs font-medium">{label}</span>
+      <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, letterSpacing: "0.1px" }}>{label}</span>
     </button>
   );
 }
