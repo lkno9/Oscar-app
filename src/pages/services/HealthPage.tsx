@@ -149,6 +149,7 @@ export function HealthPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce médicament ?")) return;
     await supabase.from("medications").delete().eq("id", id);
     toast.success("Médicament supprimé");
     fetchAll();

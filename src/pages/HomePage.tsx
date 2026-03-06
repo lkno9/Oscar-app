@@ -425,9 +425,7 @@ export function HomePage() {
       // --- DOCX — extract text from XML ---
       if (isDocx) {
         try {
-          const arrayBuffer = await file.arrayBuffer();
-          const blob = new Blob([arrayBuffer]);
-          // DOCX is a ZIP containing XML. We send as base64 PDF-style to OCR
+          // Send DOCX as base64 for server-side processing
           const base64 = await readFileAsBase64(file);
 
           const contentLabel = `[Document Word : ${file.name}]`;

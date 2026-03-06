@@ -63,15 +63,17 @@ export function MFAEnrollment({ onSuccess, onCancel }: MFAEnrollmentProps) {
     if (code.length === 6) {
       handleVerify();
     }
-  }, [code]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, factorId]);
 
   if (step === 'intro') {
     return (
       <div className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-card rounded-2xl border border-border p-6 space-y-6 shadow-lg">
+        <div className="w-full max-w-md bg-card rounded-2xl border border-border p-6 space-y-6 shadow-lg relative">
           <button
             onClick={onCancel}
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-secondary"
+            aria-label="Fermer"
           >
             <X className="w-5 h-5" />
           </button>
