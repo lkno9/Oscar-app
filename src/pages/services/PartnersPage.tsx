@@ -10,10 +10,12 @@ import {
   type PartnerCategory,
   type PartnerService,
 } from "@/components/partners/PartnersData";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { toast } from "sonner";
 
 export function PartnersPage() {
   const navigate = useNavigate();
+  const goBack = useBackNavigation();
   const [selectedCategory, setSelectedCategory] = useState<PartnerCategory | "all">("all");
   const [services, setServices] = useState<PartnerService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export function PartnersPage() {
       {/* Header */}
       <header className="px-4 py-4 bg-card border-b border-border">
         <div className="flex items-center gap-3 mb-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
+          <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />

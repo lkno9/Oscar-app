@@ -1,11 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/BottomNav";
 import { HomePage } from "@/pages/HomePage";
 import { RecapPage } from "@/pages/RecapPage";
 import { ServicesPage } from "@/pages/ServicesPage";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<"oscar" | "accueil" | "services">("accueil");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<"oscar" | "accueil" | "services">(() => {
+    const state = location.state as { tab?: string } | null;
+    if (state?.tab === "services") return "services";
+    if (state?.tab === "oscar") return "oscar";
+    return "accueil";
+  });
+
+  // Listen for navigation state changes (e.g. back from service pages)
+  useEffect(() => {
+    const state = location.state as { tab?: string } | null;
+    if (state?.tab === "services") setActiveTab("services");
+    else if (state?.tab === "oscar") setActiveTab("oscar");
+  }, [location.state]);
 
   const renderTab = () => {
     switch (activeTab) {

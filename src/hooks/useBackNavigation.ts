@@ -4,7 +4,7 @@ import { useCallback } from "react";
 /**
  * Hook for smart back navigation
  * - If there's browser history, go back
- * - Otherwise, navigate to a fallback route based on current location
+ * - Otherwise, navigate to the appropriate fallback with tab state
  */
 export function useBackNavigation(fallbackPath?: string) {
   const navigate = useNavigate();
@@ -12,40 +12,46 @@ export function useBackNavigation(fallbackPath?: string) {
 
   const goBack = useCallback(() => {
     // Determine the appropriate fallback based on current path
-    const determineFallback = (): string => {
-      if (fallbackPath) return fallbackPath;
-      
+    const determineFallback = (): { path: string; state?: { tab?: string } } => {
+      if (fallbackPath) return { path: fallbackPath };
+
       const path = location.pathname;
-      
-      // Service pages -> go to services
+
+      // Games subpages -> go to games list
+      if (path.startsWith("/services/games/")) {
+        return { path: "/services/games" };
+      }
+
+      // Service pages -> go to main page with services tab active
       if (path.startsWith("/services/")) {
-        // Games subpages -> go to games
-        if (path.startsWith("/services/games/")) {
-          return "/services/games";
-        }
-        return "/services";
+        return { path: "/", state: { tab: "services" } };
       }
-      
-      // Family pages -> go to family dashboard
-      if (path.startsWith("/family/")) {
-        return "/family";
-      }
-      
+
       // Settings subpages -> go to settings
       if (path.startsWith("/settings/")) {
-        return "/settings";
+        return { path: "/settings" };
       }
-      
+
+      // Family pages -> go to family dashboard
+      if (path.startsWith("/family/")) {
+        return { path: "/family" };
+      }
+
+      // Settings -> go to main page with services tab
+      if (path === "/settings") {
+        return { path: "/", state: { tab: "services" } };
+      }
+
       // Default to home
-      return "/";
+      return { path: "/" };
     };
 
     // Check if we have meaningful history to go back to
-    // window.history.length > 2 means there's real history (1 is the initial page, 2 includes current)
     if (window.history.length > 2 && document.referrer) {
       navigate(-1);
     } else {
-      navigate(determineFallback(), { replace: true });
+      const fallback = determineFallback();
+      navigate(fallback.path, { replace: true, state: fallback.state });
     }
   }, [navigate, location.pathname, fallbackPath]);
 

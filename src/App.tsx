@@ -31,6 +31,9 @@ import { MemoryGame } from "./pages/services/games/MemoryGame";
 import { SudokuGame } from "./pages/services/games/SudokuGame";
 import { QuizGame } from "./pages/services/games/QuizGame";
 import { Game2048 } from "./pages/services/games/Game2048";
+import { HangmanGame } from "./pages/services/games/HangmanGame";
+import { MathGame } from "./pages/services/games/MathGame";
+import { WordSearchGame } from "./pages/services/games/WordSearchGame";
 import { SettingsPage } from "./pages/SettingsPage";
 import FamilyDashboard from "./pages/family/FamilyDashboard";
 import SeniorDetailPage from "./pages/family/SeniorDetailPage";
@@ -70,6 +73,9 @@ const App = () => (
             <Route path="/services/games/sudoku" element={<ProtectedRoute><SubPageLayout><SudokuGame /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/games/quiz" element={<ProtectedRoute><SubPageLayout><QuizGame /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/games/2048" element={<ProtectedRoute><SubPageLayout><Game2048 /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/hangman" element={<ProtectedRoute><SubPageLayout><HangmanGame /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/math" element={<ProtectedRoute><SubPageLayout><MathGame /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/intruder" element={<ProtectedRoute><SubPageLayout><WordSearchGame /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/vault" element={<ProtectedRoute><SubPageLayout><VaultPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/emergency" element={<ProtectedRoute><SubPageLayout><EmergencyPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/help" element={<ProtectedRoute><SubPageLayout><HelpPage /></SubPageLayout></ProtectedRoute>} />

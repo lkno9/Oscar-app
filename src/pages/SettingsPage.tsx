@@ -1,8 +1,9 @@
-import { ArrowLeft, User, Bell, Volume2, Moon, Shield, ChevronRight, CheckCircle2, Users, MessageSquare, MessageCircle, Phone, LogOut } from "lucide-react";
+import { ArrowLeft, User, Bell, Volume2, Moon, Shield, ChevronRight, CheckCircle2, Users, MessageSquare, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,37 +18,10 @@ interface Profile {
   sms_notifications_enabled: boolean | null;
 }
 
-const FAQ_ITEMS = [
-  { q: "Comment parler à Oscar ?", a: "Appuyez sur le micro en bas de la page d'accueil et parlez naturellement. Oscar comprend le français et répond immédiatement." },
-  { q: "Comment inviter ma famille ?", a: "Allez dans Paramètres > Accès Famille, choisissez le lien familial et générez un code d'invitation à partager." },
-  { q: "Mes données sont-elles sécurisées ?", a: "Oui, toutes vos données sont chiffrées et stockées de manière sécurisée. Seuls vous et les membres de famille que vous invitez y ont accès." },
-  { q: "Comment ajouter un médicament ?", a: "Rendez-vous dans Services > Santé, puis dans l'onglet Médicaments. Appuyez sur le bouton '+' pour ajouter un nouveau médicament avec sa posologie." },
-  { q: "Comment mettre un document en favori ?", a: "Dans Services > Documents, ouvrez le document et appuyez sur l'étoile pour l'ajouter aux favoris. Retrouvez-le ensuite dans l'onglet Favoris." },
-  { q: "Puis-je désactiver les rappels de médicaments ?", a: "Oui, dans Paramètres > Préférences, désactivez les Notifications. Vous pouvez aussi gérer chaque rappel individuellement depuis la page Santé." },
-  { q: "Comment signaler une arnaque ?", a: "Allez dans Services > Protection Arnaques. Vous pouvez vérifier un message suspect ou consulter les alertes récentes. Oscar vous guide pour porter plainte si nécessaire." },
-  { q: "Comment fonctionne le mode sombre ?", a: "Dans Paramètres > Préférences, activez le Mode sombre. L'écran passe en tons foncés pour réduire la fatigue oculaire, surtout le soir." },
-  { q: "Puis-je changer la langue de l'application ?", a: "Pour l'instant, Oscar est disponible uniquement en français. D'autres langues sont prévues dans les prochaines mises à jour." },
-  { q: "Comment contacter le support ?", a: "Appelez directement le support au +33 9 00 00 00 00 depuis Paramètres > Aide & Support, ou discutez avec Oscar qui peut vous orienter." },
-];
-
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-b border-border last:border-0">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-3 text-left gap-3"
-      >
-        <span className="text-base font-medium text-foreground">{q}</span>
-        <ChevronRight className={`w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform ${open ? "rotate-90" : ""}`} />
-      </button>
-      {open && <p className="pb-3 text-sm text-muted-foreground leading-relaxed">{a}</p>}
-    </div>
-  );
-}
 
 export function SettingsPage() {
   const navigate = useNavigate();
+  const goBack = useBackNavigation();
   const { user, signOut, listFactors, unenrollMFA } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -143,28 +117,13 @@ export function SettingsPage() {
     else toast.success(enabled ? "Notifications SMS activées" : "Notifications SMS désactivées");
   };
 
-  const handleCallEmergency = () => window.open("tel:15", "_self");
-  const handleCallFamily = () => navigate("/services/communication");
-  const handleSendLocation = () => {
-    if (!navigator.geolocation) { toast.error("Géolocalisation non disponible"); return; }
-    navigator.geolocation.getCurrentPosition(pos => {
-      const url = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
-      if (navigator.share) {
-        navigator.share({ title: "Ma position", url });
-      } else {
-        window.open(url, "_blank");
-      }
-      toast.success("Position envoyée !");
-    }, () => toast.error("Impossible d'obtenir votre position"));
-  };
-
   const isMFAEnabled = mfaFactors.length > 0;
 
   return (
     <>
       <div className="flex flex-col h-full bg-background">
         <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+          <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <h1 className="text-lg font-bold text-foreground">Paramètres</h1>
@@ -189,33 +148,6 @@ export function SettingsPage() {
           </div>
 
           <div className="p-4 space-y-6">
-            {/* Help Section */}
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Aide & Support</h3>
-              <div className="bg-card rounded-2xl border border-border p-4 space-y-4">
-                <button
-                  onClick={() => navigate("/")}
-                  className="w-full flex items-center gap-4 bg-primary text-primary-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-primary/90 transition-colors active:scale-95"
-                >
-                  <MessageCircle className="w-6 h-6 flex-shrink-0" />
-                  Parler à Oscar
-                </button>
-                <a
-                  href="tel:+33900000000"
-                  className="flex items-center gap-4 bg-secondary text-foreground rounded-xl px-4 py-4 min-h-[56px] font-semibold text-base hover:bg-accent transition-colors active:scale-95"
-                >
-                  <Phone className="w-6 h-6 flex-shrink-0 text-primary" />
-                  Appeler le support
-                </a>
-                <div className="pt-2">
-                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Questions fréquentes</p>
-                  <div className="divide-y divide-border">
-                    {FAQ_ITEMS.map((item, i) => <FaqItem key={i} q={item.q} a={item.a} />)}
-                  </div>
-                </div>
-              </div>
-            </section>
-
             {/* Account */}
             <section>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Compte</h3>

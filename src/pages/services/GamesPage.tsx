@@ -29,6 +29,9 @@ export function GamesPage() {
     { id: "sudoku", name: "Sudoku", description: "Grilles de chiffres", emoji: "🔢", difficulty: "Moyen", path: "/services/games/sudoku" },
     { id: "quiz", name: "Quiz Culture", description: "10 questions variées", emoji: "🎓", difficulty: "Facile", path: "/services/games/quiz" },
     { id: "2048", name: "2048", description: "Fusionnez les tuiles", emoji: "🧮", difficulty: "Moyen", path: "/services/games/2048" },
+    { id: "hangman", name: "Le Pendu", description: "Devinez le mot caché", emoji: "🔤", difficulty: "Facile", path: "/services/games/hangman" },
+    { id: "math", name: "Calcul Mental", description: "15 calculs en 90s", emoji: "🧠", difficulty: "Moyen", path: "/services/games/math" },
+    { id: "intruder", name: "L'Intrus", description: "Trouvez le mot en trop", emoji: "🔍", difficulty: "Facile", path: "/services/games/intruder" },
   ];
 
   // Liens directs vers des jeux jouables immédiatement
