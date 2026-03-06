@@ -1,4 +1,4 @@
-import { useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { OscarAvatar } from "@/components/OscarAvatar";
 
 const NotFound = () => {
