@@ -184,6 +184,40 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       </div>
 
 
+      {/* À SAVOIR */}
+      <div style={{ padding: "24px 16px 0" }}>
+        <SectionHeader title="À savoir" />
+        <div
+          className="flex flex-col items-center justify-center"
+          style={{
+            background: "#fff",
+            border: "1.5px solid #eef2f7",
+            borderRadius: 18,
+            padding: "28px 16px",
+          }}
+        >
+          <span style={{ fontSize: 32, marginBottom: 8 }}>📰</span>
+          <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Aucun article pour le moment</p>
+        </div>
+      </div>
+
+      {/* MES RAPPELS */}
+      <div style={{ padding: "24px 16px 0" }}>
+        <SectionHeader title="Mes rappels" />
+        <div
+          className="flex flex-col items-center justify-center"
+          style={{
+            background: "#fff",
+            border: "1.5px solid #eef2f7",
+            borderRadius: 18,
+            padding: "28px 16px",
+          }}
+        >
+          <span style={{ fontSize: 32, marginBottom: 8 }}>✅</span>
+          <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Aucun rappel pour le moment</p>
+        </div>
+      </div>
+
       {/* ACTIONS RAPIDES */}
       <div style={{ padding: "24px 16px 0" }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
