@@ -55,7 +55,7 @@ export function ScamProtectionPage() {
       {/* Header */}
       <header className="bg-card border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
-          <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
+          <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Shield className="w-5 h-5 text-primary" />

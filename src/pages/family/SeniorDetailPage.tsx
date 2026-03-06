@@ -94,7 +94,7 @@ export default function SeniorDetailPage() {
           upcomingEvents: events || []
         });
       } catch (err) {
-        console.error('Error fetching senior data:', err);
+        // Error handled silently — page shows empty state
       } finally {
         setLoading(false);
       }

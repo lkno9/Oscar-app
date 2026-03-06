@@ -46,13 +46,9 @@ export function useBackNavigation(fallbackPath?: string) {
       return { path: "/" };
     };
 
-    // Check if we have meaningful history to go back to
-    if (window.history.length > 2 && document.referrer) {
-      navigate(-1);
-    } else {
-      const fallback = determineFallback();
-      navigate(fallback.path, { replace: true, state: fallback.state });
-    }
+    // Always use deterministic fallback for predictable navigation
+    const fallback = determineFallback();
+    navigate(fallback.path, { replace: true, state: fallback.state });
   }, [navigate, location.pathname, fallbackPath]);
 
   return goBack;

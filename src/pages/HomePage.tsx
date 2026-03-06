@@ -83,7 +83,7 @@ async function speakWithElevenLabs(text: string): Promise<void> {
     const playPromise = audio.play();
     if (playPromise) {
       playPromise.catch((err) => {
-        console.warn("Audio play() rejected:", err.message);
+        // Audio play() was rejected (user hasn't interacted yet)
         cleanup();
         reject(err);
       });
@@ -103,7 +103,7 @@ function stopSpeech() {
 
 export function HomePage() {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<ChatMessageData[]>([]);
+  const [messages, setMessages] = useState<ChatMessageData[]>([INITIAL_MESSAGE]);
   const [isTyping, setIsTyping] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [isSpeakingState, setIsSpeakingState] = useState(false);
@@ -209,8 +209,8 @@ export function HomePage() {
     setIsSpeakingState(true);
     try {
       await speakWithElevenLabs(text);
-    } catch (ttsErr: any) {
-      console.error("[Oscar TTS] ElevenLabs failed:", ttsErr?.message);
+    } catch {
+      // ElevenLabs TTS failed, falling back to browser speech
       // Don't silently fallback — show a toast so we know ElevenLabs is failing
       toast.info("Voix ElevenLabs indisponible, utilisation de la voix du navigateur.");
       try {
@@ -310,7 +310,7 @@ export function HomePage() {
       if (event.error === "not-allowed") {
         toast.error("Accès au microphone refusé. Vérifiez les permissions du navigateur.");
       } else {
-        console.error("[Oscar STT] Erreur:", event.error);
+        // STT error handled — show toast to user
         toast.error("Erreur de reconnaissance vocale.");
       }
     };
@@ -347,7 +347,7 @@ export function HomePage() {
     } catch (err) {
       wantRecordingRef.current = false;
       setIsRecording(false);
-      console.error("[Oscar STT] Init error:", err);
+      // STT initialization failed
       toast.error("Impossible de démarrer la reconnaissance vocale.");
     }
   };

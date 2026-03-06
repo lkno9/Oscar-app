@@ -50,8 +50,7 @@ export function ScamChecker() {
           recommendation: data.recommendation
         });
       }
-    } catch (error: any) {
-      console.error("Error analyzing message:", error);
+    } catch {
       toast.error("Erreur lors de l'analyse. Réessayez.");
     } finally {
       setIsAnalyzing(false);
