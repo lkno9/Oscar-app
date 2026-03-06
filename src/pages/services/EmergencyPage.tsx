@@ -135,6 +135,7 @@ export function EmergencyPage() {
         <button
           onClick={goBack}
           className="p-2 -ml-2 rounded-full hover:bg-destructive/10 transition-colors"
+          aria-label="Retour"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>

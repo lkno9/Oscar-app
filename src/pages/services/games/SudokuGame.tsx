@@ -179,6 +179,7 @@ export function SudokuGame() {
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
         <button
           onClick={goBack}
+          aria-label="Retour"
           className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />

@@ -95,7 +95,8 @@ export function ToolsPage() {
   const [transCopied, setTransCopied] = useState(false);
 
   // Weather state
-  const [weatherData, setWeatherData] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [weatherData, setWeatherData] = useState<Record<string, any> | null>(null);
   const [weatherCity, setWeatherCity] = useState("");
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
@@ -118,13 +119,46 @@ export function ToolsPage() {
     setOpenTool(prev => prev === name ? null : name);
   };
 
-  // Calculator
+  // Safe math expression evaluator (no eval/new Function)
+  const safeEvaluate = (expr: string): number => {
+    const tokens = expr.match(/(\d+\.?\d*|[+\-*/()])/g);
+    if (!tokens) throw new Error("Invalid");
+    let pos = 0;
+    const parseExpr = (): number => {
+      let result = parseTerm();
+      while (pos < tokens.length && (tokens[pos] === "+" || tokens[pos] === "-")) {
+        const op = tokens[pos++];
+        const right = parseTerm();
+        result = op === "+" ? result + right : result - right;
+      }
+      return result;
+    };
+    const parseTerm = (): number => {
+      let result = parseFactor();
+      while (pos < tokens.length && (tokens[pos] === "*" || tokens[pos] === "/")) {
+        const op = tokens[pos++];
+        const right = parseFactor();
+        result = op === "*" ? result * right : result / right;
+      }
+      return result;
+    };
+    const parseFactor = (): number => {
+      if (tokens[pos] === "(") { pos++; const r = parseExpr(); if (tokens[pos] === ")") pos++; return r; }
+      if (tokens[pos] === "-") { pos++; return -parseFactor(); }
+      return parseFloat(tokens[pos++]);
+    };
+    const result = parseExpr();
+    if (pos < tokens.length) throw new Error("Unexpected token");
+    return result;
+  };
+
+  // Calculator — safe evaluation without eval/new Function
   const handleCalc = () => {
     try {
-      const sanitized = calcInput.replace(/[^0-9+\-*/.() ]/g, "");
+      const sanitized = calcInput.replace(/[^0-9+\-*/.() ]/g, "").trim();
       if (!sanitized) return;
-      const result = new Function(`return (${sanitized})`)();
-      setCalcResult(String(result));
+      const result = safeEvaluate(sanitized);
+      setCalcResult(isNaN(result) || !isFinite(result) ? "Erreur de calcul" : String(result));
     } catch {
       setCalcResult("Erreur de calcul");
     }
@@ -151,8 +185,8 @@ export function ToolsPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setTransResult(data.translation);
-    } catch (err: any) {
-      toast.error(err.message || "Erreur de traduction");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Erreur de traduction");
     } finally {
       setTransLoading(false);
     }
@@ -518,7 +552,7 @@ export function ToolsPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">

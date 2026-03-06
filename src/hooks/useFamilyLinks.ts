@@ -81,7 +81,10 @@ export function useFamilyLinks() {
   const createInvitation = async (relationship: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
-    const invitationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    // Use crypto API for secure random code generation
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    const invitationCode = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').substring(0, 8).toUpperCase();
 
     const { data, error } = await supabase
       .from('family_links')

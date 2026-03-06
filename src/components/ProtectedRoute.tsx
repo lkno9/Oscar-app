@@ -6,7 +6,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+  const { user, loading, mfaRequired } = useAuth();
 
   if (loading) {
     return (
@@ -20,6 +20,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Block access if MFA verification is pending (aal1 but needs aal2)
+  if (mfaRequired) {
     return <Navigate to="/auth" replace />;
   }
 

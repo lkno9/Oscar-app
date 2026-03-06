@@ -149,6 +149,7 @@ export function HealthPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce médicament ?")) return;
     await supabase.from("medications").delete().eq("id", id);
     toast.success("Médicament supprimé");
     fetchAll();
@@ -178,7 +179,7 @@ export function HealthPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
