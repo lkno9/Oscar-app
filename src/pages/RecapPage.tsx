@@ -10,65 +10,36 @@ import {
   Check,
   Heart,
   Lock,
-  Settings as SettingsIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { OscarAvatar } from "@/components/OscarAvatar";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 // --- Types ---
-interface MoodEntry { mood_level: number; }
-interface UnreadMessage { id: string; content: string; created_at: string; sender_id: string; }
-interface SenderProfile { id: string; full_name: string | null; }
-interface CalendarEvent { id: string; title: string; event_date: string; event_time: string | null; event_type: string | null; }
-interface Medication { id: string; name: string; dosage: string | null; }
-interface UrgentDocument { id: string; name: string; expiration_date: string; }
-interface Reminder { id: string; label: string; date: string; type: "medication" | "document"; }
-interface AppNotification { id: string; title: string; message: string | null; type: string; created_at: string; is_read: boolean | null; }
-
 interface Weather { temp: number; icon: string; label: string; }
 
 // Weather icon/label maps
 const WEATHER_ICONS: Record<number, string> = {
-  0: "\u2600\ufe0f", 1: "\ud83c\udf24\ufe0f", 2: "\u26c5", 3: "\u2601\ufe0f",
-  45: "\ud83c\udf2b\ufe0f", 48: "\ud83c\udf2b\ufe0f",
-  51: "\ud83c\udf26\ufe0f", 53: "\ud83c\udf26\ufe0f", 55: "\ud83c\udf27\ufe0f",
-  61: "\ud83c\udf27\ufe0f", 63: "\ud83c\udf27\ufe0f", 65: "\ud83c\udf27\ufe0f",
-  71: "\ud83c\udf28\ufe0f", 73: "\ud83c\udf28\ufe0f", 75: "\ud83c\udf28\ufe0f",
-  80: "\ud83c\udf26\ufe0f", 81: "\ud83c\udf27\ufe0f", 82: "\ud83c\udf27\ufe0f",
-  95: "\u26c8\ufe0f", 96: "\u26c8\ufe0f", 99: "\u26c8\ufe0f",
+  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+  45: "🌫️", 48: "🌫️",
+  51: "🌦️", 53: "🌦️", 55: "🌧️",
+  61: "🌧️", 63: "🌧️", 65: "🌧️",
+  71: "🌨️", 73: "🌨️", 75: "🌨️",
+  80: "🌦️", 81: "🌧️", 82: "🌧️",
+  95: "⛈️", 96: "⛈️", 99: "⛈️",
 };
 const WEATHER_LABELS: Record<number, string> = {
-  0: "Ensoleill\u00e9", 1: "Peu nuageux", 2: "Partiellement nuageux", 3: "Nuageux",
+  0: "Ensoleillé", 1: "Peu nuageux", 2: "Partiellement nuageux", 3: "Nuageux",
   45: "Brouillard", 48: "Brouillard givrant",
-  51: "Bruine l\u00e9g\u00e8re", 53: "Bruine", 55: "Bruine forte",
-  61: "Pluie l\u00e9g\u00e8re", 63: "Pluie", 65: "Forte pluie",
-  71: "Neige l\u00e9g\u00e8re", 73: "Neige", 75: "Forte neige",
+  51: "Bruine légère", 53: "Bruine", 55: "Bruine forte",
+  61: "Pluie légère", 63: "Pluie", 65: "Forte pluie",
+  71: "Neige légère", 73: "Neige", 75: "Forte neige",
   80: "Averses", 81: "Averses", 82: "Fortes averses",
-  95: "Orage", 96: "Orage gr\u00eale", 99: "Orage fort",
+  95: "Orage", 96: "Orage grêle", 99: "Orage fort",
 };
 
-const ACTU_CATEGORIES = ["Tout", "Droits", "Senior", "S\u00e9curit\u00e9", "Activit\u00e9"];
-
-const ARTICLES = [
-  { emoji: "\ud83d\udcb0", cat: "Droits", title: "Revalorisation des petites retraites en 2025", src: "Service-Public.fr", date: "Il y a 2h" },
-  { emoji: "\ud83c\udfe5", cat: "Senior", title: "T\u00e9l\u00e9consultation : comment \u00e7a marche pour les seniors", src: "Ameli.fr", date: "Il y a 5h" },
-  { emoji: "\ud83d\udee1\ufe0f", cat: "S\u00e9curit\u00e9", title: "Attention aux faux conseillers bancaires", src: "Signal-Arnaques", date: "Hier" },
-  { emoji: "\ud83c\udfad", cat: "Activit\u00e9", title: "Ateliers gratuits dans votre ville", src: "Mairie", date: "Hier" },
-  { emoji: "\ud83d\udcdd", cat: "Droits", title: "Nouveau ch\u00e8que \u00e9nergie : \u00eates-vous \u00e9ligible ?", src: "Gouv.fr", date: "Il y a 3j" },
-  { emoji: "\ud83e\uddd1\u200d\u2695\ufe0f", cat: "Senior", title: "Les bienfaits de la marche apr\u00e8s 60 ans", src: "Sant\u00e9 Magazine", date: "Il y a 3j" },
-];
-
-const RAPPEL_STATUSES = ["Tout", "\u00c0 faire", "En cours", "En attente"];
-
-const RAPPELS_DATA = [
-  { icon: "\ud83d\udcbc", label: "Renouveler la carte vitale", sub: "Expire le 15 avril", status: "\u00c0 faire", color: "#ef4444", bg: "rgba(239,68,68,0.08)" },
-  { icon: "\ud83d\udce6", label: "Colis en attente", sub: "Point relais Carrefour", status: "En attente", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
-  { icon: "\ud83d\udcde", label: "Rappeler le Dr. Martin", sub: "Prise de rendez-vous", status: "En cours", color: "#48A29E", bg: "rgba(72,162,158,0.08)" },
-  { icon: "\ud83d\udcc4", label: "Formulaire APL \u00e0 remplir", sub: "Date limite : 20 mars", status: "\u00c0 faire", color: "#ef4444", bg: "rgba(239,68,68,0.08)" },
-];
 
 interface QuickAction {
   label: string;
@@ -78,18 +49,12 @@ interface QuickAction {
 const ALL_ACTIONS: QuickAction[] = [
   { label: "Mon calendrier", icon: <CalendarDays className="w-5 h-5 text-[#48A29E]" /> },
   { label: "Mes papiers", icon: <FileText className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Ma sant\u00e9", icon: <Heart className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Ma santé", icon: <Heart className="w-5 h-5 text-[#48A29E]" /> },
   { label: "Mes rappels", icon: <Bell className="w-5 h-5 text-[#48A29E]" /> },
   { label: "Mon coffre-fort", icon: <Lock className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mes m\u00e9dicaments", icon: <Pill className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mes médicaments", icon: <Pill className="w-5 h-5 text-[#48A29E]" /> },
 ];
 
-const DEFAULT_NOTIFS = [
-  { id: "n1", icon: "\ud83d\udcde", title: "Appel manqu\u00e9", sub: "Dr. Martin a essay\u00e9 de vous joindre", info: "Il y a 2h", color: "#48A29E" },
-  { id: "n2", icon: "\ud83d\udcb3", title: "Carte vitale", sub: "Votre carte expire bient\u00f4t", info: "Renouveler", color: "#ef4444" },
-  { id: "n3", icon: "\ud83d\udcac", title: "Message non lu", sub: "Sophie vous a envoy\u00e9 un message", info: "Famille", color: "#6366f1" },
-  { id: "n4", icon: "\ud83d\udc8a", title: "M\u00e9dicaments", sub: "N'oubliez pas votre traitement du soir", info: "Sant\u00e9", color: "#f59e0b" },
-];
 
 interface RecapPageProps {
   onGoToOscar?: () => void;
@@ -101,11 +66,9 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ full_name: string | null }>({ full_name: null });
   const [weather, setWeather] = useState<Weather | null>(null);
-  const [actuCat, setActuCat] = useState("Tout");
-  const [rappelCat, setRappelCat] = useState("Tout");
-  const [selectedActions, setSelectedActions] = useState<string[]>(["Mon calendrier", "Mes papiers", "Ma sant\u00e9", "Mes rappels"]);
+  const [selectedActions, setSelectedActions] = useState<string[]>(["Mon calendrier", "Mes papiers", "Ma santé", "Mes rappels"]);
   const [showPersonnaliser, setShowPersonnaliser] = useState(false);
-  const [notifs, setNotifs] = useState(DEFAULT_NOTIFS);
+  const [notifs, setNotifs] = useState<{id: string; icon: string; title: string; sub: string; info: string; color: string}[]>([]);
 
   // Fetch weather
   useEffect(() => {
@@ -116,11 +79,11 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         const code = data.current.weather_code;
         setWeather({
           temp: Math.round(data.current.temperature_2m),
-          icon: WEATHER_ICONS[code] || "\ud83c\udf21\ufe0f",
+          icon: WEATHER_ICONS[code] || "🌡️",
           label: WEATHER_LABELS[code] || "Variable",
         });
       } catch {
-        setWeather({ temp: 17, icon: "\u26c5", label: "Nuageux" });
+        setWeather({ temp: 17, icon: "⛅", label: "Nuageux" });
       }
     };
 
@@ -146,13 +109,10 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
     fetchProfile();
   }, [user]);
 
-  const getFirstName = () => profile.full_name ? profile.full_name.split(" ")[0] : "Jean";
+  const getFirstName = () => profile.full_name ? profile.full_name.split(" ")[0] : "";
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon apr\u00e8s-midi" : "Bonsoir";
+  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
   const dateStr = format(new Date(), "EEEE d MMMM yyyy", { locale: fr });
-
-  const filteredArticles = actuCat === "Tout" ? ARTICLES : ARTICLES.filter(a => a.cat === actuCat);
-  const filteredRappels = rappelCat === "Tout" ? RAPPELS_DATA : RAPPELS_DATA.filter(r => r.status === rappelCat);
 
   const dismissNotif = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id));
 
@@ -186,7 +146,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           >
             <span style={{ fontSize: 28 }}>{weather.icon}</span>
             <div>
-              <span style={{ fontSize: 22, fontWeight: 700, color: "#1e293b" }}>{weather.temp}\u00b0C</span>
+              <span style={{ fontSize: 22, fontWeight: 700, color: "#1e293b" }}>{weather.temp}°C</span>
               <span style={{ fontSize: 13.5, color: "#64748b", marginLeft: 8 }}>{weather.label}</span>
             </div>
           </div>
@@ -217,159 +177,12 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Oscar</span>
               <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.75)", background: "rgba(255,255,255,0.18)", borderRadius: 99, padding: "2px 8px", fontWeight: 500 }}>En ligne</span>
             </div>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Posez-moi vos questions, je suis l\u00e0 pour vous aider !</p>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Posez-moi vos questions, je suis là pour vous aider !</p>
           </div>
           <ChevronRight className="w-5 h-5 text-white/70 flex-shrink-0" />
         </button>
       </div>
 
-      {/* \u00c0 SAVOIR - Articles */}
-      <div style={{ padding: "24px 16px 0" }}>
-        <SectionHeader title="\u00c0 savoir" />
-        {/* Category pills */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12 }}>
-          {ACTU_CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActuCat(cat)}
-              style={{
-                padding: "6px 14px",
-                borderRadius: 99,
-                fontSize: 12.5,
-                fontWeight: 500,
-                border: "none",
-                cursor: "pointer",
-                flexShrink: 0,
-                background: actuCat === cat ? "#48A29E" : "#f1f5f9",
-                color: actuCat === cat ? "#fff" : "#64748b",
-                transition: "all 0.15s",
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-        {/* Horizontal scroll articles */}
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-          {filteredArticles.map((a, i) => (
-            <div
-              key={i}
-              className="flex-shrink-0"
-              style={{
-                minWidth: 220,
-                background: "#fff",
-                border: "1.5px solid #eef2f7",
-                borderRadius: 18,
-                padding: "16px 14px 14px",
-              }}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span style={{ fontSize: 20 }}>{a.emoji}</span>
-                <span
-                  style={{
-                    fontSize: 10.5,
-                    fontWeight: 600,
-                    color: "#48A29E",
-                    background: "rgba(72,162,158,0.08)",
-                    borderRadius: 99,
-                    padding: "2px 8px",
-                  }}
-                >
-                  {a.cat}
-                </span>
-              </div>
-              <p style={{ fontSize: 13.5, fontWeight: 600, color: "#1e293b", lineHeight: 1.4, marginBottom: 8 }}>{a.title}</p>
-              <div className="flex items-center justify-between">
-                <span style={{ fontSize: 11, color: "#94a3b8" }}>{a.src}</span>
-                <span style={{ fontSize: 11, color: "#94a3b8" }}>{a.date}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* MES RAPPELS */}
-      <div style={{ padding: "24px 16px 0" }}>
-        <SectionHeader title="Mes rappels" />
-        {/* Status pills */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12 }}>
-          {RAPPEL_STATUSES.map(s => (
-            <button
-              key={s}
-              onClick={() => setRappelCat(s)}
-              style={{
-                padding: "6px 14px",
-                borderRadius: 99,
-                fontSize: 12.5,
-                fontWeight: 500,
-                border: "none",
-                cursor: "pointer",
-                flexShrink: 0,
-                background: rappelCat === s ? "#48A29E" : "#f1f5f9",
-                color: rappelCat === s ? "#fff" : "#64748b",
-                transition: "all 0.15s",
-              }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-        {/* Rappels list */}
-        <div
-          style={{
-            background: "#fff",
-            border: "1.5px solid #eef2f7",
-            borderRadius: 18,
-            overflow: "hidden",
-          }}
-        >
-          {filteredRappels.map((r, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3"
-              style={{
-                padding: "14px 16px",
-                borderBottom: i < filteredRappels.length - 1 ? "1px solid #f1f5f9" : "none",
-              }}
-            >
-              <div
-                className="flex items-center justify-center flex-shrink-0"
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 12,
-                  background: r.bg,
-                  fontSize: 20,
-                }}
-              >
-                {r.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p style={{ fontSize: 13.5, fontWeight: 600, color: "#1e293b" }}>{r.label}</p>
-                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{r.sub}</p>
-              </div>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: r.color,
-                  background: r.bg,
-                  borderRadius: 99,
-                  padding: "3px 10px",
-                  flexShrink: 0,
-                }}
-              >
-                {r.status}
-              </span>
-            </div>
-          ))}
-          {filteredRappels.length === 0 && (
-            <div style={{ padding: "20px 16px", textAlign: "center" }}>
-              <p style={{ fontSize: 13, color: "#94a3b8" }}>Aucun rappel dans cette cat\u00e9gorie</p>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* ACTIONS RAPIDES */}
       <div style={{ padding: "24px 16px 0" }}>
@@ -400,10 +213,10 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   const pathMap: Record<string, string> = {
                     "Mon calendrier": "/services/agenda",
                     "Mes papiers": "/services/documents",
-                    "Ma sant\u00e9": "/services/health",
+                    "Ma santé": "/services/health",
                     "Mes rappels": "/services/agenda",
                     "Mon coffre-fort": "/services/vault",
-                    "Mes m\u00e9dicaments": "/services/health",
+                    "Mes médicaments": "/services/health",
                   };
                   navigate(pathMap[label] || "/services/agenda");
                 }}
@@ -525,7 +338,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               padding: "28px 16px",
             }}
           >
-            <span style={{ fontSize: 32, marginBottom: 8 }}>{"\ud83d\udd14"}</span>
+            <span style={{ fontSize: 32, marginBottom: 8 }}>🔔</span>
             <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Aucune notification</p>
           </div>
         )}
