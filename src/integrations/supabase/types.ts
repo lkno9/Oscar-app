@@ -706,31 +706,28 @@ export type Database = {
       }
       quiz_history: {
         Row: {
+          created_at: string
           id: string
-          user_id: string
           quiz_date: string
           score: number
           total_questions: number
-          category: string | null
-          completed_at: string
+          user_id: string
         }
         Insert: {
+          created_at?: string
           id?: string
-          user_id: string
           quiz_date?: string
           score?: number
           total_questions?: number
-          category?: string | null
-          completed_at?: string
+          user_id: string
         }
         Update: {
+          created_at?: string
           id?: string
-          user_id?: string
           quiz_date?: string
           score?: number
           total_questions?: number
-          category?: string | null
-          completed_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -898,76 +895,40 @@ export type Database = {
       }
       user_progress: {
         Row: {
-          id: string
-          user_id: string
-          total_stars: number
-          level: string
-          quizzes_completed: number
-          articles_read: number
-          oscar_conversations: number
           achievements: string[]
+          articles_read: number
           created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          total_stars?: number
-          level?: string
-          quizzes_completed?: number
-          articles_read?: number
-          oscar_conversations?: number
-          achievements?: string[]
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          total_stars?: number
-          level?: string
-          quizzes_completed?: number
-          articles_read?: number
-          oscar_conversations?: number
-          achievements?: string[]
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_streaks: {
-        Row: {
           id: string
-          user_id: string
-          current_streak: number
-          longest_streak: number
-          last_active_date: string | null
-          streak_grace_used: boolean
-          total_active_days: number
-          created_at: string
+          level: string
+          oscar_conversations: number
+          quizzes_completed: number
+          total_stars: number
           updated_at: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          current_streak?: number
-          longest_streak?: number
-          last_active_date?: string | null
-          streak_grace_used?: boolean
-          total_active_days?: number
+          achievements?: string[]
+          articles_read?: number
           created_at?: string
+          id?: string
+          level?: string
+          oscar_conversations?: number
+          quizzes_completed?: number
+          total_stars?: number
           updated_at?: string
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          current_streak?: number
-          longest_streak?: number
-          last_active_date?: string | null
-          streak_grace_used?: boolean
-          total_active_days?: number
+          achievements?: string[]
+          articles_read?: number
           created_at?: string
+          id?: string
+          level?: string
+          oscar_conversations?: number
+          quizzes_completed?: number
+          total_stars?: number
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -988,6 +949,42 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_active_date: string | null
+          longest_streak: number
+          streak_grace_used: boolean
+          total_active_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          longest_streak?: number
+          streak_grace_used?: boolean
+          total_active_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          longest_streak?: number
+          streak_grace_used?: boolean
+          total_active_days?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -1027,6 +1024,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_family_invitation: {
+        Args: { _family_member_id: string; _invitation_code: string }
+        Returns: Json
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
