@@ -704,6 +704,33 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_history: {
+        Row: {
+          created_at: string
+          id: string
+          quiz_date: string
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          quiz_date?: string
+          score?: number
+          total_questions?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          quiz_date?: string
+          score?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       rss_sources: {
         Row: {
           category: string
@@ -866,6 +893,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_progress: {
+        Row: {
+          achievements: string[]
+          articles_read: number
+          created_at: string
+          id: string
+          level: string
+          oscar_conversations: number
+          quizzes_completed: number
+          total_stars: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievements?: string[]
+          articles_read?: number
+          created_at?: string
+          id?: string
+          level?: string
+          oscar_conversations?: number
+          quizzes_completed?: number
+          total_stars?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievements?: string[]
+          articles_read?: number
+          created_at?: string
+          id?: string
+          level?: string
+          oscar_conversations?: number
+          quizzes_completed?: number
+          total_stars?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -883,6 +949,42 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_active_date: string | null
+          longest_streak: number
+          streak_grace_used: boolean
+          total_active_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          longest_streak?: number
+          streak_grace_used?: boolean
+          total_active_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          longest_streak?: number
+          streak_grace_used?: boolean
+          total_active_days?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
