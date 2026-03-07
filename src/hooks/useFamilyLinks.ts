@@ -108,17 +108,33 @@ export function useFamilyLinks() {
   const acceptInvitation = async (code: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
-    const { data, error } = await supabase.rpc('accept_family_invitation', {
-      _invitation_code: code,
-      _family_member_id: user.id,
-    });
+    // Find the pending invitation by code
+    const { data: invitation, error: findError } = await supabase
+      .from('family_links')
+      .select('*')
+      .eq('invitation_code', code)
+      .eq('status', 'pending')
+      .single();
 
-    if (error) return { error };
-
-    const result = data as { error?: string; success?: boolean } | null;
-    if (result?.error) {
-      return { error: new Error(result.error) };
+    if (findError || !invitation) {
+      return { error: new Error('Code d\'invitation invalide') };
     }
+
+    if (invitation.senior_id === user.id) {
+      return { error: new Error('Vous ne pouvez pas accepter votre propre invitation') };
+    }
+
+    // Accept the invitation
+    const { error: updateError } = await supabase
+      .from('family_links')
+      .update({
+        family_member_id: user.id,
+        status: 'accepted',
+        accepted_at: new Date().toISOString(),
+      })
+      .eq('id', invitation.id);
+
+    if (updateError) return { error: updateError };
 
     await fetchLinks();
     return { error: null };
