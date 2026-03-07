@@ -22,6 +22,7 @@ interface Weather { temp: number; icon: string; label: string; }
 
 interface RssArticle {
   title: string;
+  description: string;
   link: string;
   pubDate: string;
   category: string;
@@ -33,10 +34,10 @@ const ACTU_CATEGORIES = ["Tout", "Droits", "Santé", "Loisirs", "Sécurité", "A
 
 const RSS_SOURCES = [
   { url: "https://www.capretraite.fr/feed/", category: "Droits", source: "Cap Retraite", emoji: "📋" },
-  { url: "https://www.santemagazine.fr/feeds/rss", category: "Santé", source: "Santé Magazine", emoji: "🏥" },
-  { url: "https://www.senioractu.com/xml/syndication.rss", category: "Loisirs", source: "Senior Actu", emoji: "🎭" },
-  { url: "https://www.francetvinfo.fr/titres.rss", category: "Actualité", source: "France Info", emoji: "📰" },
+  { url: "https://www.senioractu.com/xml/syndication.rss", category: "Santé", source: "Senior Actu", emoji: "🏥" },
+  { url: "https://www.santemagazine.fr/feeds/rss", category: "Loisirs", source: "Santé Magazine", emoji: "🎭" },
   { url: "https://www.60millions-mag.com/feed", category: "Sécurité", source: "60 Millions", emoji: "🛡️" },
+  { url: "https://www.francetvinfo.fr/economie.rss", category: "Actualité", source: "France Info", emoji: "📰" },
 ];
 
 // Weather icon/label maps
@@ -106,8 +107,12 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           const data = await res.json();
           if (data.status !== "ok" || !data.items) continue;
           for (const item of data.items.slice(0, 3)) {
+            const rawDesc = item.description || "";
+            const cleanDesc = rawDesc.replace(/<[^>]+>/g, "").trim();
+            const shortDesc = cleanDesc.length > 90 ? cleanDesc.slice(0, 90) + "..." : cleanDesc;
             allArticles.push({
               title: item.title,
+              description: shortDesc,
               link: item.link,
               pubDate: item.pubDate,
               category: src.category,
@@ -286,7 +291,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             <p style={{ fontSize: 13, color: "#94a3b8" }}>Chargement des articles...</p>
           </div>
         ) : filteredArticles.length > 0 ? (
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+          <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-2">
             {filteredArticles.map((a, i) => (
               <a
                 key={i}
@@ -295,34 +300,37 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 rel="noopener noreferrer"
                 className="flex-shrink-0"
                 style={{
-                  minWidth: 220,
+                  width: 175,
                   background: "#fff",
                   border: "1.5px solid #eef2f7",
-                  borderRadius: 18,
-                  padding: "16px 14px 14px",
+                  borderRadius: 14,
+                  padding: "12px 12px 10px",
                   textDecoration: "none",
                   display: "block",
                 }}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <span style={{ fontSize: 20 }}>{a.emoji}</span>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span style={{ fontSize: 15 }}>{a.emoji}</span>
                   <span
                     style={{
-                      fontSize: 10.5,
+                      fontSize: 9.5,
                       fontWeight: 600,
                       color: "#48A29E",
                       background: "rgba(72,162,158,0.08)",
                       borderRadius: 99,
-                      padding: "2px 8px",
+                      padding: "1px 6px",
                     }}
                   >
                     {a.category}
                   </span>
                 </div>
-                <p style={{ fontSize: 13.5, fontWeight: 600, color: "#1e293b", lineHeight: 1.4, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
+                <p style={{ fontSize: 12.5, fontWeight: 600, color: "#1e293b", lineHeight: 1.35, marginBottom: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
+                {a.description && (
+                  <p style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.3, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.description}</p>
+                )}
                 <div className="flex items-center justify-between">
-                  <span style={{ fontSize: 11, color: "#94a3b8" }}>{a.source}</span>
-                  <span style={{ fontSize: 11, color: "#94a3b8" }}>{timeAgo(a.pubDate)}</span>
+                  <span style={{ fontSize: 10, color: "#b0b8c4" }}>{a.source}</span>
+                  <span style={{ fontSize: 10, color: "#b0b8c4" }}>{timeAgo(a.pubDate)}</span>
                 </div>
               </a>
             ))}
