@@ -293,12 +293,12 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide" style={{ background: "#f8fafc", fontFamily: "'Inter', 'Nunito', sans-serif" }}>
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide bg-background" style={{ fontFamily: "'Inter', 'Nunito', sans-serif" }}>
 
       {/* HEADER */}
       <div className="flex-shrink-0 bg-white dark:bg-card" style={{ padding: "22px 20px 18px" }}>
-        <p className="capitalize" style={{ fontSize: 13, color: "#94a3b8", marginBottom: 4 }}>{dateStr}</p>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1e293b", letterSpacing: "-0.5px", marginBottom: 16 }}>
+        <p className="capitalize text-muted-foreground" style={{ fontSize: 13, marginBottom: 4 }}>{dateStr}</p>
+        <h1 className="text-foreground" style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", marginBottom: 16 }}>
           {greeting}, {getFirstName()}
         </h1>
 
@@ -314,8 +314,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           >
             <span style={{ fontSize: 28 }}>{weather.icon}</span>
             <div>
-              <span style={{ fontSize: 22, fontWeight: 700, color: "#1e293b" }}>{weather.temp}°C</span>
-              <span style={{ fontSize: 13.5, color: "#64748b", marginLeft: 8 }}>{weather.label}</span>
+              <span className="text-foreground" style={{ fontSize: 22, fontWeight: 700 }}>{weather.temp}°C</span>
+              <span className="text-muted-foreground" style={{ fontSize: 13.5, marginLeft: 8 }}>{weather.label}</span>
             </div>
           </div>
         )}
@@ -397,12 +397,12 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           {/* Daily Quiz CTA */}
           <button
             onClick={() => navigate("/daily-quiz")}
-            className="flex-1 text-left"
+            className={`flex-1 text-left ${todayQuiz ? "bg-card" : ""}`}
             style={{
               background: todayQuiz
-                ? "#fff"
+                ? undefined
                 : "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
-              border: todayQuiz ? "1.5px solid #eef2f7" : "none",
+              border: todayQuiz ? "1.5px solid hsl(var(--border))" : "none",
               borderRadius: 18,
               padding: "14px 16px",
               display: "flex",
@@ -432,10 +432,10 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p style={{ fontSize: 14, fontWeight: 700, color: todayQuiz ? "#1e293b" : "#fff" }}>
+              <p className={todayQuiz ? "text-foreground" : ""} style={{ fontSize: 14, fontWeight: 700, color: todayQuiz ? undefined : "#fff" }}>
                 {todayQuiz ? "Quiz fait !" : "Quiz du jour"}
               </p>
-              <p style={{ fontSize: 11.5, color: todayQuiz ? "#94a3b8" : "rgba(255,255,255,0.8)" }}>
+              <p className={todayQuiz ? "text-muted-foreground" : ""} style={{ fontSize: 11.5, color: todayQuiz ? undefined : "rgba(255,255,255,0.8)" }}>
                 {todayQuiz
                   ? `${todayQuiz.score}/${todayQuiz.total_questions} bonnes réponses`
                   : "5 questions rapides"
@@ -471,7 +471,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 <p style={{ fontSize: 11, fontWeight: 600, color: "#e67e22", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
                   Conseil du jour
                 </p>
-                <p style={{ fontSize: 13.5, color: "#5d4e37", lineHeight: 1.45 }}>
+                <p className="text-foreground/80" style={{ fontSize: 13.5, lineHeight: 1.45 }}>
                   {tip.text}
                 </p>
               </div>
@@ -519,15 +519,12 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 href={a.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-shrink-0"
+                className="flex-shrink-0 bg-card border border-border block no-underline"
                 style={{
                   width: 175,
-                  background: "#fff",
-                  border: "1.5px solid #eef2f7",
                   borderRadius: 14,
                   padding: "12px 12px 10px",
                   textDecoration: "none",
-                  display: "block",
                 }}
               >
                 <div className="flex items-center gap-1.5 mb-1.5">
@@ -545,9 +542,9 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     {a.category}
                   </span>
                 </div>
-                <p style={{ fontSize: 12.5, fontWeight: 600, color: "#1e293b", lineHeight: 1.35, marginBottom: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
+                <p className="text-foreground" style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.35, marginBottom: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
                 {a.description && (
-                  <p style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.3, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.description}</p>
+                  <p className="text-muted-foreground" style={{ fontSize: 11, lineHeight: 1.3, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.description}</p>
                 )}
                 <div className="flex items-center justify-between">
                   <span style={{ fontSize: 10, color: "#b0b8c4" }}>{a.source}</span>
@@ -558,16 +555,14 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           </div>
         ) : (
           <div
-            className="flex flex-col items-center justify-center"
+            className="flex flex-col items-center justify-center bg-card border border-border"
             style={{
-              background: "#fff",
-              border: "1.5px solid #eef2f7",
               borderRadius: 18,
               padding: "28px 16px",
             }}
           >
             <span style={{ fontSize: 32, marginBottom: 8 }}>📰</span>
-            <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Aucun article dans cette catégorie</p>
+            <p className="text-muted-foreground" style={{ fontSize: 13.5 }}>Aucun article dans cette catégorie</p>
           </div>
         )}
       </div>
@@ -576,10 +571,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       <div style={{ padding: "24px 16px 0" }}>
         <SectionHeader title="Mes rappels" />
         <div
-          className="flex flex-col items-center justify-center"
+          className="flex flex-col items-center justify-center bg-card border border-border"
           style={{
-            background: "#fff",
-            border: "1.5px solid #eef2f7",
             borderRadius: 18,
             padding: "28px 16px",
           }}
@@ -625,10 +618,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   };
                   navigate(pathMap[label] || "/services/agenda");
                 }}
-                className="flex items-center gap-3 text-left"
+                className="flex items-center gap-3 text-left bg-card border border-border"
                 style={{
-                  background: "#fff",
-                  border: "1.5px solid #eef2f7",
                   borderRadius: 16,
                   padding: "14px 14px",
                   cursor: "pointer",
@@ -646,7 +637,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 >
                   {action.icon}
                 </div>
-                <span style={{ fontSize: 12.5, fontWeight: 500, color: "#334155" }}>{label}</span>
+                <span className="text-foreground" style={{ fontSize: 12.5, fontWeight: 500 }}>{label}</span>
               </button>
             );
           })}
@@ -678,10 +669,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             {notifs.map(n => (
               <div
                 key={n.id}
-                className="flex items-center gap-3"
+                className="flex items-center gap-3 bg-card border border-border"
                 style={{
-                  background: "#fff",
-                  border: "1.5px solid #eef2f7",
                   borderRadius: 16,
                   padding: "12px 14px",
                 }}
@@ -699,8 +688,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   {n.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p style={{ fontSize: 13.5, fontWeight: 600, color: "#1e293b" }}>{n.title}</p>
-                  <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 1 }}>{n.sub}</p>
+                  <p className="text-foreground" style={{ fontSize: 13.5, fontWeight: 600 }}>{n.title}</p>
+                  <p className="text-muted-foreground" style={{ fontSize: 12, marginTop: 1 }}>{n.sub}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span
@@ -717,12 +706,11 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   </span>
                   <button
                     onClick={() => dismissNotif(n.id)}
-                    className="flex items-center justify-center"
+                    className="flex items-center justify-center bg-secondary"
                     style={{
                       width: 28,
                       height: 28,
                       borderRadius: "50%",
-                      background: "#f1f5f9",
                       border: "none",
                       cursor: "pointer",
                     }}
@@ -735,16 +723,14 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           </div>
         ) : (
           <div
-            className="flex flex-col items-center justify-center"
+            className="flex flex-col items-center justify-center bg-card border border-border"
             style={{
-              background: "#fff",
-              border: "1.5px solid #eef2f7",
               borderRadius: 18,
               padding: "28px 16px",
             }}
           >
             <span style={{ fontSize: 32, marginBottom: 8 }}>🔔</span>
-            <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Aucune notification</p>
+            <p className="text-muted-foreground" style={{ fontSize: 13.5 }}>Aucune notification</p>
           </div>
         )}
       </div>
@@ -758,10 +744,10 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         >
           <div
             onClick={e => e.stopPropagation()}
+            className="bg-card"
             style={{
               width: "100%",
               maxWidth: 480,
-              background: "#fff",
               borderRadius: "24px 24px 0 0",
               padding: "24px 20px 32px",
               maxHeight: "70vh",
@@ -769,7 +755,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             }}
           >
             <div className="flex items-center justify-between" style={{ marginBottom: 18 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b" }}>Personnaliser</h3>
+              <h3 className="text-foreground" style={{ fontSize: 18, fontWeight: 700 }}>Personnaliser</h3>
               <span style={{ fontSize: 13, color: "#94a3b8" }}>{selectedActions.length}/4</span>
             </div>
             <div className="flex flex-col gap-2">
@@ -779,12 +765,11 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   <button
                     key={action.label}
                     onClick={() => toggleAction(action.label)}
-                    className="flex items-center gap-3 w-full text-left"
+                    className={`flex items-center gap-3 w-full text-left ${isSelected ? "bg-primary/5" : "bg-card"}`}
                     style={{
                       padding: "12px 14px",
                       borderRadius: 14,
-                      border: `1.5px solid ${isSelected ? "rgba(72,162,158,0.3)" : "#eef2f7"}`,
-                      background: isSelected ? "rgba(72,162,158,0.04)" : "#fff",
+                      border: `1.5px solid ${isSelected ? "rgba(72,162,158,0.3)" : "hsl(var(--border))"}`,
                       cursor: "pointer",
                       transition: "all 0.15s",
                     }}
@@ -800,7 +785,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     >
                       {action.icon}
                     </div>
-                    <span className="flex-1" style={{ fontSize: 14, fontWeight: 500, color: "#1e293b" }}>{action.label}</span>
+                    <span className="flex-1 text-foreground" style={{ fontSize: 14, fontWeight: 500 }}>{action.label}</span>
                     <div
                       className="flex items-center justify-center flex-shrink-0"
                       style={{
@@ -845,9 +830,9 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
 function SectionHeader({ title, noMargin }: { title: string; noMargin?: boolean }) {
   return (
     <div className="flex items-center gap-3" style={{ marginBottom: noMargin ? 0 : 14 }}>
-      <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
-      <span style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: 1.5, textTransform: "uppercase" }}>{title}</span>
-      <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+      <div className="flex-1 h-px bg-border" />
+      <span className="text-muted-foreground" style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase" }}>{title}</span>
+      <div className="flex-1 h-px bg-border" />
     </div>
   );
 }
