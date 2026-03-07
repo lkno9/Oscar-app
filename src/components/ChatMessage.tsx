@@ -101,13 +101,15 @@ export function ChatMessage({
       style={{ alignItems: "flex-end", gap: 8 }}
     >
       <div
-        className="max-w-[75%]"
+        className={cn(
+          "max-w-[75%] text-foreground",
+          isUser
+            ? "bg-[rgba(72,162,158,0.1)] dark:bg-[rgba(72,162,158,0.15)] border border-[rgba(72,162,158,0.2)]"
+            : "bg-[#f8fafc] dark:bg-secondary border border-[#f1f5f9] dark:border-border"
+        )}
         style={{
           padding: "10px 14px",
           borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-          background: isUser ? "rgba(72,162,158,0.1)" : "#f8fafc",
-          border: isUser ? "1px solid rgba(72,162,158,0.2)" : "1px solid #f1f5f9",
-          color: "#1e293b",
           fontSize: "14.5px",
           lineHeight: 1.65,
         }}
@@ -154,11 +156,10 @@ export function TypingIndicator() {
   return (
     <div className="flex justify-start msg-fade-up" style={{ alignItems: "flex-end" }}>
       <div
+        className="bg-[#f8fafc] dark:bg-secondary border border-[#f1f5f9] dark:border-border"
         style={{
           padding: "10px 16px",
           borderRadius: "18px 18px 18px 4px",
-          background: "#f8fafc",
-          border: "1px solid #f1f5f9",
         }}
       >
         <div className="flex gap-1.5 items-center py-0.5">

@@ -8,8 +8,8 @@ interface BottomNavProps {
 export function BottomNav({ active, onNavigate }: BottomNavProps) {
   return (
     <nav
-      className="flex items-center flex-shrink-0 bg-white dark:bg-card"
-      style={{ borderTop: "1px solid #f1f5f9", padding: "10px 0 16px" }}
+      className="flex items-center flex-shrink-0 bg-white dark:bg-card border-t border-border"
+      style={{ padding: "10px 0 16px" }}
     >
       <NavButton
         icon={<Home className="w-5 h-5" />}

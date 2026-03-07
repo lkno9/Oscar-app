@@ -257,26 +257,25 @@ export function DailyQuizPage() {
 
     return (
       <div
-        className="flex flex-col h-full"
-        style={{ background: "#f8fafc", fontFamily: "'Inter', 'Nunito', sans-serif" }}
+        className="flex flex-col h-full bg-background"
+        style={{ fontFamily: "'Inter', 'Nunito', sans-serif" }}
       >
         {/* Header */}
         <div className="flex items-center gap-3" style={{ padding: "16px 16px 0" }}>
           <button
             onClick={() => navigate("/")}
-            className="flex items-center justify-center"
+            className="flex items-center justify-center bg-secondary"
             style={{
               width: 36,
               height: 36,
               borderRadius: "50%",
-              background: "#f1f5f9",
               border: "none",
               cursor: "pointer",
             }}
           >
-            <ChevronLeft className="w-5 h-5 text-slate-600" />
+            <ChevronLeft className="w-5 h-5 text-foreground" />
           </button>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b" }}>Quiz du jour</h1>
+          <h1 className="text-foreground" style={{ fontSize: 18, fontWeight: 700 }}>Quiz du jour</h1>
         </div>
 
         {/* Résultat */}
@@ -302,14 +301,14 @@ export function DailyQuizPage() {
             <Trophy className="w-10 h-10 text-white" />
           </div>
 
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1e293b", marginBottom: 8 }}>
+          <h2 className="text-foreground" style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>
             {alreadyDone ? "Quiz déjà complété !" : pct >= 80 ? "Excellent !" : pct >= 50 ? "Bien joué !" : "Pas mal !"}
           </h2>
 
           <p style={{ fontSize: 40, fontWeight: 800, color: "#48A29E", marginBottom: 4 }}>
             {displayScore}/{displayTotal}
           </p>
-          <p style={{ fontSize: 14, color: "#64748b", marginBottom: 24 }}>bonnes réponses</p>
+          <p className="text-muted-foreground" style={{ fontSize: 14, marginBottom: 24 }}>bonnes réponses</p>
 
           {/* Étoiles gagnées */}
           <div
@@ -376,7 +375,7 @@ export function DailyQuizPage() {
           <ChevronLeft className="w-5 h-5 text-slate-600" />
         </button>
         <div className="flex-1">
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b" }}>Quiz du jour</h1>
+          <h1 className="text-foreground" style={{ fontSize: 18, fontWeight: 700 }}>Quiz du jour</h1>
         </div>
         <div className="flex items-center gap-1.5">
           <Star className="w-4 h-4 text-yellow-500" fill="#eab308" />
@@ -389,7 +388,7 @@ export function DailyQuizPage() {
         <div
           style={{
             height: 6,
-            background: "#e2e8f0",
+            background: "hsl(var(--border))",
             borderRadius: 99,
             overflow: "hidden",
           }}
@@ -428,10 +427,10 @@ export function DailyQuizPage() {
         </span>
 
         <h2
+          className="text-foreground"
           style={{
             fontSize: 20,
             fontWeight: 700,
-            color: "#1e293b",
             lineHeight: 1.35,
             marginBottom: 24,
           }}
@@ -446,8 +445,8 @@ export function DailyQuizPage() {
             const isCorrect = idx === currentQ.correctIndex;
             const showCorrectness = showResult;
 
-            let bg = "#fff";
-            let border = "1.5px solid #e2e8f0";
+            let bg = "hsl(var(--card))";
+            let border = "1.5px solid hsl(var(--border))";
             let iconEl: React.ReactNode = null;
 
             if (showCorrectness) {
@@ -513,8 +512,8 @@ export function DailyQuizPage() {
                     width: 28,
                     height: 28,
                     borderRadius: "50%",
-                    background: isSelected && !showResult ? "#48A29E" : "#f1f5f9",
-                    border: isSelected && !showResult ? "none" : "1.5px solid #e2e8f0",
+                    background: isSelected && !showResult ? "#48A29E" : "hsl(var(--secondary))",
+                    border: isSelected && !showResult ? "none" : "1.5px solid hsl(var(--border))",
                     display: showCorrectness && (isCorrect || isSelected) ? "none" : "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -528,10 +527,10 @@ export function DailyQuizPage() {
                 </div>
                 {iconEl}
                 <span
+                  className="text-foreground"
                   style={{
                     fontSize: 14,
                     fontWeight: isSelected || (showCorrectness && isCorrect) ? 600 : 400,
-                    color: "#1e293b",
                     flex: 1,
                   }}
                 >
@@ -556,7 +555,7 @@ export function DailyQuizPage() {
             <p style={{ fontSize: 11, fontWeight: 600, color: "#48A29E", marginBottom: 4 }}>
               Explication
             </p>
-            <p style={{ fontSize: 13, color: "#334155", lineHeight: 1.45 }}>
+            <p className="text-foreground" style={{ fontSize: 13, lineHeight: 1.45 }}>
               {currentQ.explanation}
             </p>
           </div>

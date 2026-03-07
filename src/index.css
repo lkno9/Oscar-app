@@ -1,9 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@400;500&display=swap');
 
 @layer base {
   :root {
@@ -150,6 +150,10 @@
     padding: 14px 16px;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
+  .dark .glass-input {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(72, 162, 158, 0.3);
+  }
   .glass-input:focus-within {
     border-color: rgba(72, 162, 158, 0.45);
     box-shadow: 0 0 0 3px rgba(72, 162, 158, 0.08);
@@ -184,9 +188,18 @@
     transition: all 0.18s;
     font-family: 'Inter', 'Nunito', sans-serif;
   }
+  .dark .suggestion-btn {
+    background: hsl(210 30% 18%);
+    border-color: hsl(210 30% 25%);
+    color: hsl(0 0% 90%);
+  }
   .suggestion-btn:hover {
     border-color: rgba(72, 162, 158, 0.35);
     background: rgba(72, 162, 158, 0.04);
+  }
+  .dark .suggestion-btn:hover {
+    border-color: rgba(72, 162, 158, 0.45);
+    background: rgba(72, 162, 158, 0.1);
   }
 
   /* Thin scrollbar */

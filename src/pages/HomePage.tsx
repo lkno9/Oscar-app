@@ -540,11 +540,8 @@ export function HomePage() {
     <div className="flex flex-col h-full overflow-hidden" style={{ fontFamily: "'Inter', 'Nunito', sans-serif" }}>
       {/* Header */}
       <header
-        className="flex items-center justify-between flex-shrink-0 bg-white dark:bg-card"
-        style={{
-          padding: "16px 20px 14px",
-          borderBottom: started ? "1px solid #f1f5f9" : "none",
-        }}
+        className={`flex items-center justify-between flex-shrink-0 bg-white dark:bg-card ${started ? "border-b border-border" : ""}`}
+        style={{ padding: "16px 20px 14px" }}
       >
         <div className="flex items-center gap-2.5">
           <OscarAvatar size="sm" className="w-9 h-9 shadow-[0_2px_8px_rgba(72,162,158,0.3)]" />
@@ -556,14 +553,14 @@ export function HomePage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
             aria-label="Appel audio"
           >
             <Phone className="w-[18px] h-[18px]" />
           </button>
           <button
             onClick={() => navigate("/settings")}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
             aria-label="Paramètres"
           >
             <Settings className="w-[18px] h-[18px]" />
@@ -607,7 +604,7 @@ export function HomePage() {
 
       {/* Messages */}
       {started && (
-        <div className="flex-1 overflow-y-auto px-4 py-5 thin-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="flex-1 overflow-y-auto px-4 py-5 thin-scrollbar bg-background" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {messages.map((message) => (
             <ChatMessage
               key={message.id}
@@ -628,7 +625,7 @@ export function HomePage() {
       )}
 
       {/* Input Bar */}
-      <div className="flex-shrink-0 bg-white dark:bg-card" style={{ padding: "10px 16px 24px" }}>
+      <div className="flex-shrink-0 bg-white dark:bg-card border-t border-transparent dark:border-border" style={{ padding: "10px 16px 24px" }}>
         {/* File preview */}
         {pendingFile && (
           <div className="mb-2 flex items-center gap-2 bg-slate-50 dark:bg-secondary rounded-2xl p-2 pr-3">
