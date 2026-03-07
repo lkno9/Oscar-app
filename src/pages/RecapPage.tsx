@@ -32,11 +32,11 @@ interface RssArticle {
 const ACTU_CATEGORIES = ["Tout", "Droits", "Santé", "Loisirs", "Sécurité", "Actualité"];
 
 const RSS_SOURCES = [
-  { url: "https://www.service-public.fr/rss/actualites", category: "Droits", source: "Service-Public.fr", emoji: "📋" },
-  { url: "https://www.notretemps.com/rss", category: "Santé", source: "Notre Temps", emoji: "🏥" },
-  { url: "https://www.silvereco.fr/feed", category: "Loisirs", source: "Silver Économie", emoji: "🎭" },
+  { url: "https://www.capretraite.fr/feed/", category: "Droits", source: "Cap Retraite", emoji: "📋" },
+  { url: "https://www.santemagazine.fr/feeds/rss", category: "Santé", source: "Santé Magazine", emoji: "🏥" },
+  { url: "https://www.senioractu.com/xml/syndication.rss", category: "Loisirs", source: "Senior Actu", emoji: "🎭" },
   { url: "https://www.francetvinfo.fr/titres.rss", category: "Actualité", source: "France Info", emoji: "📰" },
-  { url: "https://www.60millions-mag.com/rss", category: "Sécurité", source: "60 Millions", emoji: "🛡️" },
+  { url: "https://www.60millions-mag.com/feed", category: "Sécurité", source: "60 Millions", emoji: "🛡️" },
 ];
 
 // Weather icon/label maps
@@ -100,7 +100,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       for (const src of RSS_SOURCES) {
         try {
           const res = await fetch(
-            `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}&count=5`
+            `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`
           );
           if (!res.ok) continue;
           const data = await res.json();
