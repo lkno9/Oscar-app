@@ -115,8 +115,9 @@ export function useFamilyLinks() {
 
     if (error) return { error };
 
-    if (data?.error) {
-      return { error: new Error(data.error) };
+    const result = data as { error?: string; success?: boolean } | null;
+    if (result?.error) {
+      return { error: new Error(result.error) };
     }
 
     await fetchLinks();
