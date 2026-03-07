@@ -10,9 +10,15 @@ import {
   X,
   Check,
   Heart,
+  Flame,
+  Star,
+  Trophy,
+  ArrowRight,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useEngagement, getLevelInfo, getNextLevel, getNextMilestone } from "@/hooks/useEngagement";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -134,6 +140,7 @@ interface RecapPageProps {
 export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { streak, progress, todayQuiz, streakJustIncreased, recordActivity } = useEngagement();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ full_name: string | null }>({ full_name: null });
   const [weather, setWeather] = useState<Weather | null>(null);
@@ -143,6 +150,11 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [actuCat, setActuCat] = useState("Tout");
   const [articles, setArticles] = useState<RssArticle[]>([]);
   const [articlesLoading, setArticlesLoading] = useState(true);
+
+  // Enregistrer l'activité quotidienne au chargement
+  useEffect(() => {
+    if (user) recordActivity();
+  }, [user]);
 
   // Fetch RSS sources from Supabase (fallback to defaults)
   const [rssSources, setRssSources] = useState<RssSource[]>(DEFAULT_RSS_SOURCES);
@@ -339,6 +351,169 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Posez-moi vos questions, je suis là pour vous aider !</p>
           </div>
           <ChevronRight className="w-5 h-5 text-white/70 flex-shrink-0" />
+        </button>
+      </div>
+
+      {/* ENGAGEMENT — Streak + Quiz + Niveau */}
+      <div style={{ padding: "16px 16px 0" }}>
+        <div className="flex gap-3">
+          {/* Streak Widget */}
+          <div
+            className="flex-1"
+            style={{
+              background: streakJustIncreased
+                ? "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)"
+                : streak.current_streak > 0
+                ? "linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)"
+                : "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)",
+              borderRadius: 18,
+              padding: "16px 14px",
+              position: "relative",
+              overflow: "hidden",
+              transition: "all 0.5s ease",
+            }}
+          >
+            {streakJustIncreased && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.3) 0%, transparent 60%)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              />
+            )}
+            <div className="flex items-center gap-2 mb-1">
+              <Flame className="w-5 h-5 text-white" />
+              <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.85)", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                Série
+              </span>
+            </div>
+            <p style={{ fontSize: 32, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+              {streak.current_streak}
+            </p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>
+              {streak.current_streak <= 1 ? "jour" : "jours consécutifs"}
+            </p>
+            {(() => {
+              const next = getNextMilestone(streak.current_streak);
+              if (!next) return null;
+              const pct = Math.min(100, (streak.current_streak / next) * 100);
+              return (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ height: 4, background: "rgba(255,255,255,0.25)", borderRadius: 99, overflow: "hidden" }}>
+                    <div style={{ width: `${pct}%`, height: "100%", background: "#fff", borderRadius: 99, transition: "width 0.5s ease" }} />
+                  </div>
+                  <p style={{ fontSize: 9.5, color: "rgba(255,255,255,0.65)", marginTop: 3 }}>
+                    Prochain palier : {next} jours
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Level + Stars Widget */}
+          <div
+            className="flex-1"
+            style={{
+              background: "#fff",
+              border: "1.5px solid #eef2f7",
+              borderRadius: 18,
+              padding: "16px 14px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            {(() => {
+              const level = getLevelInfo(progress.level);
+              const next = getNextLevel(progress.level);
+              return (
+                <>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span style={{ fontSize: 20 }}>{level.emoji}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
+                        {level.label}
+                      </span>
+                    </div>
+                    {next && (
+                      <p style={{ fontSize: 10, color: "#94a3b8" }}>
+                        Prochain : {next.emoji} {next.label} ({next.minDays}j)
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <div className="flex items-center gap-1.5">
+                      <Star className="w-4 h-4 text-yellow-500" fill="#eab308" />
+                      <span style={{ fontSize: 18, fontWeight: 700, color: "#1e293b" }}>
+                        {progress.total_stars}
+                      </span>
+                      <span style={{ fontSize: 11, color: "#94a3b8" }}>étoiles</span>
+                    </div>
+                    <p style={{ fontSize: 10, color: "#b0b8c4", marginTop: 2 }}>
+                      {progress.quizzes_completed} quiz{progress.quizzes_completed > 1 ? "s" : ""} | {streak.total_active_days} jour{streak.total_active_days > 1 ? "s" : ""} actif{streak.total_active_days > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Daily Quiz CTA */}
+        <button
+          onClick={() => navigate("/daily-quiz")}
+          className="w-full text-left"
+          style={{
+            marginTop: 10,
+            background: todayQuiz
+              ? "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)"
+              : "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+            borderRadius: 16,
+            padding: "14px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            border: "none",
+            cursor: "pointer",
+            transition: "transform 0.18s",
+            boxShadow: todayQuiz ? "none" : "0 4px 16px rgba(124,58,237,0.25)",
+          }}
+        >
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              background: todayQuiz ? "rgba(72,162,158,0.1)" : "rgba(255,255,255,0.18)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            {todayQuiz ? (
+              <Check className="w-5 h-5 text-green-500" />
+            ) : (
+              <Zap className="w-5 h-5 text-white" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p style={{ fontSize: 14, fontWeight: 700, color: todayQuiz ? "#64748b" : "#fff" }}>
+              {todayQuiz ? "Quiz complété !" : "Quiz du jour"}
+            </p>
+            <p style={{ fontSize: 12, color: todayQuiz ? "#94a3b8" : "rgba(255,255,255,0.8)" }}>
+              {todayQuiz
+                ? `${todayQuiz.score}/${todayQuiz.total_questions} bonnes réponses`
+                : "5 questions pour gagner des étoiles"
+              }
+            </p>
+          </div>
+          <ChevronRight
+            className="w-5 h-5 flex-shrink-0"
+            style={{ color: todayQuiz ? "#94a3b8" : "rgba(255,255,255,0.7)" }}
+          />
         </button>
       </div>
 

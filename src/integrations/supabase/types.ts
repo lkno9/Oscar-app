@@ -704,6 +704,36 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_history: {
+        Row: {
+          id: string
+          user_id: string
+          quiz_date: string
+          score: number
+          total_questions: number
+          category: string | null
+          completed_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          quiz_date?: string
+          score?: number
+          total_questions?: number
+          category?: string | null
+          completed_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          quiz_date?: string
+          score?: number
+          total_questions?: number
+          category?: string | null
+          completed_at?: string
+        }
+        Relationships: []
+      }
       rss_sources: {
         Row: {
           category: string
@@ -863,6 +893,81 @@ export type Database = {
           score?: number
           total_questions?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          id: string
+          user_id: string
+          total_stars: number
+          level: string
+          quizzes_completed: number
+          articles_read: number
+          oscar_conversations: number
+          achievements: string[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          total_stars?: number
+          level?: string
+          quizzes_completed?: number
+          articles_read?: number
+          oscar_conversations?: number
+          achievements?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          total_stars?: number
+          level?: string
+          quizzes_completed?: number
+          articles_read?: number
+          oscar_conversations?: number
+          achievements?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          id: string
+          user_id: string
+          current_streak: number
+          longest_streak: number
+          last_active_date: string | null
+          streak_grace_used: boolean
+          total_active_days: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          current_streak?: number
+          longest_streak?: number
+          last_active_date?: string | null
+          streak_grace_used?: boolean
+          total_active_days?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          current_streak?: number
+          longest_streak?: number
+          last_active_date?: string | null
+          streak_grace_used?: boolean
+          total_active_days?: number
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
