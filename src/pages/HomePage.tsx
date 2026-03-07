@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Phone, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
@@ -20,11 +20,42 @@ interface ChatMessageData {
   richCards?: RichCard[];
 }
 
-const SUGGESTIONS = [
+// Pool de suggestions — 3 sont choisies aléatoirement à chaque visite
+const ALL_SUGGESTIONS = [
+  // Administratif
   "Comment renouveler ma carte vitale ?",
-  "Je me sens seul aujourd'hui",
   "Aide-moi avec ma mutuelle",
+  "Comment déclarer mes impôts ?",
+  "Je veux simuler mes aides sociales",
+  "Comment obtenir l'APA ?",
+  "Je dois renouveler ma carte d'identité",
+  // Santé & bien-être
+  "Rappelle-moi de prendre mes médicaments",
+  "Je cherche une pharmacie de garde",
+  "Aide-moi à prendre un RDV chez le médecin",
+  "Quels exercices doux je peux faire ?",
+  // Social & émotionnel
+  "Je me sens seul aujourd'hui",
+  "Aide-moi à écrire un message à mes petits-enfants",
+  "Je voudrais appeler ma famille",
+  "Raconte-moi quelque chose d'intéressant",
+  // Quotidien & pratique
+  "Quel temps fait-il aujourd'hui ?",
+  "Aide-moi à traduire un texte",
+  "Je veux voir les trains pour aller à Lyon",
+  "Quel film voir ce soir ?",
+  // Sécurité
+  "J'ai reçu un SMS bizarre, c'est une arnaque ?",
+  "Comment me protéger des arnaques en ligne ?",
+  // Loisirs
+  "Jouons à un petit quiz !",
+  "Qu'est-ce que je peux faire aujourd'hui ?",
 ];
+
+function pickRandomSuggestions(count: number): string[] {
+  const shuffled = [...ALL_SUGGESTIONS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -104,6 +135,8 @@ interface PendingFile {
 
 export function HomePage() {
   const navigate = useNavigate();
+  // 3 suggestions aléatoires choisies au montage
+  const suggestions = useMemo(() => pickRandomSuggestions(3), []);
   const [messages, setMessages] = useState<ChatMessageData[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
@@ -559,7 +592,7 @@ export function HomePage() {
             className="flex flex-col gap-2.5 w-full animate-fade-in"
             style={{ animationDelay: "0.35s", animationFillMode: "both" }}
           >
-            {SUGGESTIONS.map((s, i) => (
+            {suggestions.map((s, i) => (
               <button
                 key={i}
                 className="suggestion-btn"
