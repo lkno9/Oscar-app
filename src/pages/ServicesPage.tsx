@@ -1,35 +1,36 @@
 import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
-  Bell,
-  Smile,
-  Gamepad2,
-  Heart,
-  FileText,
-  Lock,
-  Gift,
-  MessageCircle,
+  Cloud,
   Image,
+  Ticket,
+  Gamepad2,
+  Sparkles,
+  ShieldAlert,
+  MessageCircle,
+  Heart,
   Phone,
-  Shield,
   GraduationCap,
   HelpCircle,
   Settings,
   ChevronRight,
+  Navigation,
+  Wrench,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 
 const PRIMARY_SERVICES = [
-  { icon: <CalendarDays className="w-8 h-8" />, label: "Mon calendrier", path: "/services/agenda" },
-  { icon: <Bell className="w-8 h-8" />, label: "Mes rappels", path: "/services/agenda" },
-  { icon: <Smile className="w-8 h-8" />, label: "Mon bien-être", path: "/services/wellness" },
-  { icon: <Gamepad2 className="w-8 h-8" />, label: "Mes loisirs & jeux", path: "/services/games" },
-  { icon: <Heart className="w-8 h-8" />, label: "Ma santé", path: "/services/health" },
-  { icon: <FileText className="w-8 h-8" />, label: "Mes papiers", path: "/services/documents" },
-  { icon: <Lock className="w-8 h-8" />, label: "Mon coffre-fort", path: "/services/vault" },
-  { icon: <Gift className="w-8 h-8" />, label: "Mes avantages", path: "/services/partners" },
+  { icon: <CalendarDays className="w-8 h-8" />, label: "Mon agenda", path: "/services/agenda" },
+  { icon: <Heart className="w-8 h-8" />, label: "Ma santé & bien-être", path: "/services/health" },
+  { icon: <Image className="w-8 h-8" />, label: "Mon album photos", path: "/services/photos" },
   { icon: <MessageCircle className="w-8 h-8" />, label: "Mes communications", path: "/services/communication" },
-  { icon: <Image className="w-8 h-8" />, label: "Mon album", path: "/services/photos" },
+  { icon: <Navigation className="w-8 h-8" />, label: "Mes déplacements", path: "/services/transport" },
+  { icon: <Ticket className="w-8 h-8" />, label: "Mes loisirs & sorties", path: "/services/entertainment" },
+  { icon: <Wrench className="w-8 h-8" />, label: "Mes outils pratiques", path: "/services/tools" },
+  { icon: <Cloud className="w-8 h-8" />, label: "Mon coffre-fort", path: "/services/storage" },
+  { icon: <Gamepad2 className="w-8 h-8" />, label: "Mes jeux & mémoire", path: "/services/games" },
+  { icon: <Sparkles className="w-8 h-8" />, label: "Mes avantages", path: "/services/partners" },
+  { icon: <ShieldAlert className="w-8 h-8" />, label: "Ma sécurité", path: "/services/scam-protection" },
 ];
 
 const SUPPORT_ITEMS = [
@@ -39,13 +40,6 @@ const SUPPORT_ITEMS = [
     sublabel: "Appeler les secours ou ma famille",
     path: "/services/emergency",
     accent: true,
-  },
-  {
-    icon: <Shield className="w-6 h-6" />,
-    label: "Me protéger",
-    sublabel: "Arnaques et sécurité",
-    path: "/services/scam-protection",
-    accent: false,
   },
   {
     icon: <GraduationCap className="w-6 h-6" />,

@@ -20,6 +20,25 @@ import { fr } from "date-fns/locale";
 // --- Types ---
 interface Weather { temp: number; icon: string; label: string; }
 
+interface RssArticle {
+  title: string;
+  link: string;
+  pubDate: string;
+  category: string;
+  source: string;
+  emoji: string;
+}
+
+const ACTU_CATEGORIES = ["Tout", "Droits", "Santé", "Loisirs", "Sécurité", "Actualité"];
+
+const RSS_SOURCES = [
+  { url: "https://www.service-public.fr/rss/actualites", category: "Droits", source: "Service-Public.fr", emoji: "📋" },
+  { url: "https://www.notretemps.com/rss", category: "Santé", source: "Notre Temps", emoji: "🏥" },
+  { url: "https://www.silvereco.fr/feed", category: "Loisirs", source: "Silver Économie", emoji: "🎭" },
+  { url: "https://www.francetvinfo.fr/titres.rss", category: "Actualité", source: "France Info", emoji: "📰" },
+  { url: "https://www.60millions-mag.com/rss", category: "Sécurité", source: "60 Millions", emoji: "🛡️" },
+];
+
 // Weather icon/label maps
 const WEATHER_ICONS: Record<number, string> = {
   0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
@@ -69,6 +88,42 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [selectedActions, setSelectedActions] = useState<string[]>(["Mon calendrier", "Mes papiers", "Ma santé", "Mes rappels"]);
   const [showPersonnaliser, setShowPersonnaliser] = useState(false);
   const [notifs, setNotifs] = useState<{id: string; icon: string; title: string; sub: string; info: string; color: string}[]>([]);
+  const [actuCat, setActuCat] = useState("Tout");
+  const [articles, setArticles] = useState<RssArticle[]>([]);
+  const [articlesLoading, setArticlesLoading] = useState(true);
+
+  // Fetch RSS articles
+  useEffect(() => {
+    const fetchRss = async () => {
+      setArticlesLoading(true);
+      const allArticles: RssArticle[] = [];
+      for (const src of RSS_SOURCES) {
+        try {
+          const res = await fetch(
+            `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}&count=5`
+          );
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data.status !== "ok" || !data.items) continue;
+          for (const item of data.items.slice(0, 3)) {
+            allArticles.push({
+              title: item.title,
+              link: item.link,
+              pubDate: item.pubDate,
+              category: src.category,
+              source: src.source,
+              emoji: src.emoji,
+            });
+          }
+        } catch {
+          // skip failed feeds silently
+        }
+      }
+      setArticles(allArticles);
+      setArticlesLoading(false);
+    };
+    fetchRss();
+  }, []);
 
   // Fetch weather
   useEffect(() => {
@@ -113,6 +168,21 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
   const dateStr = format(new Date(), "EEEE d MMMM yyyy", { locale: fr });
+
+  const filteredArticles = actuCat === "Tout" ? articles : articles.filter(a => a.category === actuCat);
+
+  const timeAgo = (dateStr: string) => {
+    try {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 60) return `Il y a ${mins}min`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `Il y a ${hrs}h`;
+      const days = Math.floor(hrs / 24);
+      if (days === 1) return "Hier";
+      return `Il y a ${days}j`;
+    } catch { return ""; }
+  };
 
   const dismissNotif = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id));
 
@@ -187,18 +257,90 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       {/* À SAVOIR */}
       <div style={{ padding: "24px 16px 0" }}>
         <SectionHeader title="À savoir" />
-        <div
-          className="flex flex-col items-center justify-center"
-          style={{
-            background: "#fff",
-            border: "1.5px solid #eef2f7",
-            borderRadius: 18,
-            padding: "28px 16px",
-          }}
-        >
-          <span style={{ fontSize: 32, marginBottom: 8 }}>📰</span>
-          <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Aucun article pour le moment</p>
+        {/* Category pills */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12 }}>
+          {ACTU_CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActuCat(cat)}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 99,
+                fontSize: 12.5,
+                fontWeight: 500,
+                border: "none",
+                cursor: "pointer",
+                flexShrink: 0,
+                background: actuCat === cat ? "#48A29E" : "#f1f5f9",
+                color: actuCat === cat ? "#fff" : "#64748b",
+                transition: "all 0.15s",
+              }}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
+        {/* Articles */}
+        {articlesLoading ? (
+          <div className="flex items-center justify-center" style={{ padding: "28px 16px" }}>
+            <p style={{ fontSize: 13, color: "#94a3b8" }}>Chargement des articles...</p>
+          </div>
+        ) : filteredArticles.length > 0 ? (
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {filteredArticles.map((a, i) => (
+              <a
+                key={i}
+                href={a.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0"
+                style={{
+                  minWidth: 220,
+                  background: "#fff",
+                  border: "1.5px solid #eef2f7",
+                  borderRadius: 18,
+                  padding: "16px 14px 14px",
+                  textDecoration: "none",
+                  display: "block",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span style={{ fontSize: 20 }}>{a.emoji}</span>
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      color: "#48A29E",
+                      background: "rgba(72,162,158,0.08)",
+                      borderRadius: 99,
+                      padding: "2px 8px",
+                    }}
+                  >
+                    {a.category}
+                  </span>
+                </div>
+                <p style={{ fontSize: 13.5, fontWeight: 600, color: "#1e293b", lineHeight: 1.4, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
+                <div className="flex items-center justify-between">
+                  <span style={{ fontSize: 11, color: "#94a3b8" }}>{a.source}</span>
+                  <span style={{ fontSize: 11, color: "#94a3b8" }}>{timeAgo(a.pubDate)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div
+            className="flex flex-col items-center justify-center"
+            style={{
+              background: "#fff",
+              border: "1.5px solid #eef2f7",
+              borderRadius: 18,
+              padding: "28px 16px",
+            }}
+          >
+            <span style={{ fontSize: 32, marginBottom: 8 }}>📰</span>
+            <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Aucun article dans cette catégorie</p>
+          </div>
+        )}
       </div>
 
       {/* MES RAPPELS */}
