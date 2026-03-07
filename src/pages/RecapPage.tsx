@@ -297,28 +297,44 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
 
       {/* HEADER */}
       <div className="flex-shrink-0 bg-white dark:bg-card" style={{ padding: "22px 20px 18px" }}>
-        <p className="capitalize text-muted-foreground" style={{ fontSize: 13, marginBottom: 4 }}>{dateStr}</p>
-        <h1 className="text-foreground" style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", marginBottom: 16 }}>
-          {greeting}, {getFirstName()}
-        </h1>
-
-        {/* Weather widget */}
-        {weather && (
-          <div
-            className="flex items-center gap-3"
-            style={{
-              background: "rgba(72,162,158,0.12)",
-              borderRadius: 18,
-              padding: "12px 16px",
-            }}
-          >
-            <span style={{ fontSize: 28 }}>{weather.icon}</span>
-            <div>
-              <span className="text-foreground" style={{ fontSize: 22, fontWeight: 700 }}>{weather.temp}°C</span>
-              <span className="text-muted-foreground" style={{ fontSize: 13.5, marginLeft: 8 }}>{weather.label}</span>
-            </div>
+        <div className="flex items-start justify-between gap-3">
+          {/* Left: date + greeting */}
+          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <p className="capitalize text-muted-foreground" style={{ fontSize: 13, fontWeight: 500 }}>{dateStr}</p>
+            <h1 className="text-foreground" style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", lineHeight: 1.2 }}>
+              {greeting}{getFirstName() ? `, ${getFirstName()}` : ""} 👋
+            </h1>
           </div>
-        )}
+
+          {/* Right: weather card (translucid teal) */}
+          {weather && (
+            <div
+              style={{
+                background: "rgba(72,162,158,0.15)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                border: "1.5px solid rgba(72,162,158,0.25)",
+                borderRadius: 18,
+                padding: "10px 14px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                minWidth: 80,
+                flexShrink: 0,
+                boxShadow: "0 2px 12px rgba(72,162,158,0.12)",
+              }}
+            >
+              <span style={{ fontSize: 28, lineHeight: 1 }}>{weather.icon}</span>
+              <span style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginTop: 3 }}
+                className="dark:text-foreground">
+                {weather.temp}°
+              </span>
+              <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500, marginTop: 1, textAlign: "center", maxWidth: 72 }}>
+                {weather.label}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* OSCAR WIDGET */}

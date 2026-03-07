@@ -64,6 +64,7 @@ function getGreeting() {
   return "ce soir";
 }
 
+
 // ElevenLabs TTS — with abort, play() error handling, and truncation
 let currentAudio: HTMLAudioElement | null = null;
 let currentTtsAbort: AbortController | null = null;
