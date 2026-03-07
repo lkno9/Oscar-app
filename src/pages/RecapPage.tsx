@@ -301,7 +301,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           {/* Left: date + greeting */}
           <div className="flex flex-col flex-1 min-w-0" style={{ gap: 8 }}>
             <p className="capitalize text-muted-foreground" style={{ fontSize: 13, fontWeight: 500 }}>{dateStr}</p>
-            <h1 className="text-foreground" style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", lineHeight: 1.2 }}>
+            <h1 className="text-foreground" style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.4px", lineHeight: 1.2 }}>
               {greeting}{getFirstName() ? `, ${getFirstName()}` : ""} 👋
             </h1>
           </div>
