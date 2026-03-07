@@ -61,6 +61,36 @@ const DEFAULT_RSS_SOURCES: RssSource[] = [
   { url: "https://www.femmeactuelle.fr/sante/feed", category: "Bien-être", source: "Femme Actuelle Santé", emoji: "🌿" },
 ];
 
+// Conseils bien-être & citations — un par jour
+const DAILY_TIPS = [
+  { emoji: "🌿", text: "Prenez 5 minutes pour respirer profondément. Inspirez par le nez, expirez par la bouche. Votre corps vous remerciera." },
+  { emoji: "🚶", text: "Une petite marche de 15 minutes améliore l'humeur et la circulation. Même autour du pâté de maisons, ça compte !" },
+  { emoji: "💧", text: "Pensez à boire régulièrement, même sans soif. Un verre d'eau toutes les heures, c'est l'idéal." },
+  { emoji: "😊", text: "Sourire, même sans raison, envoie un signal positif au cerveau. Essayez, vous verrez !" },
+  { emoji: "📞", text: "Appelez un proche aujourd'hui, même juste pour dire bonjour. Ça fait du bien des deux côtés." },
+  { emoji: "🧘", text: "Étirez-vous doucement en vous levant. Bras en l'air, rotation des épaules... Votre journée commencera mieux." },
+  { emoji: "🌞", text: "Si le soleil est là, profitez-en quelques minutes. La lumière naturelle booste le moral et la vitamine D." },
+  { emoji: "📖", text: "Lire quelques pages par jour stimule la mémoire et l'imagination. Un bon moment rien qu'à vous." },
+  { emoji: "🎵", text: "Mettez votre musique préférée. La musique réduit le stress et réveille de beaux souvenirs." },
+  { emoji: "🥗", text: "Un fruit ou un légume de saison à chaque repas, c'est un geste simple pour votre santé." },
+  { emoji: "😴", text: "Le sommeil est précieux. Essayez de vous coucher à heure régulière, votre corps a besoin de rythme." },
+  { emoji: "🤝", text: "Rendre un petit service à quelqu'un, c'est bon pour le moral. Le vôtre comme le sien." },
+  { emoji: "🧩", text: "Faites travailler votre esprit : mots croisés, sudoku, ou un petit quiz. Le cerveau aime qu'on le stimule !" },
+  { emoji: "🌸", text: "Prenez le temps d'observer la nature autour de vous. Un arbre, un oiseau, le ciel... Ça apaise." },
+  { emoji: "✍️", text: "Écrire quelques lignes sur sa journée aide à organiser ses pensées. Un petit journal, même court, fait du bien." },
+  { emoji: "👨‍👩‍👧", text: "Les liens avec vos proches sont votre plus grande richesse. N'hésitez pas à leur dire que vous pensez à eux." },
+  { emoji: "🎨", text: "La créativité n'a pas d'âge. Dessiner, bricoler, cuisiner... Laissez-vous surprendre par vos talents !" },
+  { emoji: "🙏", text: "Prenez un instant pour penser à 3 choses positives de votre journée. La gratitude rend plus heureux." },
+  { emoji: "🍵", text: "Accordez-vous une pause thé ou café, sans écran. Juste le plaisir du moment présent." },
+  { emoji: "💪", text: "Chaque petit effort physique compte. Se lever, marcher, jardiner... Vous êtes plus fort que vous ne le pensez !" },
+  { emoji: "🌈", text: "Après la pluie, le beau temps. Les journées difficiles passent, les bons moments restent." },
+];
+
+function getDailyTip() {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  return DAILY_TIPS[dayOfYear % DAILY_TIPS.length];
+}
+
 // Weather icon/label maps
 const WEATHER_ICONS: Record<number, string> = {
   0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
@@ -312,6 +342,35 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         </button>
       </div>
 
+      {/* CONSEIL DU JOUR */}
+      {(() => {
+        const tip = getDailyTip();
+        return (
+          <div style={{ padding: "16px 16px 0" }}>
+            <div
+              style={{
+                background: "linear-gradient(135deg, #fef9e7 0%, #fdf2e9 100%)",
+                border: "1.5px solid #fdebd0",
+                borderRadius: 18,
+                padding: "16px 18px",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 12,
+              }}
+            >
+              <span style={{ fontSize: 28, flexShrink: 0, lineHeight: 1 }}>{tip.emoji}</span>
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 600, color: "#e67e22", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
+                  Conseil du jour
+                </p>
+                <p style={{ fontSize: 13.5, color: "#5d4e37", lineHeight: 1.45 }}>
+                  {tip.text}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* À SAVOIR */}
       <div style={{ padding: "24px 16px 0" }}>
