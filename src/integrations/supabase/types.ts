@@ -704,6 +704,42 @@ export type Database = {
         }
         Relationships: []
       }
+      rss_sources: {
+        Row: {
+          category: string
+          created_at: string
+          display_order: number
+          emoji: string
+          id: string
+          is_active: boolean
+          source_name: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          display_order?: number
+          emoji?: string
+          id?: string
+          is_active?: boolean
+          source_name: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          display_order?: number
+          emoji?: string
+          id?: string
+          is_active?: boolean
+          source_name?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       scam_alerts: {
         Row: {
           category: string
