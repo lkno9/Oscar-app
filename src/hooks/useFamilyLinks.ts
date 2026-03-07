@@ -108,33 +108,20 @@ export function useFamilyLinks() {
   const acceptInvitation = async (code: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
-    // Find the invitation
-    const { data: invitation, error: findError } = await supabase
-      .from('family_links')
-      .select('*')
-      .eq('invitation_code', code)
-      .eq('status', 'pending')
-      .single();
+    const { data, error } = await supabase.rpc('accept_family_invitation', {
+      _invitation_code: code,
+      _family_member_id: user.id,
+    });
 
-    if (findError || !invitation) {
-      return { error: new Error('Code d\'invitation invalide') };
+    if (error) return { error };
+
+    const result = data as { error?: string; success?: boolean } | null;
+    if (result?.error) {
+      return { error: new Error(result.error) };
     }
 
-    // Update the invitation
-    const { error } = await supabase
-      .from('family_links')
-      .update({
-        family_member_id: user.id,
-        status: 'accepted',
-        accepted_at: new Date().toISOString()
-      })
-      .eq('id', invitation.id);
-
-    if (!error) {
-      await fetchLinks();
-    }
-
-    return { error };
+    await fetchLinks();
+    return { error: null };
   };
 
   const removeLink = async (linkId: string) => {
