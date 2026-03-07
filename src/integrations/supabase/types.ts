@@ -706,37 +706,37 @@ export type Database = {
       }
       rss_sources: {
         Row: {
-          id: string
-          url: string
           category: string
-          source_name: string
-          emoji: string
-          is_active: boolean
-          display_order: number
           created_at: string
+          display_order: number
+          emoji: string
+          id: string
+          is_active: boolean
+          source_name: string
           updated_at: string
+          url: string
         }
         Insert: {
-          id?: string
-          url: string
           category: string
-          source_name: string
-          emoji?: string
-          is_active?: boolean
-          display_order?: number
           created_at?: string
+          display_order?: number
+          emoji?: string
+          id?: string
+          is_active?: boolean
+          source_name: string
           updated_at?: string
+          url: string
         }
         Update: {
-          id?: string
-          url?: string
           category?: string
-          source_name?: string
-          emoji?: string
-          is_active?: boolean
-          display_order?: number
           created_at?: string
+          display_order?: number
+          emoji?: string
+          id?: string
+          is_active?: boolean
+          source_name?: string
           updated_at?: string
+          url?: string
         }
         Relationships: []
       }
