@@ -1,4 +1,4 @@
-import { ArrowLeft, HelpCircle, MessageCircle, BookOpen, ChevronRight, Search } from "lucide-react";
+import { ArrowLeft, HelpCircle, MessageCircle, BookOpen, ChevronRight, Search, Mail, Phone as PhoneIcon, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -209,14 +209,48 @@ export function HelpPage() {
           )}
         </div>
 
-        {/* Support info */}
-        <div className="bg-accent rounded-xl p-4 text-center">
-          <p className="text-sm text-foreground font-medium">
-            Vous ne trouvez pas la réponse ?
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Parlez directement à Oscar, il est disponible 24h/24 pour vous aider !
-          </p>
+        {/* Contacter le support */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+            <PhoneIcon className="w-4 h-4" />
+            Contacter le support
+          </h2>
+          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+            <div className="p-4 border-b border-border">
+              <p className="text-sm text-foreground font-medium mb-1">
+                Vous ne trouvez pas la réponse ?
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Notre équipe est disponible du lundi au vendredi, de 9h à 18h.
+              </p>
+            </div>
+            <a
+              href="mailto:support@oscar-app.fr"
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors border-b border-border"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Mail className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Envoyer un e-mail</p>
+                <p className="text-xs text-muted-foreground">support@oscar-app.fr</p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            </a>
+            <a
+              href="tel:+33180000000"
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <PhoneIcon className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Appeler le support</p>
+                <p className="text-xs text-muted-foreground">01 80 00 00 00 (appel non surtaxé)</p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            </a>
+          </div>
         </div>
       </div>
     </div>
