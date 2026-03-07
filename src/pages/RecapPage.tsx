@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
-  Pill,
   ChevronRight,
-  FileText,
-  Bell,
+  Cloud,
+  MessageCircle,
+  Gamepad2,
+  Sparkles,
   X,
   Check,
   Heart,
-  Lock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -66,12 +66,12 @@ interface QuickAction {
 }
 
 const ALL_ACTIONS: QuickAction[] = [
-  { label: "Mon calendrier", icon: <CalendarDays className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mes papiers", icon: <FileText className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Ma santé", icon: <Heart className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mes rappels", icon: <Bell className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mon coffre-fort", icon: <Lock className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mes médicaments", icon: <Pill className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mon agenda", icon: <CalendarDays className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Ma santé & bien-être", icon: <Heart className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mes communications", icon: <MessageCircle className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mon coffre-fort", icon: <Cloud className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mes jeux & mémoire", icon: <Gamepad2 className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mes avantages", icon: <Sparkles className="w-5 h-5 text-[#48A29E]" /> },
 ];
 
 
@@ -85,7 +85,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ full_name: string | null }>({ full_name: null });
   const [weather, setWeather] = useState<Weather | null>(null);
-  const [selectedActions, setSelectedActions] = useState<string[]>(["Mon calendrier", "Mes papiers", "Ma santé", "Mes rappels"]);
+  const [selectedActions, setSelectedActions] = useState<string[]>(["Mon agenda", "Ma santé & bien-être", "Mes communications", "Mon coffre-fort"]);
   const [showPersonnaliser, setShowPersonnaliser] = useState(false);
   const [notifs, setNotifs] = useState<{id: string; icon: string; title: string; sub: string; info: string; color: string}[]>([]);
   const [actuCat, setActuCat] = useState("Tout");
@@ -387,12 +387,12 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 key={label}
                 onClick={() => {
                   const pathMap: Record<string, string> = {
-                    "Mon calendrier": "/services/agenda",
-                    "Mes papiers": "/services/documents",
-                    "Ma santé": "/services/health",
-                    "Mes rappels": "/services/agenda",
-                    "Mon coffre-fort": "/services/vault",
-                    "Mes médicaments": "/services/health",
+                    "Mon agenda": "/services/agenda",
+                    "Ma santé & bien-être": "/services/health",
+                    "Mes communications": "/services/communication",
+                    "Mon coffre-fort": "/services/storage",
+                    "Mes jeux & mémoire": "/services/games",
+                    "Mes avantages": "/services/partners",
                   };
                   navigate(pathMap[label] || "/services/agenda");
                 }}
