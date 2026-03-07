@@ -607,10 +607,15 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             style={{
               fontSize: 12,
               color: "#48A29E",
-              fontWeight: 500,
-              background: "none",
-              border: "none",
+              fontWeight: 600,
+              background: "rgba(72,162,158,0.1)",
+              border: "1.5px solid rgba(72,162,158,0.3)",
+              borderRadius: 99,
+              padding: "5px 14px",
               cursor: "pointer",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              letterSpacing: 0.1,
             }}
           >
             Personnaliser
@@ -664,21 +669,24 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       <div style={{ padding: "24px 16px 32px" }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
           <SectionHeader title="Notifications" noMargin />
-          {notifs.length > 0 && (
-            <button
-              onClick={() => setNotifs([])}
-              style={{
-                fontSize: 12,
-                color: "#ef4444",
-                fontWeight: 500,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              Tout effacer
-            </button>
-          )}
+          <button
+            onClick={() => setNotifs([])}
+            style={{
+              fontSize: 12,
+              color: "#ef4444",
+              fontWeight: 600,
+              background: "rgba(239,68,68,0.08)",
+              border: "1.5px solid rgba(239,68,68,0.25)",
+              borderRadius: 99,
+              padding: "5px 14px",
+              cursor: "pointer",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              letterSpacing: 0.1,
+            }}
+          >
+            Tout effacer
+          </button>
         </div>
         {notifs.length > 0 ? (
           <div className="flex flex-col gap-2.5">
