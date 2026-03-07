@@ -101,8 +101,8 @@ export default function FamilySettingsPage() {
                   id="invitation-code"
                   value={invitationCode}
                   onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
-                  placeholder="Ex: ABC123"
-                  maxLength={6}
+                  placeholder="Ex: A1B2C3D4"
+                  maxLength={8}
                   className="font-mono text-lg tracking-widest uppercase"
                 />
                 <Button onClick={handleAcceptInvitation} disabled={submitting}>
