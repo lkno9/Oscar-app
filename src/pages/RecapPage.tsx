@@ -299,7 +299,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       <div className="flex-shrink-0 bg-white dark:bg-card" style={{ padding: "22px 20px 18px" }}>
         <div className="flex items-start justify-between gap-3">
           {/* Left: date + greeting */}
-          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+          <div className="flex flex-col flex-1 min-w-0" style={{ gap: 8 }}>
             <p className="capitalize text-muted-foreground" style={{ fontSize: 13, fontWeight: 500 }}>{dateStr}</p>
             <h1 className="text-foreground" style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", lineHeight: 1.2 }}>
               {greeting}{getFirstName() ? `, ${getFirstName()}` : ""} 👋
@@ -319,17 +319,20 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                minWidth: 80,
                 flexShrink: 0,
                 boxShadow: "0 2px 12px rgba(72,162,158,0.12)",
+                minWidth: 90,
               }}
             >
-              <span style={{ fontSize: 28, lineHeight: 1 }}>{weather.icon}</span>
-              <span style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginTop: 3 }}
-                className="dark:text-foreground">
-                {weather.temp}°
-              </span>
-              <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500, marginTop: 1, textAlign: "center", maxWidth: 72 }}>
+              {/* Emoji + temp on same row */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 24, lineHeight: 1 }}>{weather.icon}</span>
+                <span style={{ fontSize: 20, fontWeight: 700, color: "#1e293b", lineHeight: 1 }}
+                  className="dark:text-foreground">
+                  {weather.temp}°
+                </span>
+              </div>
+              <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500, marginTop: 4, textAlign: "center", maxWidth: 80 }}>
                 {weather.label}
               </span>
             </div>
