@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Send, User } from 'lucide-react';
+import { ArrowLeft, Send, User, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 import { useFamilyLinks } from '@/hooks/useFamilyLinks';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,10 +24,8 @@ export default function FamilyMessagesPage() {
   const { messages, loading, sendMessage, markAsRead } = useFamilyMessages(selectedContact || undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Get contacts list based on role
   const contacts = isSenior ? linkedFamily : linkedSeniors;
 
-  // Auto-select first contact if none selected
   useEffect(() => {
     if (!selectedContact && contacts.length > 0) {
       const firstContact = isSenior ? contacts[0].family_member_id : contacts[0].senior_id;
@@ -34,12 +33,10 @@ export default function FamilyMessagesPage() {
     }
   }, [contacts, selectedContact, isSenior]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Mark messages as read
   useEffect(() => {
     if (selectedContact && messages.length > 0) {
       const unreadIds = messages
@@ -53,54 +50,83 @@ export default function FamilyMessagesPage() {
 
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedContact) return;
-
     await sendMessage(selectedContact, newMessage.trim());
     setNewMessage('');
   };
 
+  const handleQuickReply = (reply: string) => {
+    setNewMessage(reply);
+  };
+
   const getContactName = (contactId: string) => {
-    const link = contacts.find(l => 
+    const link = contacts.find(l =>
       (isSenior ? l.family_member_id : l.senior_id) === contactId
     );
-    return isSenior 
-      ? link?.family_profile?.full_name 
+    return isSenior
+      ? link?.family_profile?.full_name
       : link?.senior_profile?.full_name || 'Contact';
   };
 
   const getContactAvatar = (contactId: string) => {
-    const link = contacts.find(l => 
+    const link = contacts.find(l =>
       (isSenior ? l.family_member_id : l.senior_id) === contactId
     );
-    return isSenior 
-      ? link?.family_profile?.avatar_url 
+    return isSenior
+      ? link?.family_profile?.avatar_url
       : link?.senior_profile?.avatar_url;
   };
+
+  const getDateLabel = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) return "Aujourd'hui";
+    if (format(date, 'yyyy-MM-dd') === format(yesterday, 'yyyy-MM-dd')) return 'Hier';
+    return format(date, 'EEEE d MMMM', { locale: fr });
+  };
+
+  const isDifferentDay = (date1: string, date2: string) => {
+    return format(new Date(date1), 'yyyy-MM-dd') !== format(new Date(date2), 'yyyy-MM-dd');
+  };
+
+  const quickReplies = [
+    "Bonjour !",
+    "Comment ça va ?",
+    "Je pense à toi",
+    "À bientôt !",
+    "Merci"
+  ];
 
   const backLink = isSenior ? '/settings/family-access' : '/family';
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-card border-b border-border p-4 sticky top-0 z-10">
+      <header className="bg-card border-b border-border p-4 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-3">
           <Link to={backLink}>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
           {selectedContact ? (
             <>
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={getContactAvatar(selectedContact) || undefined} />
-                <AvatarFallback>
-                  {getContactName(selectedContact)?.charAt(0).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-lg font-bold text-foreground">
+              <div className="relative">
+                <Avatar className="w-11 h-11 ring-2 ring-primary/20">
+                  <AvatarImage src={getContactAvatar(selectedContact) || undefined} />
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    {getContactName(selectedContact)?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-base font-bold text-foreground truncate">
                   {getContactName(selectedContact)}
                 </h1>
-                <p className="text-sm text-muted-foreground">Messages</p>
+                <p className="text-xs text-green-600">En ligne</p>
               </div>
             </>
           ) : (
@@ -109,31 +135,33 @@ export default function FamilyMessagesPage() {
         </div>
       </header>
 
-      {/* Contact Selector (if multiple contacts) */}
+      {/* Contact Selector */}
       {contacts.length > 1 && (
-        <div className="p-2 bg-muted/50 border-b border-border overflow-x-auto">
-          <div className="flex gap-2">
+        <div className="px-4 py-3 bg-muted/30 border-b border-border overflow-x-auto scrollbar-hide">
+          <div className="flex gap-3">
             {contacts.map((link) => {
               const contactId = isSenior ? link.family_member_id : link.senior_id;
               const profile = isSenior ? link.family_profile : link.senior_profile;
               const isSelected = selectedContact === contactId;
 
               return (
-                <Button
+                <button
                   key={link.id}
-                  variant={isSelected ? 'default' : 'outline'}
-                  size="sm"
                   onClick={() => setSelectedContact(contactId)}
-                  className="flex-shrink-0"
+                  className="flex flex-col items-center gap-1 flex-shrink-0"
                 >
-                  <Avatar className="w-5 h-5 mr-2">
-                    <AvatarImage src={profile?.avatar_url || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {profile?.full_name?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  {profile?.full_name || 'Contact'}
-                </Button>
+                  <div className={`relative rounded-full transition-all ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={profile?.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                        {profile?.full_name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <span className={`text-[11px] max-w-[56px] truncate ${isSelected ? 'font-bold text-primary' : 'text-muted-foreground'}`}>
+                    {profile?.full_name?.split(' ')[0] || 'Contact'}
+                  </span>
+                </button>
               );
             })}
           </div>
@@ -145,8 +173,10 @@ export default function FamilyMessagesPage() {
         {contacts.length === 0 ? (
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
-              <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-medium mb-2">Aucun contact</h3>
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="font-bold mb-2">Aucun contact</h3>
               <p className="text-sm text-muted-foreground">
                 {isSenior
                   ? "Invitez un membre de votre famille depuis les paramètres."
@@ -161,8 +191,10 @@ export default function FamilyMessagesPage() {
         ) : messages.length === 0 ? (
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
-              <Send className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-medium mb-2">Aucun message</h3>
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Send className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="font-bold mb-2">Aucun message</h3>
               <p className="text-sm text-muted-foreground">
                 Envoyez le premier message à {getContactName(selectedContact!)}
               </p>
@@ -170,25 +202,49 @@ export default function FamilyMessagesPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {messages.map((message) => {
+            {messages.map((message, index) => {
               const isOwn = message.sender_id === user?.id;
+              const showDateSeparator = index === 0 ||
+                isDifferentDay(messages[index - 1].created_at, message.created_at);
 
               return (
-                <div
-                  key={message.id}
-                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                <div key={message.id}>
+                  {showDateSeparator && (
+                    <div className="flex items-center gap-3 my-4">
+                      <Separator className="flex-1" />
+                      <span className="text-[11px] text-muted-foreground font-medium bg-background px-2 whitespace-nowrap">
+                        {getDateLabel(message.created_at)}
+                      </span>
+                      <Separator className="flex-1" />
+                    </div>
+                  )}
+
+                  <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} msg-fade-up`}>
+                    {!isOwn && (
+                      <Avatar className="w-8 h-8 mr-2 mt-auto mb-1 flex-shrink-0">
+                        <AvatarImage src={getContactAvatar(selectedContact!) || undefined} />
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                          {getContactName(selectedContact!)?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       isOwn
                         ? 'bg-primary text-primary-foreground rounded-br-md'
-                        : 'bg-muted rounded-bl-md'
-                    }`}
-                  >
-                    <p className="text-sm">{message.content}</p>
-                    <p className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                      {format(new Date(message.created_at), 'HH:mm', { locale: fr })}
-                    </p>
+                        : 'bg-card border border-border rounded-bl-md'
+                    }`}>
+                      <p className="text-[15px] leading-relaxed">{message.content}</p>
+                      <div className={`flex items-center justify-end gap-1 mt-1 ${
+                        isOwn ? 'text-primary-foreground/60' : 'text-muted-foreground'
+                      }`}>
+                        <p className="text-[10px]">
+                          {format(new Date(message.created_at), 'HH:mm', { locale: fr })}
+                        </p>
+                        {isOwn && message.is_read && (
+                          <CheckCheck className="w-3 h-3" />
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
@@ -198,20 +254,47 @@ export default function FamilyMessagesPage() {
         )}
       </ScrollArea>
 
-      {/* Message Input */}
+      {/* Quick Replies + Message Input */}
       {selectedContact && contacts.length > 0 && (
-        <div className="p-4 bg-card border-t border-border">
-          <div className="flex gap-2">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Votre message..."
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              className="flex-1"
-            />
-            <Button onClick={handleSend} disabled={!newMessage.trim()}>
-              <Send className="w-4 h-4" />
-            </Button>
+        <div className="bg-card border-t border-border">
+          {/* Quick Replies */}
+          {messages.length > 0 && (
+            <div className="px-3 pt-2 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 pb-2">
+                {quickReplies.map((reply) => (
+                  <Button
+                    key={reply}
+                    variant="outline"
+                    size="sm"
+                    className="flex-shrink-0 rounded-full text-xs h-8 px-3 border-primary/30 text-primary hover:bg-primary/10"
+                    onClick={() => handleQuickReply(reply)}
+                  >
+                    {reply}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Input Bar */}
+          <div className="p-3">
+            <div className="flex items-end gap-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Votre message..."
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                className="flex-1 h-12 rounded-2xl border-primary/20 text-[15px] focus:ring-primary/30 bg-muted/50"
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!newMessage.trim()}
+                size="icon"
+                className="w-12 h-12 rounded-full shrink-0"
+              >
+                <Send className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </div>
       )}
