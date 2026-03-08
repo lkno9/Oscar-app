@@ -96,7 +96,6 @@ export function SettingsPage() {
   const handleNotificationsChange = (enabled: boolean) => {
     setNotificationsEnabled(enabled);
     localStorage.setItem("oscar_notifications_enabled", String(enabled));
-    syncRemotePref('notifications_enabled', enabled);
     toast.success(enabled ? "Notifications activées" : "Notifications désactivées");
   };
 
@@ -109,7 +108,6 @@ export function SettingsPage() {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("oscar_dark_mode", "false");
     }
-    syncRemotePref('dark_mode_enabled', enabled);
   };
 
   const handleSmsNotificationsChange = async (enabled: boolean) => {
