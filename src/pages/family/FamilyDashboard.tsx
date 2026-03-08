@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Activity, Settings, RefreshCw, Clock, UserPlus, ChevronRight, Sparkles, Bell, MessageCircle } from 'lucide-react';
+import { Heart, Activity, Settings, RefreshCw, Clock, UserPlus, ChevronRight, Sparkles, Bell, MessageCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,6 +10,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
+import {
+  RSS_SOURCES,
+  ACTU_CATEGORIES,
+  AIDANT_GUIDES,
+  USEFUL_LINKS,
+  fetchRssArticles,
+  timeAgo,
+  type RssArticle,
+} from './familyInfoData';
 
 interface SeniorStatus {
   id: string;
@@ -25,6 +34,17 @@ interface FamilyDashboardProps {
   onNavigate?: (tab: "accueil" | "oscar" | "messages") => void;
 }
 
+// --- Section header (same pattern as senior RecapPage) ---
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-3">
+      <div className="flex-1 h-px bg-border" />
+      <span className="text-muted-foreground" style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase" }}>{title}</span>
+      <div className="flex-1 h-px bg-border" />
+    </div>
+  );
+}
+
 export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {}) {
   const { user } = useAuth();
   const { linkedSeniors, loading: linksLoading } = useFamilyLinks();
@@ -33,6 +53,14 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
   const [notificationCount, setNotificationCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserName] = useState('');
+
+  // RSS state
+  const [articles, setArticles] = useState<RssArticle[]>([]);
+  const [articlesLoading, setArticlesLoading] = useState(true);
+  const [actuCat, setActuCat] = useState("Tout");
+
+  // Guides accordion
+  const [expandedGuide, setExpandedGuide] = useState<string | null>(null);
 
   const fetchUserName = async () => {
     if (!user) return;
@@ -73,6 +101,15 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
   useEffect(() => {
     if (!linksLoading) { fetchSeniorsStatus(); fetchNotificationCount(); }
   }, [linkedSeniors, linksLoading, user]);
+
+  // Fetch RSS articles
+  useEffect(() => {
+    setArticlesLoading(true);
+    fetchRssArticles(RSS_SOURCES).then(data => {
+      setArticles(data);
+      setArticlesLoading(false);
+    });
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -131,6 +168,8 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
     if (h < 18) return 'Bon après-midi';
     return 'Bonsoir';
   };
+
+  const filteredArticles = actuCat === "Tout" ? articles : articles.filter(a => a.category === actuCat);
 
   if (loading || linksLoading) {
     return (
@@ -288,6 +327,177 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
             </div>
           </div>
         </div>
+
+        {/* ──────────── À SAVOIR — Articles RSS ──────────── */}
+        <div>
+          <SectionHeader title="À savoir" />
+
+          {/* Category pills */}
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3">
+            {ACTU_CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActuCat(cat)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+                  actuCat === cat
+                    ? 'bg-primary text-white'
+                    : 'bg-card text-muted-foreground border border-border'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Articles — horizontal scroll */}
+          {articlesLoading ? (
+            <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-2">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="flex-shrink-0 rounded-xl" style={{ width: 175, height: 130 }} />
+              ))}
+            </div>
+          ) : filteredArticles.length > 0 ? (
+            <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-2">
+              {filteredArticles.map((a, i) => (
+                <a
+                  key={i}
+                  href={a.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 bg-card border border-border block no-underline active:scale-[0.98] transition-transform"
+                  style={{
+                    width: 175,
+                    borderRadius: 14,
+                    padding: "12px 12px 10px",
+                    textDecoration: "none",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span style={{ fontSize: 15 }}>{a.emoji}</span>
+                    <span
+                      className="text-primary"
+                      style={{
+                        fontSize: 9.5,
+                        fontWeight: 600,
+                        background: "rgba(72,162,158,0.08)",
+                        borderRadius: 99,
+                        padding: "1px 6px",
+                      }}
+                    >
+                      {a.category}
+                    </span>
+                  </div>
+                  <p
+                    className="text-foreground"
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      lineHeight: 1.35,
+                      marginBottom: 4,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {a.title}
+                  </p>
+                  {a.description && (
+                    <p
+                      className="text-muted-foreground"
+                      style={{
+                        fontSize: 11,
+                        lineHeight: 1.3,
+                        marginBottom: 6,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {a.description}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span style={{ fontSize: 10, color: "#b0b8c4" }}>{a.source}</span>
+                    <span style={{ fontSize: 10, color: "#b0b8c4" }}>{timeAgo(a.pubDate)}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-card rounded-2xl border border-border p-8 text-center">
+              <span className="text-3xl block mb-2">📰</span>
+              <p className="text-sm text-muted-foreground">Aucun article dans cette catégorie</p>
+            </div>
+          )}
+        </div>
+
+        {/* ──────────── GUIDE DE L'AIDANT ──────────── */}
+        <div>
+          <SectionHeader title="Guide de l'aidant" />
+
+          <div className="space-y-2.5">
+            {AIDANT_GUIDES.map((guide) => (
+              <div key={guide.id} className="bg-card rounded-2xl border border-border overflow-hidden">
+                {/* Guide header — clickable */}
+                <button
+                  onClick={() => setExpandedGuide(prev => prev === guide.id ? null : guide.id)}
+                  className="w-full text-left p-4 flex items-center gap-3 active:bg-secondary/50 transition-colors"
+                >
+                  <div className={`w-10 h-10 rounded-xl ${guide.bgClass} flex items-center justify-center flex-shrink-0`}>
+                    <span className="text-lg">{guide.emoji}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-sm text-foreground">{guide.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{guide.description}</p>
+                  </div>
+                  <ChevronRight
+                    className={`w-4 h-4 text-muted-foreground/40 flex-shrink-0 transition-transform duration-200 ${
+                      expandedGuide === guide.id ? 'rotate-90' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Guide tips — expandable */}
+                {expandedGuide === guide.id && (
+                  <div className="px-4 pb-4 pt-0 space-y-2.5 border-t border-border/50">
+                    <div className="pt-3" />
+                    {guide.tips.map((tip, i) => (
+                      <div key={i} className="flex gap-2.5 items-start">
+                        <span className="text-primary text-xs mt-0.5 font-bold flex-shrink-0">{i + 1}.</span>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{tip}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ──────────── RESSOURCES UTILES ──────────── */}
+        <div>
+          <SectionHeader title="Ressources" />
+          <div className="space-y-2">
+            {USEFUL_LINKS.map((link, i) => (
+              <a
+                key={i}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-card rounded-xl border border-border p-3.5 no-underline active:scale-[0.98] transition-transform"
+              >
+                <span className="text-lg">{link.emoji}</span>
+                <span className="flex-1 text-sm font-medium text-foreground">{link.label}</span>
+                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Spacer bottom */}
+        <div className="h-2" />
       </main>
     </div>
   );
