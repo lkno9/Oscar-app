@@ -69,14 +69,9 @@ export default function FamilyMessagesPage() {
   const backLink = isSenior ? '/settings/family-access' : '/family';
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-full bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3 sticky top-0 z-10">
-        <Link to={backLink}>
-          <button className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-        </Link>
+      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
         {selectedContact ? (
           <>
             <Avatar className="w-10 h-10 border-2 border-background shadow-sm">
