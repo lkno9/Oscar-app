@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Send, User, CheckCheck } from 'lucide-react';
+import { ArrowLeft, Send, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFamilyMessages } from '@/hooks/useFamilyMessages';
@@ -66,40 +65,37 @@ export default function FamilyMessagesPage() {
   };
 
   const isDifferentDay = (d1: string, d2: string) => format(new Date(d1), 'yyyy-MM-dd') !== format(new Date(d2), 'yyyy-MM-dd');
-
   const quickReplies = ["Bonjour !", "Comment ça va ?", "Je pense à toi", "À bientôt !", "Merci"];
   const backLink = isSenior ? '/settings/family-access' : '/family';
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-stone-100 px-4 py-3 sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <Link to={backLink}>
-            <Button variant="ghost" size="icon" className="rounded-full text-stone-500 hover:bg-stone-100 h-9 w-9">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </Link>
-          {selectedContact ? (
-            <>
-              <Avatar className="w-10 h-10 border-2 border-white shadow-sm">
-                <AvatarImage src={getContactAvatar(selectedContact) || undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">{getContactName(selectedContact)?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-base font-bold text-stone-800 truncate">{getContactName(selectedContact)}</h1>
-                <p className="text-[11px] text-emerald-500 font-medium">En ligne</p>
-              </div>
-            </>
-          ) : (
-            <h1 className="text-lg font-bold text-stone-800">Messages</h1>
-          )}
-        </div>
+      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3 sticky top-0 z-10">
+        <Link to={backLink}>
+          <button className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+        </Link>
+        {selectedContact ? (
+          <>
+            <Avatar className="w-10 h-10 border-2 border-background shadow-sm">
+              <AvatarImage src={getContactAvatar(selectedContact) || undefined} />
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">{getContactName(selectedContact)?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-bold text-foreground truncate">{getContactName(selectedContact)}</h1>
+              <p className="text-xs text-primary font-medium">En ligne</p>
+            </div>
+          </>
+        ) : (
+          <h1 className="text-lg font-bold text-foreground">Messages</h1>
+        )}
       </header>
 
-      {/* Contact Selector */}
+      {/* Contact Selector (si > 1) */}
       {contacts.length > 1 && (
-        <div className="px-4 py-3 bg-white border-b border-stone-100 overflow-x-auto scrollbar-hide">
+        <div className="px-4 py-3 bg-card border-b border-border overflow-x-auto scrollbar-hide">
           <div className="flex gap-3">
             {contacts.map((link) => {
               const contactId = isSenior ? link.family_member_id : link.senior_id;
@@ -113,7 +109,7 @@ export default function FamilyMessagesPage() {
                       <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">{profile?.full_name?.charAt(0) || 'U'}</AvatarFallback>
                     </Avatar>
                   </div>
-                  <span className={`text-[10px] max-w-[50px] truncate ${isSelected ? 'font-bold text-primary' : 'text-stone-400'}`}>{profile?.full_name?.split(' ')[0] || 'Contact'}</span>
+                  <span className={`text-[10px] max-w-[50px] truncate ${isSelected ? 'font-bold text-primary' : 'text-muted-foreground'}`}>{profile?.full_name?.split(' ')[0] || 'Contact'}</span>
                 </button>
               );
             })}
@@ -124,21 +120,23 @@ export default function FamilyMessagesPage() {
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         {contacts.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-center p-8">
+          <div className="h-full flex items-center justify-center text-center py-12 px-8">
             <div>
               <div className="text-5xl mb-4">💬</div>
-              <h3 className="font-bold text-stone-700 mb-2">Aucun contact</h3>
-              <p className="text-sm text-stone-400">{isSenior ? "Invitez un membre de votre famille depuis les paramètres." : "Entrez le code d'invitation de votre proche pour commencer."}</p>
+              <h3 className="font-bold text-foreground mb-2">Aucun contact</h3>
+              <p className="text-sm text-muted-foreground">{isSenior ? "Invitez un membre de votre famille depuis les paramètres." : "Entrez le code d'invitation de votre proche pour commencer."}</p>
             </div>
           </div>
         ) : loading ? (
-          <div className="h-full flex items-center justify-center"><div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" /></div>
+          <div className="h-full flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
         ) : messages.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-center p-8">
+          <div className="h-full flex items-center justify-center text-center py-12 px-8">
             <div>
               <div className="text-5xl mb-4">👋</div>
-              <h3 className="font-bold text-stone-700 mb-2">Dites bonjour !</h3>
-              <p className="text-sm text-stone-400">Envoyez le premier message à {getContactName(selectedContact!)}</p>
+              <h3 className="font-bold text-foreground mb-2">Dites bonjour !</h3>
+              <p className="text-sm text-muted-foreground">Envoyez le premier message à {getContactName(selectedContact!)}</p>
             </div>
           </div>
         ) : (
@@ -150,7 +148,7 @@ export default function FamilyMessagesPage() {
                 <div key={message.id}>
                   {showDate && (
                     <div className="flex justify-center my-4">
-                      <span className="text-[10px] text-stone-400 font-medium bg-stone-100 px-3 py-1 rounded-full">{getDateLabel(message.created_at)}</span>
+                      <span className="text-[10px] text-muted-foreground font-medium bg-secondary px-3 py-1 rounded-full">{getDateLabel(message.created_at)}</span>
                     </div>
                   )}
                   <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
@@ -161,10 +159,12 @@ export default function FamilyMessagesPage() {
                       </Avatar>
                     )}
                     <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
-                      isOwn ? 'bg-primary text-white rounded-br-lg' : 'bg-white shadow-sm rounded-bl-lg'
+                      isOwn
+                        ? 'bg-primary text-white rounded-br-lg'
+                        : 'bg-card border border-border rounded-bl-lg text-foreground'
                     }`}>
                       <p className="text-[15px] leading-relaxed">{message.content}</p>
-                      <div className={`flex items-center justify-end gap-1 mt-1 ${isOwn ? 'text-white/50' : 'text-stone-400'}`}>
+                      <div className={`flex items-center justify-end gap-1 mt-1 ${isOwn ? 'text-white/50' : 'text-muted-foreground'}`}>
                         <p className="text-[10px]">{format(new Date(message.created_at), 'HH:mm')}</p>
                         {isOwn && message.is_read && <CheckCheck className="w-3 h-3" />}
                       </div>
@@ -180,19 +180,27 @@ export default function FamilyMessagesPage() {
 
       {/* Input */}
       {selectedContact && contacts.length > 0 && (
-        <div className="bg-white border-t border-stone-100">
+        <div className="bg-card border-t border-border">
           {messages.length > 0 && (
             <div className="px-3 pt-2 overflow-x-auto scrollbar-hide">
               <div className="flex gap-2 pb-2">
                 {quickReplies.map((r) => (
-                  <button key={r} onClick={() => setNewMessage(r)} className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium text-stone-500 bg-stone-100 hover:bg-stone-200 transition-colors">{r}</button>
+                  <button key={r} onClick={() => setNewMessage(r)} className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground bg-secondary hover:bg-secondary/80 transition-colors">{r}</button>
                 ))}
               </div>
             </div>
           )}
           <div className="p-3 flex items-end gap-2">
-            <Input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Votre message..." onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()} className="flex-1 h-12 rounded-2xl border-stone-200 text-[15px] bg-stone-50 focus:bg-white" />
-            <Button onClick={handleSend} disabled={!newMessage.trim()} size="icon" className="w-12 h-12 rounded-full shrink-0"><Send className="w-5 h-5" /></Button>
+            <input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Votre message..."
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+              className="flex-1 h-12 rounded-2xl border border-border bg-secondary px-4 text-[15px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 transition-colors"
+            />
+            <Button onClick={handleSend} disabled={!newMessage.trim()} size="icon" className="w-12 h-12 rounded-full shrink-0">
+              <Send className="w-5 h-5" />
+            </Button>
           </div>
         </div>
       )}

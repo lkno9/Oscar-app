@@ -41,6 +41,7 @@ import FamilyMessagesPage from "./pages/family/FamilyMessagesPage";
 import FamilyNotificationsPage from "./pages/family/FamilyNotificationsPage";
 import FamilySettingsPage from "./pages/family/FamilySettingsPage";
 import FamilyAccessPage from "./pages/settings/FamilyAccessPage";
+import FamilyChatPage from "./pages/family/FamilyChatPage";
 import { SubPageLayout } from "./components/SubPageLayout";
 import { OscarAcademyPage } from "./pages/services/OscarAcademyPage";
 import { TransportPage } from "./pages/services/TransportPage";
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/family/messages" element={<ProtectedRoute><SubPageLayout><FamilyMessagesPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/notifications" element={<ProtectedRoute><SubPageLayout><FamilyNotificationsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/settings" element={<ProtectedRoute><SubPageLayout><FamilySettingsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/family/chat" element={<ProtectedRoute><FamilyChatPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
