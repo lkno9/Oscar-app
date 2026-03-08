@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { PhoneOff, Mic, MicOff, Video, VideoOff, X } from "lucide-react";
-import { OscarAvatar } from "./OscarAvatar";
+import { PhoneOff, Mic, MicOff, Video, VideoOff, Camera, RotateCcw } from "lucide-react";
 import { streamChat, Message } from "@/lib/oscarChat";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -13,15 +12,15 @@ interface CallScreenProps {
 
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
+type CallState = "connecting" | "idle" | "listening" | "thinking" | "speaking";
+
 export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: CallScreenProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(initialVideoEnabled);
   const [callDuration, setCallDuration] = useState(0);
-  const [isOscarSpeaking, setIsOscarSpeaking] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [callState, setCallState] = useState<CallState>("connecting");
   const [liveTranscript, setLiveTranscript] = useState("");
-  const [statusText, setStatusText] = useState("Connexion...");
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
 
   const conversationRef = useRef<Message[]>([]);
   const callTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -37,12 +36,19 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
   const webSpeechSupported = typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
+  // --- Status text by state ---
+  const statusLabel: Record<CallState, string> = {
+    connecting: "Connexion...",
+    idle: "En appel avec Oscar",
+    listening: "Oscar écoute...",
+    thinking: "Oscar réfléchit...",
+    speaking: "Oscar parle...",
+  };
+
   // --- ElevenLabs TTS (try first) then fallback to browser ---
   const speakAsOscar = useCallback(async (text: string): Promise<void> => {
-    setIsOscarSpeaking(true);
-    setStatusText("Oscar parle...");
+    setCallState("speaking");
 
-    // Try ElevenLabs first
     try {
       ttsAbortRef.current?.abort();
       const abortController = new AbortController();
@@ -75,7 +81,6 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
         if (playPromise) playPromise.catch(reject);
       });
     } catch {
-      // Fallback to Web Speech API
       await new Promise<void>((resolve) => {
         if (!("speechSynthesis" in window)) { resolve(); return; }
         window.speechSynthesis.cancel();
@@ -88,7 +93,7 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
       });
     }
 
-    setIsOscarSpeaking(false);
+    setCallState("idle");
     ttsAbortRef.current = null;
   }, []);
 
@@ -100,14 +105,18 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
       currentAudioRef.current = null;
     }
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    setIsOscarSpeaking(false);
+    setCallState("idle");
   }, []);
 
-  // --- Camera for video calls ---
-  const startCamera = useCallback(async () => {
+  // --- Camera ---
+  const startCamera = useCallback(async (facing: "user" | "environment" = "user") => {
+    // Stop existing stream first
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
       streamRef.current = stream;
@@ -115,6 +124,7 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
         videoRef.current.srcObject = stream;
       }
       setIsVideoEnabled(true);
+      setFacingMode(facing);
     } catch {
       toast.error("Impossible d'accéder à la caméra.");
       setIsVideoEnabled(false);
@@ -136,9 +146,14 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     if (isVideoEnabled) {
       stopCamera();
     } else {
-      startCamera();
+      startCamera(facingMode);
     }
-  }, [isVideoEnabled, startCamera, stopCamera]);
+  }, [isVideoEnabled, startCamera, stopCamera, facingMode]);
+
+  const switchCamera = useCallback(() => {
+    const newFacing = facingMode === "user" ? "environment" : "user";
+    startCamera(newFacing);
+  }, [facingMode, startCamera]);
 
   // --- STT: Web Speech API with auto-restart ---
   const startListeningInternal = useCallback(() => {
@@ -164,10 +179,8 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
       const fullText = finalTranscriptRef.current + interim;
       setLiveTranscript(fullText);
 
-      // Reset silence timer — user is still speaking
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = setTimeout(() => {
-        // 2 seconds of silence → send the message
         if (finalTranscriptRef.current.trim()) {
           const text = finalTranscriptRef.current.trim();
           finalTranscriptRef.current = "";
@@ -183,13 +196,13 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
       if (wantListeningRef.current) {
         try { recognition.start(); return; } catch { /* fall through */ }
       }
-      setIsListening(false);
+      if (callState === "listening") setCallState("idle");
     };
 
     recognition.onerror = (event: any) => {
       if (event.error === "no-speech" || event.error === "aborted") return;
       wantListeningRef.current = false;
-      setIsListening(false);
+      if (callState === "listening") setCallState("idle");
       if (event.error === "not-allowed") {
         toast.error("Accès au microphone refusé.");
       }
@@ -198,10 +211,9 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     try {
       recognition.start();
       recognitionRef.current = recognition;
-      setIsListening(true);
-      setStatusText("Oscar écoute...");
+      setCallState("listening");
     } catch { /* already running */ }
-  }, [webSpeechSupported]);
+  }, [webSpeechSupported, callState]);
 
   const startListening = useCallback(() => {
     finalTranscriptRef.current = "";
@@ -215,18 +227,16 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     recognitionRef.current?.stop();
     recognitionRef.current = null;
-    setIsListening(false);
     setLiveTranscript("");
     finalTranscriptRef.current = "";
   }, []);
 
   // --- Process user speech → Mistral → Oscar speaks ---
   const processUserSpeech = useCallback(async (userText: string) => {
-    if (!userText.trim() || isProcessing) return;
+    if (!userText.trim()) return;
 
-    setIsProcessing(true);
-    setStatusText("Oscar réfléchit...");
-    setIsListening(false);
+    setCallState("thinking");
+    setLiveTranscript("");
 
     conversationRef.current = [
       ...conversationRef.current,
@@ -245,27 +255,22 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
           ...conversationRef.current,
           { role: "assistant", content: oscarResponse },
         ];
-        setIsProcessing(false);
 
-        // Oscar speaks the response
         await speakAsOscar(oscarResponse);
 
-        // Resume listening after Oscar finishes
-        if (!isMuted && wantListeningRef.current !== false) {
+        if (!isMuted) {
           setTimeout(() => startListening(), 300);
         }
       },
       onError: (error) => {
         toast.error(error);
-        setIsProcessing(false);
-        setStatusText("Erreur...");
-        // Resume listening even on error
+        setCallState("idle");
         if (!isMuted) {
           setTimeout(() => startListening(), 500);
         }
       },
     });
-  }, [isProcessing, isMuted, speakAsOscar, startListening]);
+  }, [isMuted, speakAsOscar, startListening]);
 
   // --- Toggle mute ---
   const toggleMute = useCallback(() => {
@@ -275,38 +280,31 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     } else {
       setIsMuted(true);
       stopListening();
-      setStatusText("Micro coupé");
+      setCallState("idle");
     }
   }, [isMuted, startListening, stopListening]);
 
-  // --- Initialize / cleanup call ---
+  // --- Initialize / cleanup ---
   useEffect(() => {
     if (isOpen) {
-      // Reset state
       conversationRef.current = [];
       setCallDuration(0);
       setIsMuted(false);
-      setIsProcessing(false);
-      setIsOscarSpeaking(false);
+      setCallState("connecting");
       setLiveTranscript("");
-      setStatusText("Connexion...");
 
-      // Start call timer
       callTimerRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
 
-      // Start camera if video call
       if (initialVideoEnabled) {
         startCamera();
       }
 
-      // Oscar greeting after a short delay
       const greetTimeout = setTimeout(async () => {
         const greeting = "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider ?";
         conversationRef.current = [{ role: "assistant", content: greeting }];
         await speakAsOscar(greeting);
-        // Start listening after greeting
         startListening();
       }, 800);
 
@@ -314,7 +312,6 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
         clearTimeout(greetTimeout);
       };
     } else {
-      // Cleanup
       if (callTimerRef.current) clearInterval(callTimerRef.current);
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       stopListening();
@@ -335,7 +332,6 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     onClose();
   }, [stopListening, stopOscarSpeech, stopCamera, onClose]);
 
-  // Format duration
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -345,142 +341,239 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Main area */}
-      <div className="flex-1 relative bg-oscar-navy overflow-hidden">
-        {/* Oscar avatar (center) */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-6">
-            <div className={cn(
-              "transition-transform duration-300",
-              isOscarSpeaking && "animate-pulse scale-110"
-            )}>
-              <OscarAvatar size="lg" />
-            </div>
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-primary-foreground">Oscar</h2>
-              <p className="text-primary-foreground/70 text-lg">
-                {statusText}
-              </p>
-            </div>
-
-            {/* Audio waveform when listening */}
-            {isListening && !isMuted && (
-              <div className="flex gap-1.5 items-end h-8">
-                {[...Array(5)].map((_, i) => (
-                  <span
-                    key={i}
-                    className="w-2 bg-primary rounded-full animate-pulse"
-                    style={{
-                      height: `${12 + Math.random() * 20}px`,
-                      animationDelay: `${i * 150}ms`,
-                      animationDuration: "0.8s",
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Processing indicator */}
-            {isProcessing && (
-              <div className="flex gap-2">
-                <span className="w-3 h-3 bg-primary rounded-full animate-bounce" />
-                <span className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
-            )}
-          </div>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "#000" }}>
+      {/* Top status bar */}
+      <div className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),16px)] pb-3">
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            "w-2.5 h-2.5 rounded-full",
+            callState === "connecting" ? "bg-yellow-500 animate-pulse" :
+            callState === "speaking" ? "bg-green-400 animate-pulse" :
+            callState === "listening" ? "bg-blue-400 animate-pulse" :
+            callState === "thinking" ? "bg-purple-400 animate-pulse" :
+            "bg-green-500"
+          )} />
+          <span className="text-white/80 text-sm font-medium">{statusLabel[callState]}</span>
         </div>
+        <span className="text-white/50 text-sm font-mono tabular-nums">{formatDuration(callDuration)}</span>
+      </div>
 
-        {/* User video preview (small corner) */}
-        {isVideoEnabled && (
-          <div className="absolute top-4 right-4 w-32 h-44 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg bg-black">
+      {/* Main content area */}
+      <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+        {/* Camera viewfinder (takes most of screen when active) */}
+        {isVideoEnabled ? (
+          <div className="absolute inset-0 flex items-center justify-center">
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover mirror"
-              style={{ transform: "scaleX(-1)" }}
+              className="w-full h-full object-cover"
+              style={facingMode === "user" ? { transform: "scaleX(-1)" } : undefined}
             />
+            {/* Camera overlay gradient (top + bottom) */}
+            <div className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 20%, transparent 75%, rgba(0,0,0,0.8) 100%)"
+              }}
+            />
+            {/* Switch camera button */}
+            <button
+              onClick={switchCamera}
+              className="absolute top-4 right-4 p-3 rounded-full bg-black/40 text-white backdrop-blur-sm active:scale-95 transition-transform"
+              aria-label="Changer de caméra"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+            {/* Mini orb indicator */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2">
+              <GeminiOrb state={callState} size="sm" />
+            </div>
+          </div>
+        ) : (
+          /* Orb visualization (center, no camera) */
+          <div className="flex flex-col items-center gap-8">
+            <GeminiOrb state={callState} size="lg" />
+            <p className="text-white/40 text-sm font-medium tracking-wide uppercase">
+              {callState === "listening" ? "Parlez maintenant" :
+               callState === "speaking" ? "Oscar vous répond" :
+               callState === "thinking" ? "Un instant..." :
+               callState === "connecting" ? "Démarrage..." :
+               "En attente"}
+            </p>
           </div>
         )}
 
-        {/* Close button */}
-        <button
-          onClick={handleEndCall}
-          className="absolute top-4 left-4 p-2 rounded-full bg-background/20 text-primary-foreground hover:bg-background/30 transition-colors"
-          aria-label="Fermer"
-        >
-          <X className="w-6 h-6" />
-        </button>
-
-        {/* Call duration */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-background/20 px-4 py-2 rounded-full">
-          <span className="text-primary-foreground font-medium">
-            {formatDuration(callDuration)}
-          </span>
-        </div>
-
-        {/* Live transcript */}
+        {/* Live transcript overlay */}
         {liveTranscript && (
-          <div className="absolute bottom-28 left-4 right-4">
-            <div className="bg-background/80 backdrop-blur-sm rounded-2xl px-5 py-3 text-center">
-              <p className="text-foreground text-base">{liveTranscript}</p>
+          <div className="absolute bottom-6 left-4 right-4 z-10">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl px-5 py-3 border border-white/10">
+              <p className="text-white text-base text-center leading-relaxed">{liveTranscript}</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Controls */}
-      <div className="bg-card border-t border-border p-6">
-        <div className="flex items-center justify-center gap-8">
+      {/* Bottom controls */}
+      <div className="relative z-10 pb-[max(env(safe-area-inset-bottom),24px)] pt-4 px-6">
+        <div className="flex items-center justify-center gap-6">
           {/* Mute toggle */}
           <button
             onClick={toggleMute}
             className={cn(
-              "p-4 rounded-full transition-all",
+              "w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95",
               !isMuted
-                ? "bg-secondary text-foreground"
-                : "bg-destructive/20 text-destructive"
+                ? "bg-white/15 text-white"
+                : "bg-red-500/30 text-red-400 ring-2 ring-red-500/50"
             )}
-            aria-label={isMuted ? "Activer le micro" : "Désactiver le micro"}
+            aria-label={isMuted ? "Activer le micro" : "Couper le micro"}
           >
-            {!isMuted ? (
-              <Mic className="w-6 h-6" />
-            ) : (
-              <MicOff className="w-6 h-6" />
-            )}
+            {!isMuted ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+          </button>
+
+          {/* End call */}
+          <button
+            onClick={handleEndCall}
+            className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-all active:scale-95 shadow-lg shadow-red-500/30"
+            aria-label="Terminer l'appel"
+          >
+            <PhoneOff className="w-7 h-7" />
           </button>
 
           {/* Video toggle */}
           <button
             onClick={toggleVideo}
             className={cn(
-              "p-4 rounded-full transition-all",
+              "w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95",
               isVideoEnabled
-                ? "bg-secondary text-foreground"
-                : "bg-secondary/50 text-foreground/50"
+                ? "bg-blue-500/30 text-blue-400 ring-2 ring-blue-500/50"
+                : "bg-white/15 text-white/60"
             )}
-            aria-label={isVideoEnabled ? "Désactiver la caméra" : "Activer la caméra"}
+            aria-label={isVideoEnabled ? "Couper la caméra" : "Activer la caméra"}
           >
-            {isVideoEnabled ? (
-              <Video className="w-6 h-6" />
-            ) : (
-              <VideoOff className="w-6 h-6" />
-            )}
-          </button>
-
-          {/* End call */}
-          <button
-            onClick={handleEndCall}
-            className="p-5 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all"
-            aria-label="Terminer l'appel"
-          >
-            <PhoneOff className="w-7 h-7" />
+            {isVideoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────
+// Animated Orb component (Gemini Live–style)
+// ─────────────────────────────────────────────────────
+function GeminiOrb({ state, size = "lg" }: { state: CallState; size?: "sm" | "lg" }) {
+  const isSmall = size === "sm";
+  const dim = isSmall ? "w-10 h-10" : "w-48 h-48";
+  const blurLg = isSmall ? "blur-md" : "blur-3xl";
+  const blurMd = isSmall ? "blur-sm" : "blur-xl";
+
+  // Colors and animation speed by state
+  const config: Record<CallState, { gradient: string; speed: string; scale: string; glow: string }> = {
+    connecting: {
+      gradient: "conic-gradient(from 0deg, #4285F4, #34A853, #FBBC05, #EA4335, #4285F4)",
+      speed: "3s",
+      scale: "scale-90",
+      glow: "rgba(66, 133, 244, 0.15)",
+    },
+    idle: {
+      gradient: "conic-gradient(from 0deg, #4285F4, #38b2ac, #4285F4)",
+      speed: "6s",
+      scale: "scale-100",
+      glow: "rgba(56, 178, 172, 0.1)",
+    },
+    listening: {
+      gradient: "conic-gradient(from 0deg, #4285F4, #078efb, #38b2ac, #4285F4)",
+      speed: "2s",
+      scale: "scale-105",
+      glow: "rgba(7, 142, 251, 0.2)",
+    },
+    thinking: {
+      gradient: "conic-gradient(from 0deg, #ac87eb, #4285F4, #34A853, #ac87eb)",
+      speed: "1.5s",
+      scale: "scale-95",
+      glow: "rgba(172, 135, 235, 0.2)",
+    },
+    speaking: {
+      gradient: "conic-gradient(from 0deg, #34A853, #38b2ac, #4285F4, #34A853)",
+      speed: "2.5s",
+      scale: "scale-110",
+      glow: "rgba(52, 168, 83, 0.2)",
+    },
+  };
+
+  const c = config[state];
+
+  return (
+    <div className={cn("relative", dim)}>
+      {/* Outer glow */}
+      <div
+        className={cn(
+          "absolute inset-[-30%] rounded-full transition-all duration-700",
+          blurLg,
+          state === "speaking" ? "opacity-80" : "opacity-40"
+        )}
+        style={{
+          background: c.gradient,
+          animation: `orbRotate ${c.speed} linear infinite`,
+        }}
+      />
+      {/* Middle ring */}
+      <div
+        className={cn(
+          "absolute inset-[-10%] rounded-full transition-all duration-500",
+          blurMd,
+          c.scale,
+        )}
+        style={{
+          background: c.gradient,
+          animation: `orbRotate ${c.speed} linear infinite reverse`,
+        }}
+      />
+      {/* Core */}
+      <div
+        className={cn(
+          "absolute inset-[10%] rounded-full transition-all duration-500",
+          c.scale
+        )}
+        style={{
+          background: c.gradient,
+          animation: `orbRotate ${c.speed} linear infinite`,
+          boxShadow: `0 0 ${isSmall ? 15 : 60}px ${isSmall ? 5 : 20}px ${c.glow}`,
+        }}
+      />
+      {/* White center dot / breathing */}
+      {!isSmall && (
+        <div
+          className={cn(
+            "absolute inset-[25%] rounded-full transition-all duration-500",
+            state === "speaking" ? "bg-white/20" :
+            state === "listening" ? "bg-white/15" :
+            "bg-white/10"
+          )}
+          style={{
+            animation: state === "speaking"
+              ? "orbPulse 0.8s ease-in-out infinite"
+              : state === "listening"
+              ? "orbPulse 1.5s ease-in-out infinite"
+              : state === "thinking"
+              ? "orbPulse 1s ease-in-out infinite"
+              : "orbPulse 3s ease-in-out infinite",
+          }}
+        />
+      )}
+
+      {/* Inject keyframes once */}
+      <style>{`
+        @keyframes orbRotate {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes orbPulse {
+          0%, 100% { transform: scale(1); opacity: 0.7; }
+          50%      { transform: scale(1.1); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
