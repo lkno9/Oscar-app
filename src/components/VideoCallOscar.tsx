@@ -17,10 +17,9 @@ import {
   RoomAudioRenderer,
   useAgent,
   useConnectionState,
-  useLocalParticipant,
+  useRoomContext,
   useTrackToggle,
 } from "@livekit/components-react";
-import { TokenSource } from "livekit-client";
 import { Track, ConnectionState } from "livekit-client";
 import {
   PhoneOff,
