@@ -26,12 +26,15 @@ export default function FamilyAccessPage() {
     setCreatingInvitation(true);
     const { invitationCode, error } = await createInvitation(relationship);
     setCreatingInvitation(false);
-    if (error) toast.error('Erreur lors de la création de l\'invitation');
-    else if (invitationCode) { setGeneratedCode(invitationCode); toast.success('Code d\'invitation créé !'); }
+    if (error) toast.error("Erreur lors de la création de l'invitation");
+    else if (invitationCode) { setGeneratedCode(invitationCode); toast.success("Code d'invitation créé !"); }
   };
 
   const copyCode = (code: string) => { navigator.clipboard.writeText(code); toast.success('Code copié !'); };
-  const shareCode = (code: string) => { if (navigator.share) navigator.share({ title: 'Code Oscar', text: `Rejoignez-moi sur Oscar avec le code : ${code}` }); else copyCode(code); };
+  const shareCode = (code: string) => {
+    if (navigator.share) navigator.share({ title: 'Code Oscar', text: `Rejoignez-moi sur Oscar avec le code : ${code}` });
+    else copyCode(code);
+  };
 
   const handleRemoveLink = async (linkId: string) => {
     const { error } = await removeLink(linkId);
@@ -41,43 +44,50 @@ export default function FamilyAccessPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 pb-24">
-        <div className="bg-white/80 px-5 py-4 border-b border-stone-100"><Skeleton className="h-6 w-32" /></div>
-        <div className="p-5 space-y-6"><Skeleton className="h-24 w-full rounded-2xl" /><Skeleton className="h-64 w-full rounded-2xl" /><Skeleton className="h-40 w-full rounded-2xl" /></div>
+      <div className="min-h-screen bg-background pb-24">
+        <div className="bg-card px-4 py-4 border-b border-border"><Skeleton className="h-6 w-32" /></div>
+        <div className="p-4 space-y-4">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-40 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-stone-100 px-5 py-4 sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <Link to="/settings">
-            <Button variant="ghost" size="icon" className="rounded-full text-stone-500 hover:bg-stone-100 h-9 w-9"><ArrowLeft className="w-5 h-5" /></Button>
-          </Link>
-          <div>
-            <h1 className="text-lg font-bold text-stone-800">Accès Famille</h1>
-            {linkedFamily.length > 0 && <p className="text-[11px] text-stone-400">{linkedFamily.length} membre{linkedFamily.length > 1 ? 's' : ''} connecté{linkedFamily.length > 1 ? 's' : ''}</p>}
-          </div>
+      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3 sticky top-0 z-10">
+        <Link to="/settings">
+          <button className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+        </Link>
+        <div className="flex-1">
+          <h1 className="text-lg font-bold text-foreground">Accès Famille</h1>
+          {linkedFamily.length > 0 && (
+            <p className="text-xs text-muted-foreground">{linkedFamily.length} membre{linkedFamily.length > 1 ? 's' : ''} connecté{linkedFamily.length > 1 ? 's' : ''}</p>
+          )}
         </div>
+        <Users className="w-6 h-6 text-primary" />
       </header>
 
-      <main className="p-5 space-y-5">
-        {/* Quick Messages Link */}
+      <main className="p-4 space-y-4">
+        {/* Messages famille (si liés) */}
         {linkedFamily.length > 0 && (
           <Link to="/family/messages">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 flex items-center gap-3 active:scale-[0.98] transition-transform border border-blue-100/60">
-              <div className="w-11 h-11 rounded-2xl bg-blue-100 flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-blue-500" />
+            <div className="bg-card rounded-xl p-4 border border-border flex items-center gap-3 active:scale-[0.98] transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <MessageCircle className="w-6 h-6 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-stone-800 text-sm">Messages famille</p>
-                <p className="text-xs text-stone-400">Discuter avec vos proches</p>
+                <p className="font-semibold text-foreground text-sm">Messages famille</p>
+                <p className="text-xs text-muted-foreground">Discuter avec vos proches</p>
               </div>
               <div className="flex -space-x-2">
                 {linkedFamily.slice(0, 3).map(link => (
-                  <Avatar key={link.id} className="w-8 h-8 border-2 border-white">
+                  <Avatar key={link.id} className="w-8 h-8 border-2 border-card">
                     <AvatarImage src={link.family_profile?.avatar_url || undefined} />
                     <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">{link.family_profile?.full_name?.charAt(0) || 'F'}</AvatarFallback>
                   </Avatar>
@@ -87,23 +97,23 @@ export default function FamilyAccessPage() {
           </Link>
         )}
 
-        {/* Create Invitation */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <UserPlus className="w-5 h-5 text-primary" />
+        {/* Inviter un proche */}
+        <div className="bg-card rounded-xl p-5 border border-border">
+          <div className="flex items-start gap-4 mb-5">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <UserPlus className="w-6 h-6 text-primary" />
             </div>
-            <div>
-              <h2 className="font-bold text-stone-800">Inviter un proche</h2>
-              <p className="text-xs text-stone-400">Créez un code à partager</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-foreground">Inviter un proche</h2>
+              <p className="text-sm text-muted-foreground">Créez un code à partager</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Relation</Label>
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Relation</Label>
               <Select value={relationship} onValueChange={setRelationship}>
-                <SelectTrigger className="h-12 rounded-xl border-stone-200 mt-2"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-12 rounded-xl mt-2"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="enfant">Enfant</SelectItem>
                   <SelectItem value="conjoint">Conjoint(e)</SelectItem>
@@ -116,54 +126,64 @@ export default function FamilyAccessPage() {
               </Select>
             </div>
 
-            <Button onClick={handleCreateInvitation} disabled={creatingInvitation} className="w-full h-12 rounded-xl text-base font-semibold">
-              {creatingInvitation ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />Création...</>) : "Créer un code d'invitation"}
+            <Button
+              onClick={handleCreateInvitation}
+              disabled={creatingInvitation}
+              className="w-full gap-2 min-h-[52px]"
+              size="lg"
+            >
+              {creatingInvitation
+                ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Création...</>
+                : "Créer un code d'invitation"
+              }
             </Button>
 
             {generatedCode && (
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-100/60 text-center space-y-3 mt-2">
-                <div className="text-3xl mb-1">🎉</div>
-                <p className="text-sm font-medium text-stone-700">Partagez ce code avec votre proche :</p>
-                <div className="bg-white rounded-xl p-4 border border-stone-100 shadow-sm">
+              <div className="bg-accent rounded-xl p-5 border border-primary/20 text-center space-y-3">
+                <div className="text-3xl">🎉</div>
+                <p className="text-sm font-medium text-foreground">Partagez ce code avec votre proche :</p>
+                <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
                   <p className="text-3xl font-mono font-black tracking-[0.3em] text-primary select-all">{generatedCode}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1 h-11 rounded-xl border-stone-200 text-stone-600" onClick={() => copyCode(generatedCode)}>
+                  <Button variant="outline" className="flex-1 h-11 rounded-xl" onClick={() => copyCode(generatedCode)}>
                     <Copy className="w-4 h-4 mr-2" />Copier
                   </Button>
                   <Button className="flex-1 h-11 rounded-xl" onClick={() => shareCode(generatedCode)}>
                     <Share2 className="w-4 h-4 mr-2" />Partager
                   </Button>
                 </div>
-                <p className="text-[11px] text-stone-400">Valable jusqu'à son utilisation</p>
+                <p className="text-xs text-muted-foreground">Valable jusqu'à son utilisation</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Pending Invitations */}
+        {/* Invitations en attente */}
         {pendingInvitations.length > 0 && (
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="font-bold text-stone-800 mb-3 flex items-center gap-2">
+          <div className="bg-card rounded-xl p-5 border border-border">
+            <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               En attente
-              <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold">{pendingInvitations.length}</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-secondary text-muted-foreground">{pendingInvitations.length}</span>
             </h2>
             <div className="space-y-3">
               {pendingInvitations.map((inv) => (
-                <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl bg-amber-50/60 border border-amber-100/60">
+                <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                       <Clock className="w-3.5 h-3.5 text-amber-600" />
                     </div>
                     <div>
-                      <Badge variant="secondary" className="text-[10px] bg-amber-100/50 text-amber-700">{inv.relationship}</Badge>
+                      <Badge variant="secondary" className="text-[10px]">{inv.relationship}</Badge>
                       <div className="flex items-center gap-1 mt-0.5">
-                        <span className="font-mono text-xs font-bold tracking-wider text-stone-700">{inv.invitation_code}</span>
-                        <button onClick={() => copyCode(inv.invitation_code!)} className="text-stone-400 hover:text-stone-600 p-0.5"><Copy className="w-3 h-3" /></button>
+                        <span className="font-mono text-xs font-bold tracking-wider text-foreground">{inv.invitation_code}</span>
+                        <button onClick={() => copyCode(inv.invitation_code!)} className="text-muted-foreground hover:text-foreground p-0.5">
+                          <Copy className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-full h-8 w-8" onClick={() => handleRemoveLink(inv.id)}>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-8 w-8" onClick={() => handleRemoveLink(inv.id)}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
@@ -172,40 +192,47 @@ export default function FamilyAccessPage() {
           </div>
         )}
 
-        {/* Connected Family */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 flex items-center justify-center">
-              <Users className="w-5 h-5 text-purple-500" />
+        {/* Famille connectée */}
+        <div className="bg-card rounded-xl p-5 border border-border">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+              <Users className="w-6 h-6 text-muted-foreground" />
             </div>
-            <h2 className="font-bold text-stone-800">Famille connectée</h2>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-foreground">Famille connectée</h2>
+              <p className="text-sm text-muted-foreground">{linkedFamily.length} membre{linkedFamily.length > 1 ? 's' : ''}</p>
+            </div>
           </div>
 
           {linkedFamily.length === 0 ? (
             <div className="text-center py-6">
               <div className="text-4xl mb-3">👨‍👩‍👧</div>
-              <p className="text-sm font-medium text-stone-600 mb-1">Aucun membre connecté</p>
-              <p className="text-xs text-stone-400">Créez un code d'invitation ci-dessus</p>
+              <p className="text-sm font-medium text-foreground mb-1">Aucun membre connecté</p>
+              <p className="text-xs text-muted-foreground">Créez un code d'invitation ci-dessus</p>
             </div>
           ) : (
             <div className="space-y-3">
               {linkedFamily.map((link) => (
-                <div key={link.id} className="flex items-center gap-3 p-3 rounded-xl bg-stone-50">
-                  <Avatar className="w-11 h-11 border-2 border-white shadow-sm">
+                <div key={link.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary">
+                  <Avatar className="w-11 h-11">
                     <AvatarImage src={link.family_profile?.avatar_url || undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary font-bold">{link.family_profile?.full_name?.charAt(0).toUpperCase() || 'F'}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-stone-800 text-sm truncate">{link.family_profile?.full_name || 'Membre famille'}</p>
-                    <Badge variant="secondary" className="text-[10px] bg-stone-200/50 text-stone-500">{link.relationship}</Badge>
+                    <p className="font-semibold text-foreground text-sm truncate">{link.family_profile?.full_name || 'Membre famille'}</p>
+                    <Badge variant="secondary" className="text-[10px]">{link.relationship}</Badge>
                   </div>
                   <div className="flex items-center gap-1">
                     <Link to={`/family/messages?contact=${link.family_member_id}`}>
-                      <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 text-blue-500 hover:bg-blue-50"><MessageCircle className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 text-primary hover:bg-primary/10">
+                        <MessageCircle className="w-4 h-4" />
+                      </Button>
                     </Link>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-full h-9 w-9"><Trash2 className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-9 w-9">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
