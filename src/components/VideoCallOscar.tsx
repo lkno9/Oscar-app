@@ -208,7 +208,7 @@ function CallContent({
         <AgentAudioVisualizerAura
           size="xl"
           state={agent.state ?? "connecting"}
-          audioTrack={agent.audioTrack}
+          audioTrack={agent.microphoneTrack}
           color={OSCAR_TEAL as `#${string}`}
           themeMode="dark"
         />
