@@ -53,29 +53,6 @@ export function SettingsPage() {
     if (data) {
       setProfile(data);
       setSmsNotificationsEnabled(data.sms_notifications_enabled || false);
-
-      // Synchroniser les préférences configurées à distance par les proches
-      const rp = data.remote_preferences as Record<string, any> | null;
-      if (rp) {
-        if (typeof rp.voice_enabled === 'boolean') {
-          setVoiceEnabled(rp.voice_enabled);
-          localStorage.setItem("oscar_voice_enabled", String(rp.voice_enabled));
-        }
-        if (typeof rp.notifications_enabled === 'boolean') {
-          setNotificationsEnabled(rp.notifications_enabled);
-          localStorage.setItem("oscar_notifications_enabled", String(rp.notifications_enabled));
-        }
-        if (typeof rp.dark_mode_enabled === 'boolean') {
-          setDarkMode(rp.dark_mode_enabled);
-          if (rp.dark_mode_enabled) {
-            document.documentElement.classList.add("dark");
-            localStorage.setItem("oscar_dark_mode", "true");
-          } else {
-            document.documentElement.classList.remove("dark");
-            localStorage.setItem("oscar_dark_mode", "false");
-          }
-        }
-      }
     }
     setLoading(false);
   };
