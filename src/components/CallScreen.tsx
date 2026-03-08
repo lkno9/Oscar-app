@@ -207,16 +207,20 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
             </span>
           </div>
 
-          {/* Tavus CVI iframe — plein écran, caméra active pour montrer des choses */}
-          <div className="flex-1 relative">
-            <iframe
-              ref={iframeRef}
-              src={conversationUrl}
-              allow="camera; microphone; autoplay; display-capture"
-              className="absolute inset-0 w-full h-full border-0"
-              style={{ background: "#000" }}
-              title="Appel vidéo avec Oscar"
-            />
+          {/* Tavus iframe — masquée visuellement, audio uniquement */}
+          <iframe
+            ref={iframeRef}
+            src={conversationUrl}
+            allow="camera; microphone; autoplay; display-capture"
+            className="absolute w-0 h-0 border-0 opacity-0 pointer-events-none"
+            style={{ position: "absolute", top: -9999, left: -9999 }}
+            title="Appel vidéo avec Oscar"
+          />
+
+          {/* Orbe animé visible à la place de l'avatar */}
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <OscarOrb state="speaking" />
+            <p className="text-white/60 text-base mt-6">Oscar vous écoute...</p>
           </div>
 
           {/* Bottom controls (overlay) */}
