@@ -15,6 +15,8 @@ interface AuthContextType {
   mfaRequired: boolean;
   signIn: (email: string, password: string) => Promise<SignInResult>;
   signUp: (email: string, password: string, fullName: string, role?: 'senior' | 'family_member') => Promise<{ error: Error | null }>;
+  signInWithPhone: (phone: string) => Promise<{ error: Error | null }>;
+  verifyPhoneOtp: (phone: string, code: string) => Promise<{ error: Error | null; user: User | null }>;
   signOut: () => Promise<void>;
   enrollMFA: () => Promise<AuthMFAEnrollResponse>;
   verifyMFA: (factorId: string, code: string) => Promise<{ error: Error | null }>;
@@ -78,6 +80,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  // ─── Auth téléphone (seniors) ───────────────────────────
+  const signInWithPhone = async (phone: string): Promise<{ error: Error | null }> => {
+    const { error } = await supabase.auth.signInWithOtp({ phone });
+    return { error };
+  };
+
+  const verifyPhoneOtp = async (phone: string, code: string): Promise<{ error: Error | null; user: User | null }> => {
+    const { data, error } = await supabase.auth.verifyOtp({
+      phone,
+      token: code,
+      type: 'sms',
+    });
+    return { error, user: data?.user ?? null };
+  };
+
   const signOut = async () => {
     setMfaRequired(false);
     await supabase.auth.signOut();
@@ -132,13 +149,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
-      loading, 
+    <AuthContext.Provider value={{
+      user,
+      session,
+      loading,
       mfaRequired,
-      signIn, 
-      signUp, 
+      signIn,
+      signUp,
+      signInWithPhone,
+      verifyPhoneOtp,
       signOut,
       enrollMFA,
       verifyMFA,

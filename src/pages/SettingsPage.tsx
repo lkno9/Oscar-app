@@ -118,6 +118,8 @@ export function SettingsPage() {
   };
 
   const isMFAEnabled = mfaFactors.length > 0;
+  // Les seniors connectés par téléphone n'ont pas besoin de MFA (le code vocal fait office de 2FA)
+  const isPhoneAuth = !!user?.phone && !user?.email;
 
   return (
     <>
@@ -142,7 +144,7 @@ export function SettingsPage() {
               </div>
               <div className="flex-1">
                 <h2 className="text-lg font-bold text-foreground">{profile?.full_name || "Utilisateur"}</h2>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <p className="text-sm text-muted-foreground">{user?.email || user?.phone}</p>
               </div>
             </div>
           </div>
@@ -179,33 +181,35 @@ export function SettingsPage() {
               </div>
             </section>
 
-            {/* Security */}
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Sécurité</h3>
-              <div className="bg-card rounded-xl border border-border overflow-hidden">
-                <div className="flex items-center gap-4 p-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isMFAEnabled ? "bg-green-500/20" : "bg-secondary"}`}>
-                    <Shield className={`w-5 h-5 ${isMFAEnabled ? "text-green-500" : "text-foreground"}`} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-foreground">Double authentification</p>
-                      {isMFAEnabled && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+            {/* Security — masqué pour les seniors connectés par téléphone */}
+            {!isPhoneAuth && (
+              <section>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Sécurité</h3>
+                <div className="bg-card rounded-xl border border-border overflow-hidden">
+                  <div className="flex items-center gap-4 p-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isMFAEnabled ? "bg-green-500/20" : "bg-secondary"}`}>
+                      <Shield className={`w-5 h-5 ${isMFAEnabled ? "text-green-500" : "text-foreground"}`} />
                     </div>
-                    <p className="text-sm text-muted-foreground">{isMFAEnabled ? "Votre compte est protégé" : "Protégez votre compte"}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground">Double authentification</p>
+                        {isMFAEnabled && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{isMFAEnabled ? "Votre compte est protégé" : "Protégez votre compte"}</p>
+                    </div>
+                    <Button
+                      variant={isMFAEnabled ? "outline" : "default"}
+                      size="sm"
+                      onClick={isMFAEnabled ? handleDisableMFA : () => setShowMFAEnrollment(true)}
+                      disabled={mfaLoading}
+                      className={isMFAEnabled ? "border-destructive text-destructive hover:bg-destructive/10" : ""}
+                    >
+                      {mfaLoading ? "..." : isMFAEnabled ? "Désactiver" : "Activer"}
+                    </Button>
                   </div>
-                  <Button
-                    variant={isMFAEnabled ? "outline" : "default"}
-                    size="sm"
-                    onClick={isMFAEnabled ? handleDisableMFA : () => setShowMFAEnrollment(true)}
-                    disabled={mfaLoading}
-                    className={isMFAEnabled ? "border-destructive text-destructive hover:bg-destructive/10" : ""}
-                  >
-                    {mfaLoading ? "..." : isMFAEnabled ? "Désactiver" : "Activer"}
-                  </Button>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* Preferences */}
             <section>
