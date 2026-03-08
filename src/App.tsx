@@ -100,6 +100,7 @@ const App = () => (
             <Route path="/family/messages" element={<ProtectedRoute><SubPageLayout><FamilyMessagesPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/notifications" element={<ProtectedRoute><SubPageLayout><FamilyNotificationsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/settings" element={<ProtectedRoute><SubPageLayout><FamilySettingsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/family/chat" element={<ProtectedRoute><FamilyChatPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
