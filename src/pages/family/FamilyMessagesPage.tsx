@@ -66,7 +66,6 @@ export default function FamilyMessagesPage() {
 
   const isDifferentDay = (d1: string, d2: string) => format(new Date(d1), 'yyyy-MM-dd') !== format(new Date(d2), 'yyyy-MM-dd');
   const quickReplies = ["Bonjour !", "Comment ça va ?", "Je pense à toi", "À bientôt !", "Merci"];
-  const backLink = isSenior ? '/settings/family-access' : '/family';
 
   return (
     <div className="h-full bg-background flex flex-col overflow-hidden">
