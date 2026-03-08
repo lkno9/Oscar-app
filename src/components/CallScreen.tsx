@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { PhoneOff, Loader2, AlertCircle, VideoOff } from "lucide-react";
+import { PhoneOff, Mic, MicOff, Loader2, AlertCircle, VideoOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 // ─── TODO (Phase 2) : Migrer de l'iframe vers le composant React natif Tavus
 // → npx @tavus/cvi-ui@latest init
-// Cela permettra un contrôle plus fin de l'interface (mute, camera toggle, etc.)
+// Cela permettra un contrôle plus fin (mute natif, events, etc.)
 
 // ─── Types ────────────────────────────────────────────────
 interface CallScreenProps {
@@ -18,7 +18,6 @@ type CallStatus = "loading" | "active" | "ended" | "error" | "permission-denied"
 
 // ─── Tavus API helper ─────────────────────────────────────
 // TODO: En production, proxifier cet appel via Xano pour ne pas exposer l'API key côté client
-// Ex: POST https://votre-xano.com/api/tavus/create-conversation
 async function createTavusConversation(): Promise<string> {
   const apiKey = import.meta.env.VITE_TAVUS_API_KEY;
   const replicaId = import.meta.env.VITE_TAVUS_REPLICA_ID;
@@ -57,23 +56,15 @@ async function createTavusConversation(): Promise<string> {
   return conversationUrl;
 }
 
-// ─── Check camera/mic permissions ─────────────────────────
+// ─── Check mic permissions ────────────────────────────────
 async function checkMediaPermissions(): Promise<boolean> {
   try {
-    // Check if permissions API is available
     if (navigator.permissions) {
-      const [camera, mic] = await Promise.all([
-        navigator.permissions.query({ name: "camera" as PermissionName }),
-        navigator.permissions.query({ name: "microphone" as PermissionName }),
-      ]);
-      // If either is explicitly denied, return false
-      if (camera.state === "denied" || mic.state === "denied") {
-        return false;
-      }
+      const mic = await navigator.permissions.query({ name: "microphone" as PermissionName });
+      if (mic.state === "denied") return false;
     }
     return true;
   } catch {
-    // permissions.query not supported (e.g. some mobile browsers) — let it through
     return true;
   }
 }
@@ -84,6 +75,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   const [conversationUrl, setConversationUrl] = useState<string | null>(null);
   const [callDuration, setCallDuration] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isMuted, setIsMuted] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -99,6 +91,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
     setStatus("loading");
     setCallDuration(0);
     setErrorMessage("");
+    setIsMuted(false);
   }, []);
 
   // ─── End call ───────────────────────────────────────────
@@ -107,67 +100,55 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
     onClose();
   }, [cleanup, onClose]);
 
+  // ─── Retry helper ───────────────────────────────────────
+  const retryInit = useCallback(async () => {
+    setStatus("loading");
+    setErrorMessage("");
+    setConversationUrl(null);
+
+    const permOk = await checkMediaPermissions();
+    if (!permOk) {
+      setStatus("permission-denied");
+      setErrorMessage(
+        "Oscar a besoin de votre microphone pour vous parler. Autorisez l'accès dans les réglages de votre navigateur."
+      );
+      return;
+    }
+
+    try {
+      const url = await createTavusConversation();
+      if (!mountedRef.current) return;
+      setConversationUrl(url);
+      setStatus("active");
+      timerRef.current = setInterval(() => {
+        setCallDuration((d) => d + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("[CallScreen] Init error:", err);
+      if (!mountedRef.current) return;
+      setStatus("error");
+      const error = err as Error;
+      if (error.message === "MISSING_CONFIG") {
+        setErrorMessage(
+          "Configuration Tavus manquante. Ajoutez les variables VITE_TAVUS_API_KEY, VITE_TAVUS_REPLICA_ID et VITE_TAVUS_PERSONA_ID."
+        );
+      } else {
+        setErrorMessage(
+          "Impossible de joindre Oscar pour le moment. Réessayez dans quelques instants."
+        );
+      }
+    }
+  }, []);
+
   // ─── Initialize on open ─────────────────────────────────
   useEffect(() => {
     if (!isOpen) return;
 
     mountedRef.current = true;
-    setStatus("loading");
     setCallDuration(0);
-    setErrorMessage("");
-    setConversationUrl(null);
+    setIsMuted(false);
 
-    async function init() {
-      // 1. Check permissions
-      const permOk = await checkMediaPermissions();
-      if (!permOk) {
-        if (mountedRef.current) {
-          setStatus("permission-denied");
-          setErrorMessage(
-            "Oscar a besoin de votre caméra et microphone pour vous parler. Autorisez l'accès dans les réglages de votre navigateur."
-          );
-        }
-        return;
-      }
-
-      // 2. Create Tavus conversation
-      try {
-        const url = await createTavusConversation();
-        if (!mountedRef.current) return;
-
-        setConversationUrl(url);
-        setStatus("active");
-
-        // Start call timer
-        timerRef.current = setInterval(() => {
-          setCallDuration((d) => d + 1);
-        }, 1000);
-      } catch (err) {
-        if (!mountedRef.current) return;
-
-        const error = err as Error;
-        console.error("[CallScreen] Tavus init error:", error);
-
-        if (error.message === "MISSING_CONFIG") {
-          setStatus("error");
-          setErrorMessage(
-            "Configuration Tavus manquante. Ajoutez les variables VITE_TAVUS_API_KEY, VITE_TAVUS_REPLICA_ID et VITE_TAVUS_PERSONA_ID."
-          );
-        } else if (error.message.startsWith("API_ERROR_")) {
-          setStatus("error");
-          setErrorMessage(
-            "Impossible de joindre Oscar pour le moment. Réessayez dans quelques instants."
-          );
-        } else {
-          setStatus("error");
-          setErrorMessage(
-            "Une erreur est survenue. Réessayez dans quelques instants."
-          );
-        }
-      }
-    }
-
-    init();
+    retryInit();
 
     return () => {
       mountedRef.current = false;
@@ -192,20 +173,16 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
       {status === "loading" && (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center animate-pulse">
-              <span className="text-3xl">🎙️</span>
-            </div>
-            <Loader2 className="absolute -bottom-1 -right-1 w-8 h-8 text-teal-400 animate-spin" />
+            <OscarOrb state="connecting" />
           </div>
           <div className="text-center">
             <p className="text-white text-xl font-semibold mb-2">
               Oscar se prépare...
             </p>
             <p className="text-white/50 text-base max-w-xs leading-relaxed">
-              Préparation de l'appel vidéo. Cela peut prendre quelques secondes.
+              Préparation de l'appel. Cela peut prendre quelques secondes.
             </p>
           </div>
-          {/* Cancel button */}
           <button
             onClick={handleEndCall}
             className="mt-4 px-6 py-3 rounded-full bg-white/10 text-white/70 hover:bg-white/20 transition-all active:scale-95 text-base"
@@ -215,11 +192,29 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
         </div>
       )}
 
-      {/* ── Active state — Tavus iframe ── */}
+      {/* ── Active state — Orb UI + hidden Tavus iframe ── */}
       {status === "active" && conversationUrl && (
         <>
+          {/* Hidden Tavus iframe — powers the conversation audio */}
+          <iframe
+            ref={iframeRef}
+            src={conversationUrl}
+            allow="camera; microphone; autoplay; display-capture"
+            title="Oscar conversation"
+            className="absolute"
+            style={{
+              width: "1px",
+              height: "1px",
+              opacity: 0,
+              pointerEvents: "none",
+              position: "absolute",
+              top: "-9999px",
+              left: "-9999px",
+            }}
+          />
+
           {/* Top status bar */}
-          <div className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),16px)] pb-2 bg-gradient-to-b from-black/80 to-transparent">
+          <div className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),16px)] pb-3">
             <div className="flex items-center gap-3">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
               <span className="text-white/80 text-sm font-medium">
@@ -231,21 +226,34 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
             </span>
           </div>
 
-          {/* Tavus CVI iframe — responsive, full viewport */}
-          <div className="flex-1 relative">
-            <iframe
-              ref={iframeRef}
-              src={conversationUrl}
-              allow="camera; microphone; autoplay; display-capture"
-              className="absolute inset-0 w-full h-full border-0"
-              style={{ background: "#000" }}
-              title="Appel vidéo avec Oscar"
-            />
+          {/* Main content — animated orb */}
+          <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+            <div className="flex flex-col items-center gap-8">
+              <OscarOrb state={isMuted ? "idle" : "speaking"} />
+              <p className="text-white/40 text-sm font-medium tracking-wide uppercase">
+                {isMuted ? "Micro coupé" : "Oscar vous écoute"}
+              </p>
+            </div>
           </div>
 
           {/* Bottom controls */}
-          <div className="relative z-10 pb-[max(env(safe-area-inset-bottom),24px)] pt-4 px-6 bg-gradient-to-t from-black/80 to-transparent">
-            <div className="flex items-center justify-center">
+          <div className="relative z-10 pb-[max(env(safe-area-inset-bottom),24px)] pt-4 px-6">
+            <div className="flex items-center justify-center gap-6">
+              {/* Mute toggle */}
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                className={cn(
+                  "w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95",
+                  !isMuted
+                    ? "bg-white/15 text-white"
+                    : "bg-red-500/30 text-red-400 ring-2 ring-red-500/50"
+                )}
+                aria-label={isMuted ? "Activer le micro" : "Couper le micro"}
+              >
+                {!isMuted ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+              </button>
+
+              {/* End call */}
               <button
                 onClick={handleEndCall}
                 className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-all active:scale-95 shadow-lg shadow-red-500/30"
@@ -274,38 +282,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
           </div>
           <div className="flex gap-3 mt-2">
             <button
-              onClick={() => {
-                // Retry
-                setStatus("loading");
-                setErrorMessage("");
-                setConversationUrl(null);
-                // Re-trigger init by toggling
-                const retryInit = async () => {
-                  const permOk = await checkMediaPermissions();
-                  if (!permOk) {
-                    setStatus("permission-denied");
-                    setErrorMessage(
-                      "Oscar a besoin de votre caméra et microphone pour vous parler. Autorisez l'accès dans les réglages de votre navigateur."
-                    );
-                    return;
-                  }
-                  try {
-                    const url = await createTavusConversation();
-                    setConversationUrl(url);
-                    setStatus("active");
-                    timerRef.current = setInterval(() => {
-                      setCallDuration((d) => d + 1);
-                    }, 1000);
-                  } catch (retryErr) {
-                    console.error("[CallScreen] Retry error:", retryErr);
-                    setStatus("error");
-                    setErrorMessage(
-                      "Impossible de joindre Oscar pour le moment. Réessayez dans quelques instants."
-                    );
-                  }
-                };
-                retryInit();
-              }}
+              onClick={retryInit}
               className="px-6 py-3 rounded-full bg-teal-500 text-white font-medium hover:bg-teal-600 transition-all active:scale-95 text-base"
             >
               Réessayer
@@ -328,7 +305,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
           </div>
           <div className="text-center">
             <p className="text-white text-xl font-semibold mb-2">
-              Caméra et micro nécessaires
+              Microphone nécessaire
             </p>
             <p className="text-white/50 text-base max-w-xs leading-relaxed">
               {errorMessage}
@@ -337,9 +314,8 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
           <div className="flex gap-3 mt-2">
             <button
               onClick={() => {
-                // Guide the user — on mobile this usually opens settings
                 toast.info(
-                  "Allez dans les réglages de votre navigateur pour autoriser la caméra et le microphone, puis revenez ici.",
+                  "Allez dans les réglages de votre navigateur pour autoriser le microphone, puis revenez ici.",
                   { duration: 6000 }
                 );
               }}
@@ -379,6 +355,102 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// Animated Orb — visual representation of Oscar (no avatar)
+// ─────────────────────────────────────────────────────────
+type OrbState = "connecting" | "idle" | "speaking";
+
+function OscarOrb({ state }: { state: OrbState }) {
+  const config: Record<OrbState, { gradient: string; speed: string; scale: string; glow: string }> = {
+    connecting: {
+      gradient: "conic-gradient(from 0deg, #4285F4, #34A853, #FBBC05, #EA4335, #4285F4)",
+      speed: "3s",
+      scale: "scale-90",
+      glow: "rgba(66, 133, 244, 0.15)",
+    },
+    idle: {
+      gradient: "conic-gradient(from 0deg, #4285F4, #38b2ac, #4285F4)",
+      speed: "6s",
+      scale: "scale-100",
+      glow: "rgba(56, 178, 172, 0.1)",
+    },
+    speaking: {
+      gradient: "conic-gradient(from 0deg, #34A853, #38b2ac, #4285F4, #34A853)",
+      speed: "2.5s",
+      scale: "scale-110",
+      glow: "rgba(52, 168, 83, 0.2)",
+    },
+  };
+
+  const c = config[state];
+
+  return (
+    <div className="relative w-48 h-48">
+      {/* Outer glow */}
+      <div
+        className={cn(
+          "absolute inset-[-30%] rounded-full transition-all duration-700 blur-3xl",
+          state === "speaking" ? "opacity-80" : "opacity-40"
+        )}
+        style={{
+          background: c.gradient,
+          animation: `orbRotate ${c.speed} linear infinite`,
+        }}
+      />
+      {/* Middle ring (reverse rotation) */}
+      <div
+        className={cn(
+          "absolute inset-[-10%] rounded-full transition-all duration-500 blur-xl",
+          c.scale
+        )}
+        style={{
+          background: c.gradient,
+          animation: `orbRotate ${c.speed} linear infinite reverse`,
+        }}
+      />
+      {/* Core */}
+      <div
+        className={cn(
+          "absolute inset-[10%] rounded-full transition-all duration-500",
+          c.scale
+        )}
+        style={{
+          background: c.gradient,
+          animation: `orbRotate ${c.speed} linear infinite`,
+          boxShadow: `0 0 60px 20px ${c.glow}`,
+        }}
+      />
+      {/* White center breathing */}
+      <div
+        className={cn(
+          "absolute inset-[25%] rounded-full transition-all duration-500",
+          state === "speaking" ? "bg-white/20" : "bg-white/10"
+        )}
+        style={{
+          animation:
+            state === "speaking"
+              ? "orbPulse 0.8s ease-in-out infinite"
+              : state === "connecting"
+              ? "orbPulse 1.5s ease-in-out infinite"
+              : "orbPulse 3s ease-in-out infinite",
+        }}
+      />
+
+      {/* Keyframes */}
+      <style>{`
+        @keyframes orbRotate {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes orbPulse {
+          0%, 100% { transform: scale(1); opacity: 0.7; }
+          50%      { transform: scale(1.1); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
