@@ -299,6 +299,32 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     onClose();
   }, [cleanupAll, onClose]);
 
+  // ─── Fetch Gemini API key ─────────────────────────────────
+  async function fetchGeminiApiKey(): Promise<string | null> {
+    // 1. Try env variable first (local dev)
+    const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (envKey) return envKey;
+
+    // 2. Try Supabase edge function (Lovable production)
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      if (!supabaseUrl || !supabaseKey) return null;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/gemini-key`, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.apiKey || data.key || data.geminiApiKey || null;
+    } catch {
+      return null;
+    }
+  }
+
   // ─── Initialize on open ─────────────────────────────────
   useEffect(() => {
     if (!isOpen) return;
@@ -313,13 +339,8 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     setOutputTranscript("");
 
     async function init() {
-      // 0. Fetch Gemini API key securely from edge function
-      const keyRes = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-key`,
-        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
-      );
-      const keyData = await keyRes.json();
-      const apiKey: string = keyData.key;
+      // 0. Get Gemini API key (env variable or edge function)
+      const apiKey = await fetchGeminiApiKey();
       if (!apiKey) {
         setNoApiKey(true);
         return;
