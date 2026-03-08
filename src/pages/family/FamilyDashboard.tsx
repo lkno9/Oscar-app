@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, MessageCircle, Bell, Heart, Activity, Settings, RefreshCw, Clock, UserPlus, ChevronRight, Sparkles, MessageSquare } from 'lucide-react';
+import { Heart, Activity, Settings, RefreshCw, Clock, UserPlus, ChevronRight, Sparkles, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFamilyLinks } from '@/hooks/useFamilyLinks';
-import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
@@ -29,7 +28,6 @@ interface FamilyDashboardProps {
 export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {}) {
   const { user } = useAuth();
   const { linkedSeniors, loading: linksLoading } = useFamilyLinks();
-  const { unreadCount } = useFamilyMessages();
   const [seniors, setSeniors] = useState<SeniorStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -119,7 +117,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
   ];
   const dailyTip = tips[new Date().getDay() % tips.length];
 
-  const getHour = () => {
+  const getGreeting = () => {
     const h = new Date().getHours();
     if (h < 12) return 'Bonjour';
     if (h < 18) return 'Bon après-midi';
@@ -128,32 +126,28 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
 
   if (loading || linksLoading) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="h-full bg-background overflow-y-auto">
         <div className="px-4 pt-12 pb-4 space-y-3">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-8 w-52" />
         </div>
         <div className="px-4 space-y-4">
-          <div className="flex gap-3">
-            <Skeleton className="h-24 flex-1 rounded-xl" />
-            <Skeleton className="h-24 flex-1 rounded-xl" />
-            <Skeleton className="h-24 flex-1 rounded-xl" />
-          </div>
-          <Skeleton className="h-48 w-full rounded-xl" />
-          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-2xl" />
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <Skeleton className="h-24 w-full rounded-2xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="h-full bg-background overflow-y-auto pb-6">
       {/* Header */}
-      <header className="px-4 pt-12 pb-4">
+      <header className="px-4 pt-10 pb-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{getHour()}</p>
-            <h1 className="text-2xl font-bold text-foreground mt-1">
+            <p className="text-xs font-medium text-muted-foreground">{getGreeting()}</p>
+            <h1 className="text-2xl font-bold text-foreground mt-0.5">
               {userName ? `${userName} 👋` : 'Espace Famille 👋'}
             </h1>
           </div>
@@ -171,57 +165,27 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
       </header>
 
       <main className="px-4 space-y-5">
-        {/* Quick Actions — 3 colonnes */}
-        <div className="grid grid-cols-3 gap-3">
-          <button onClick={() => onNavigate?.("messages")} className="w-full text-left">
-            <div className="bg-card rounded-xl p-4 border border-border active:scale-[0.98] transition-transform">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5 text-primary" />
-                </div>
-                {unreadCount > 0 && (
-                  <span className="px-1.5 h-4 bg-primary rounded-full text-[9px] text-white flex items-center justify-center font-bold">{unreadCount > 9 ? '9+' : unreadCount}</span>
-                )}
-              </div>
-              <p className="font-semibold text-foreground text-xs">Messages</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{unreadCount > 0 ? `${unreadCount} non lu${unreadCount > 1 ? 's' : ''}` : 'Discuter'}</p>
-            </div>
-          </button>
-
-          <button onClick={() => onNavigate?.("oscar")} className="w-full text-left">
-            <div className="bg-card rounded-xl p-4 border border-border active:scale-[0.98] transition-transform">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-              <p className="font-semibold text-foreground text-xs">Chat Oscar</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Assistant IA</p>
-            </div>
-          </button>
-
+        {/* Bandeau alertes si notifs */}
+        {notificationCount > 0 && (
           <Link to="/family/notifications">
-            <div className="bg-card rounded-xl p-4 border border-border active:scale-[0.98] transition-transform">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                  <Bell className="w-5 h-5 text-amber-500" />
-                </div>
-                {notificationCount > 0 && (
-                  <span className="px-1.5 h-4 bg-amber-500 rounded-full text-[9px] text-white flex items-center justify-center font-bold">{notificationCount > 9 ? '9+' : notificationCount}</span>
-                )}
+            <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3 active:scale-[0.99] transition-transform">
+              <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+                <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               </div>
-              <p className="font-semibold text-foreground text-xs">Alertes</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{notificationCount > 0 ? `${notificationCount} nouvelle${notificationCount > 1 ? 's' : ''}` : 'Tout va bien'}</p>
+              <p className="flex-1 text-sm font-medium text-amber-800 dark:text-amber-300">
+                {notificationCount} nouvelle{notificationCount > 1 ? 's' : ''} alerte{notificationCount > 1 ? 's' : ''}
+              </p>
+              <ChevronRight className="w-4 h-4 text-amber-400" />
             </div>
           </Link>
-        </div>
+        )}
 
         {/* Section Mes proches */}
         <div>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Mes proches</h2>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Mes proches</h2>
 
           {seniors.length === 0 ? (
-            <div className="bg-card rounded-xl p-8 text-center border border-border">
+            <div className="bg-card rounded-2xl p-8 text-center border border-border">
               <div className="text-5xl mb-4">👨‍👩‍👧‍👦</div>
               <h3 className="font-bold text-foreground mb-2">Aucun proche lié</h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-[260px] mx-auto leading-relaxed">
@@ -238,49 +202,43 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
             <div className="space-y-3">
               {seniors.map((senior) => (
                 <Link key={senior.id} to={`/family/senior/${senior.id}`}>
-                  <div className={`rounded-xl p-4 active:scale-[0.98] transition-all ${getMoodCardBg(senior.lastMood)}`}>
-                    <div className="flex items-center gap-4 mb-3">
+                  <div className={`rounded-2xl p-4 active:scale-[0.98] transition-all ${getMoodCardBg(senior.lastMood)}`}>
+                    <div className="flex items-center gap-3 mb-4">
                       <div className="relative">
-                        <Avatar className="w-14 h-14 border-2 border-card shadow-sm">
+                        <Avatar className="w-12 h-12 border-2 border-card shadow-sm">
                           <AvatarImage src={senior.avatar || undefined} />
-                          <AvatarFallback className="text-lg bg-primary/10 text-primary font-bold">{senior.name.charAt(0).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback className="text-base bg-primary/10 text-primary font-bold">{senior.name.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <span className="absolute -bottom-1 -right-1 text-lg leading-none">{getMoodEmoji(senior.lastMood)}</span>
+                        <span className="absolute -bottom-1 -right-1 text-base leading-none">{getMoodEmoji(senior.lastMood)}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base text-foreground truncate">{senior.name}</h3>
+                        <h3 className="font-bold text-sm text-foreground truncate">{senior.name}</h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {senior.lastMoodTime
-                            ? `Dernière activité ${format(new Date(senior.lastMoodTime), "EEEE", { locale: fr })}`
+                            ? `Actif ${format(new Date(senior.lastMoodTime), "EEEE d MMM", { locale: fr })}`
                             : 'Pas encore de données'}
                         </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
                     </div>
 
-                    <div className="flex gap-2">
-                      <div className="flex-1 bg-card/80 rounded-xl p-3 text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Heart className="w-3.5 h-3.5 text-rose-400" />
-                          <span className="text-[10px] font-medium text-muted-foreground">Humeur</span>
-                        </div>
-                        <p className="text-xs font-bold text-foreground">{getMoodLabel(senior.lastMood)}</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-card/80 rounded-xl p-2.5 text-center">
+                        <Heart className="w-3.5 h-3.5 text-rose-400 mx-auto mb-1" />
+                        <p className="text-[11px] font-semibold text-foreground leading-tight">{getMoodLabel(senior.lastMood)}</p>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">Humeur</p>
                       </div>
-                      <div className="flex-1 bg-card/80 rounded-xl p-3 text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                          <span className="text-[10px] font-medium text-muted-foreground">Activité</span>
-                        </div>
-                        <p className="text-xs font-bold text-foreground truncate">{senior.lastActivity || '---'}</p>
+                      <div className="bg-card/80 rounded-xl p-2.5 text-center">
+                        <Activity className="w-3.5 h-3.5 text-emerald-400 mx-auto mb-1" />
+                        <p className="text-[11px] font-semibold text-foreground leading-tight truncate">{senior.lastActivity || '---'}</p>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">Activité</p>
                       </div>
-                      <div className="flex-1 bg-card/80 rounded-xl p-3 text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Clock className="w-3.5 h-3.5 text-blue-400" />
-                          <span className="text-[10px] font-medium text-muted-foreground">Dernière</span>
-                        </div>
-                        <p className="text-xs font-bold text-foreground">
+                      <div className="bg-card/80 rounded-xl p-2.5 text-center">
+                        <Clock className="w-3.5 h-3.5 text-blue-400 mx-auto mb-1" />
+                        <p className="text-[11px] font-semibold text-foreground leading-tight">
                           {senior.lastMoodTime ? format(new Date(senior.lastMoodTime), 'd MMM', { locale: fr }) : '---'}
                         </p>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">Dernière</p>
                       </div>
                     </div>
                   </div>
@@ -291,14 +249,14 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
         </div>
 
         {/* Conseil du jour */}
-        <div className="bg-accent rounded-xl p-4 border border-primary/20">
-          <div className="flex gap-3">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-6 h-6 text-primary" />
+        <div className="bg-accent rounded-2xl p-4 border border-primary/20">
+          <div className="flex gap-3 items-start">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Sparkles className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground text-sm">Conseil du jour</h3>
-              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{dailyTip}</p>
+              <p className="text-xs font-semibold text-primary mb-1">Conseil du jour</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{dailyTip}</p>
             </div>
           </div>
         </div>
