@@ -1,42 +1,73 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { PhoneOff, Mic, MicOff, Video, VideoOff, Camera, RotateCcw } from "lucide-react";
-import { streamChat, Message } from "@/lib/oscarChat";
+import { PhoneOff, Mic, MicOff, Video, VideoOff, RotateCcw, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  AudioRecorder,
+  AudioPlayer,
+  GeminiLiveSession,
+  type GeminiEvent,
+} from "@/lib/gemini-live";
 
+// ─── Oscar's system prompt for Gemini Live ───────────────
+const OSCAR_SYSTEM_PROMPT = `Tu es Oscar, un compagnon numérique bienveillant et chaleureux conçu pour aider les seniors au quotidien.
+
+Règles de conversation :
+- Parle toujours en français, de manière simple, claire et chaleureuse
+- Utilise des phrases courtes et faciles à comprendre
+- Sois patient et reformule si nécessaire
+- Vouvoie l'utilisateur par défaut, tutoie-le s'il le demande
+- Sois encourageant et positif
+- Réponds de manière concise (2-3 phrases maximum à l'oral)
+- Présente-toi brièvement au début de la conversation
+
+Tu peux aider avec :
+- Questions du quotidien (météo, recettes, actualités, heure)
+- Aide technologique (utiliser un téléphone, une application, internet, envoyer un SMS)
+- Compagnie et conversation (discuter, raconter des histoires, anecdotes)
+- Santé (rappels généraux, bien-être — toujours recommander de consulter un médecin pour les questions médicales)
+- Sécurité (reconnaître les arnaques téléphoniques/internet, numéros d'urgence : 15 SAMU, 17 Police, 18 Pompiers, 112 Europe)
+
+Si l'utilisateur te montre quelque chose via la caméra, décris ce que tu vois et aide-le en conséquence (lire un document, identifier un produit, expliquer une notice, etc.). Sois descriptif mais concis.`;
+
+// ─── Types ────────────────────────────────────────────────
 interface CallScreenProps {
   isOpen: boolean;
   onClose: () => void;
   initialVideoEnabled?: boolean;
 }
 
-const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
-
 type CallState = "connecting" | "idle" | "listening" | "thinking" | "speaking";
 
+// ─── Main Component ───────────────────────────────────────
 export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: CallScreenProps) {
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(initialVideoEnabled);
-  const [callDuration, setCallDuration] = useState(0);
+  // State
   const [callState, setCallState] = useState<CallState>("connecting");
-  const [liveTranscript, setLiveTranscript] = useState("");
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [callDuration, setCallDuration] = useState(0);
+  const [inputTranscript, setInputTranscript] = useState("");
+  const [outputTranscript, setOutputTranscript] = useState("");
+  const [noApiKey, setNoApiKey] = useState(false);
 
-  const conversationRef = useRef<Message[]>([]);
-  const callTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const recognitionRef = useRef<any>(null);
-  const wantListeningRef = useRef(false);
-  const finalTranscriptRef = useRef("");
-  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const ttsAbortRef = useRef<AbortController | null>(null);
+  // Refs (persistent across renders)
+  const sessionRef = useRef<GeminiLiveSession | null>(null);
+  const recorderRef = useRef<AudioRecorder | null>(null);
+  const playerRef = useRef<AudioPlayer | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const videoStreamRef = useRef<MediaStream | null>(null);
+  const frameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const thinkingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const outputClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(false);
+  const callStateRef = useRef<CallState>("connecting");
 
-  const webSpeechSupported = typeof window !== "undefined" &&
-    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+  // Keep ref in sync with state for use in callbacks
+  callStateRef.current = callState;
 
-  // --- Status text by state ---
+  // ─── Status labels ──────────────────────────────────────
   const statusLabel: Record<CallState, string> = {
     connecting: "Connexion...",
     idle: "En appel avec Oscar",
@@ -45,96 +76,163 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     speaking: "Oscar parle...",
   };
 
-  // --- ElevenLabs TTS (try first) then fallback to browser ---
-  const speakAsOscar = useCallback(async (text: string): Promise<void> => {
-    setCallState("speaking");
+  // ─── Gemini event handler ───────────────────────────────
+  const handleGeminiEvent = useCallback((event: GeminiEvent) => {
+    if (!mountedRef.current) return;
 
+    switch (event.type) {
+      case "connected":
+        setCallState("idle");
+        // Start mic recording — audio streams continuously to Gemini
+        startMicRecording();
+        break;
+
+      case "audio":
+        // Clear any thinking timer
+        if (thinkingTimerRef.current) {
+          clearTimeout(thinkingTimerRef.current);
+          thinkingTimerRef.current = null;
+        }
+        setCallState("speaking");
+        playerRef.current?.resume();
+        playerRef.current?.play(event.data);
+        break;
+
+      case "inputTranscript":
+        setCallState("listening");
+        setInputTranscript((prev) => prev + event.text);
+        // Set thinking timer — if no audio arrives soon, show "thinking"
+        if (thinkingTimerRef.current) clearTimeout(thinkingTimerRef.current);
+        thinkingTimerRef.current = setTimeout(() => {
+          if (callStateRef.current === "listening") {
+            setCallState("thinking");
+          }
+        }, 1200);
+        break;
+
+      case "outputTranscript":
+        setOutputTranscript((prev) => prev + event.text);
+        break;
+
+      case "interrupted":
+        // User interrupted Oscar — stop audio immediately
+        playerRef.current?.stop();
+        setCallState("listening");
+        setOutputTranscript("");
+        if (outputClearTimerRef.current) clearTimeout(outputClearTimerRef.current);
+        break;
+
+      case "turnComplete":
+        setCallState("idle");
+        setInputTranscript("");
+        // Keep output transcript visible briefly, then clear
+        if (outputClearTimerRef.current) clearTimeout(outputClearTimerRef.current);
+        outputClearTimerRef.current = setTimeout(() => {
+          setOutputTranscript("");
+        }, 4000);
+        break;
+
+      case "error":
+        toast.error(event.message);
+        break;
+
+      case "closed":
+        // Connection lost — could reconnect here
+        if (mountedRef.current && callStateRef.current !== "connecting") {
+          toast.error("Connexion perdue avec Oscar");
+        }
+        break;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ─── Start mic recording ────────────────────────────────
+  const startMicRecording = useCallback(async () => {
     try {
-      ttsAbortRef.current?.abort();
-      const abortController = new AbortController();
-      ttsAbortRef.current = abortController;
-
-      const truncated = text.length > 4000 ? text.substring(0, 4000) + "..." : text;
-
-      const response = await fetch(TTS_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ text: truncated }),
-        signal: abortController.signal,
+      const recorder = new AudioRecorder();
+      await recorder.start((base64Pcm) => {
+        sessionRef.current?.sendAudio(base64Pcm);
       });
-
-      if (!response.ok) throw new Error("TTS failed");
-      const blob = await response.blob();
-      if (blob.size === 0) throw new Error("Empty audio");
-
-      const url = URL.createObjectURL(blob);
-      await new Promise<void>((resolve, reject) => {
-        const audio = new Audio(url);
-        currentAudioRef.current = audio;
-        audio.onended = () => { currentAudioRef.current = null; URL.revokeObjectURL(url); resolve(); };
-        audio.onerror = () => { currentAudioRef.current = null; URL.revokeObjectURL(url); reject(new Error("Audio error")); };
-        const playPromise = audio.play();
-        if (playPromise) playPromise.catch(reject);
-      });
-    } catch {
-      await new Promise<void>((resolve) => {
-        if (!("speechSynthesis" in window)) { resolve(); return; }
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "fr-FR";
-        utterance.rate = 0.95;
-        utterance.onend = () => resolve();
-        utterance.onerror = () => resolve();
-        window.speechSynthesis.speak(utterance);
-      });
+      recorderRef.current = recorder;
+    } catch (err) {
+      console.error("[CallScreen] Mic error:", err);
+      toast.error("Impossible d'accéder au microphone");
     }
-
-    setCallState("idle");
-    ttsAbortRef.current = null;
   }, []);
 
-  const stopOscarSpeech = useCallback(() => {
-    ttsAbortRef.current?.abort();
-    ttsAbortRef.current = null;
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current = null;
+  // ─── Camera management ──────────────────────────────────
+  const startCamera = useCallback(async (facing: "user" | "environment") => {
+    // Stop existing video tracks
+    if (videoStreamRef.current) {
+      videoStreamRef.current.getTracks().forEach((t) => t.stop());
+      videoStreamRef.current = null;
     }
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    setCallState("idle");
-  }, []);
+    if (frameIntervalRef.current) {
+      clearInterval(frameIntervalRef.current);
+      frameIntervalRef.current = null;
+    }
 
-  // --- Camera ---
-  const startCamera = useCallback(async (facing: "user" | "environment" = "user") => {
-    // Stop existing stream first
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: {
+          facingMode: facing, // Don't use 'exact' — fails on desktop
+          width: { ideal: 768 },
+          height: { ideal: 768 },
+        },
         audio: false,
       });
-      streamRef.current = stream;
+
+      videoStreamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
       setIsVideoEnabled(true);
       setFacingMode(facing);
+
+      // Start capturing frames at 1 FPS for Gemini
+      const canvas = document.createElement("canvas");
+      canvas.width = 768;
+      canvas.height = 768;
+      const ctx = canvas.getContext("2d");
+
+      frameIntervalRef.current = setInterval(() => {
+        if (!videoRef.current || !ctx || !sessionRef.current?.isConnected) return;
+        try {
+          ctx.drawImage(videoRef.current, 0, 0, 768, 768);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+          const base64 = dataUrl.split(",")[1];
+          if (base64) {
+            sessionRef.current.sendImage(base64);
+          }
+        } catch {
+          /* canvas draw can fail if video not ready */
+        }
+      }, 1000);
     } catch {
-      toast.error("Impossible d'accéder à la caméra.");
-      setIsVideoEnabled(false);
+      // Fallback: try without facingMode constraint (desktop with single camera)
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 768 }, height: { ideal: 768 } },
+          audio: false,
+        });
+        videoStreamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
+        setIsVideoEnabled(true);
+      } catch {
+        toast.error("Impossible d'accéder à la caméra");
+        setIsVideoEnabled(false);
+      }
     }
   }, []);
 
   const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
+    if (frameIntervalRef.current) {
+      clearInterval(frameIntervalRef.current);
+      frameIntervalRef.current = null;
+    }
+    if (videoStreamRef.current) {
+      videoStreamRef.current.getTracks().forEach((t) => t.stop());
+      videoStreamRef.current = null;
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -155,212 +253,179 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     startCamera(newFacing);
   }, [facingMode, startCamera]);
 
-  // --- STT: Web Speech API with auto-restart ---
-  const startListeningInternal = useCallback(() => {
-    if (!webSpeechSupported) return;
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = "fr-FR";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-
-    recognition.onresult = (event: any) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          finalTranscriptRef.current += result[0].transcript;
-        } else {
-          interim += result[0].transcript;
-        }
-      }
-      const fullText = finalTranscriptRef.current + interim;
-      setLiveTranscript(fullText);
-
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = setTimeout(() => {
-        if (finalTranscriptRef.current.trim()) {
-          const text = finalTranscriptRef.current.trim();
-          finalTranscriptRef.current = "";
-          setLiveTranscript("");
-          wantListeningRef.current = false;
-          recognition.stop();
-          processUserSpeech(text);
-        }
-      }, 2000);
-    };
-
-    recognition.onend = () => {
-      if (wantListeningRef.current) {
-        try { recognition.start(); return; } catch { /* fall through */ }
-      }
-      if (callState === "listening") setCallState("idle");
-    };
-
-    recognition.onerror = (event: any) => {
-      if (event.error === "no-speech" || event.error === "aborted") return;
-      wantListeningRef.current = false;
-      if (callState === "listening") setCallState("idle");
-      if (event.error === "not-allowed") {
-        toast.error("Accès au microphone refusé.");
-      }
-    };
-
-    try {
-      recognition.start();
-      recognitionRef.current = recognition;
-      setCallState("listening");
-    } catch { /* already running */ }
-  }, [webSpeechSupported, callState]);
-
-  const startListening = useCallback(() => {
-    finalTranscriptRef.current = "";
-    setLiveTranscript("");
-    wantListeningRef.current = true;
-    startListeningInternal();
-  }, [startListeningInternal]);
-
-  const stopListening = useCallback(() => {
-    wantListeningRef.current = false;
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-    setLiveTranscript("");
-    finalTranscriptRef.current = "";
-  }, []);
-
-  // --- Process user speech → Mistral → Oscar speaks ---
-  const processUserSpeech = useCallback(async (userText: string) => {
-    if (!userText.trim()) return;
-
-    setCallState("thinking");
-    setLiveTranscript("");
-
-    conversationRef.current = [
-      ...conversationRef.current,
-      { role: "user", content: userText },
-    ];
-
-    let oscarResponse = "";
-
-    await streamChat({
-      messages: conversationRef.current,
-      onDelta: (chunk) => {
-        oscarResponse += chunk;
-      },
-      onDone: async () => {
-        conversationRef.current = [
-          ...conversationRef.current,
-          { role: "assistant", content: oscarResponse },
-        ];
-
-        await speakAsOscar(oscarResponse);
-
-        if (!isMuted) {
-          setTimeout(() => startListening(), 300);
-        }
-      },
-      onError: (error) => {
-        toast.error(error);
-        setCallState("idle");
-        if (!isMuted) {
-          setTimeout(() => startListening(), 500);
-        }
-      },
-    });
-  }, [isMuted, speakAsOscar, startListening]);
-
-  // --- Toggle mute ---
+  // ─── Mute toggle ────────────────────────────────────────
   const toggleMute = useCallback(() => {
     if (isMuted) {
+      recorderRef.current?.unmute();
       setIsMuted(false);
-      startListening();
     } else {
+      recorderRef.current?.mute();
       setIsMuted(true);
-      stopListening();
-      setCallState("idle");
     }
-  }, [isMuted, startListening, stopListening]);
+  }, [isMuted]);
 
-  // --- Initialize / cleanup ---
+  // ─── Cleanup helper ─────────────────────────────────────
+  const cleanupAll = useCallback(() => {
+    // Timers
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (thinkingTimerRef.current) clearTimeout(thinkingTimerRef.current);
+    if (outputClearTimerRef.current) clearTimeout(outputClearTimerRef.current);
+    timerRef.current = null;
+    thinkingTimerRef.current = null;
+    outputClearTimerRef.current = null;
+
+    // Audio
+    recorderRef.current?.stop();
+    recorderRef.current = null;
+    playerRef.current?.destroy();
+    playerRef.current = null;
+
+    // Camera
+    if (frameIntervalRef.current) clearInterval(frameIntervalRef.current);
+    frameIntervalRef.current = null;
+    if (videoStreamRef.current) {
+      videoStreamRef.current.getTracks().forEach((t) => t.stop());
+      videoStreamRef.current = null;
+    }
+
+    // Gemini session
+    sessionRef.current?.disconnect();
+    sessionRef.current = null;
+  }, []);
+
+  // ─── End call ───────────────────────────────────────────
+  const handleEndCall = useCallback(() => {
+    cleanupAll();
+    onClose();
+  }, [cleanupAll, onClose]);
+
+  // ─── Initialize on open ─────────────────────────────────
   useEffect(() => {
-    if (isOpen) {
-      conversationRef.current = [];
-      setCallDuration(0);
-      setIsMuted(false);
-      setCallState("connecting");
-      setLiveTranscript("");
+    if (!isOpen) return;
 
-      callTimerRef.current = setInterval(() => {
-        setCallDuration(prev => prev + 1);
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      setNoApiKey(true);
+      return;
+    }
+
+    mountedRef.current = true;
+    setNoApiKey(false);
+    setCallState("connecting");
+    setCallDuration(0);
+    setIsMuted(false);
+    setIsVideoEnabled(false);
+    setInputTranscript("");
+    setOutputTranscript("");
+
+    async function init() {
+      // 1. Init audio player (for Gemini's responses)
+      const player = new AudioPlayer();
+      await player.init();
+      playerRef.current = player;
+
+      // 2. Create and connect Gemini Live session
+      const session = new GeminiLiveSession({
+        apiKey,
+        systemPrompt: OSCAR_SYSTEM_PROMPT,
+        voiceName: "Kore",
+        onEvent: handleGeminiEvent,
+      });
+      sessionRef.current = session;
+      session.connect();
+
+      // 3. Start call timer
+      timerRef.current = setInterval(() => {
+        setCallDuration((d) => d + 1);
       }, 1000);
 
+      // 4. Start camera if requested
       if (initialVideoEnabled) {
-        startCamera();
+        // Wait a bit for session to establish
+        setTimeout(() => startCamera("user"), 1500);
       }
-
-      const greetTimeout = setTimeout(async () => {
-        const greeting = "Bonjour ! Je suis Oscar, votre compagnon numérique. Comment puis-je vous aider ?";
-        conversationRef.current = [{ role: "assistant", content: greeting }];
-        await speakAsOscar(greeting);
-        startListening();
-      }, 800);
-
-      return () => {
-        clearTimeout(greetTimeout);
-      };
-    } else {
-      if (callTimerRef.current) clearInterval(callTimerRef.current);
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      stopListening();
-      stopOscarSpeech();
-      stopCamera();
-      conversationRef.current = [];
-      setCallDuration(0);
     }
+
+    init().catch((err) => {
+      console.error("[CallScreen] Init error:", err);
+      toast.error("Erreur d'initialisation de l'appel");
+    });
+
+    return () => {
+      mountedRef.current = false;
+      cleanupAll();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // --- End call ---
-  const handleEndCall = useCallback(() => {
-    stopListening();
-    stopOscarSpeech();
-    stopCamera();
-    if (callTimerRef.current) clearInterval(callTimerRef.current);
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    onClose();
-  }, [stopListening, stopOscarSpeech, stopCamera, onClose]);
-
+  // ─── Format duration ────────────────────────────────────
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // ─── Transcript to display ──────────────────────────────
+  const displayTranscript = callState === "listening" || callState === "thinking"
+    ? inputTranscript
+    : outputTranscript;
+  const transcriptLabel = callState === "listening" || callState === "thinking"
+    ? "Vous"
+    : "Oscar";
+
+  // ─── Render ─────────────────────────────────────────────
   if (!isOpen) return null;
+
+  // Missing API key screen
+  if (noApiKey) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-8" style={{ background: "#000" }}>
+        <KeyRound className="w-16 h-16 text-white/30 mb-6" />
+        <p className="text-white text-lg text-center font-medium mb-2">
+          Clé API Gemini requise
+        </p>
+        <p className="text-white/50 text-sm text-center max-w-xs mb-8 leading-relaxed">
+          Pour activer les appels vocaux avec Oscar, ajoutez votre clé API Google Gemini
+          dans le fichier <span className="text-white/70 font-mono">.env</span>
+        </p>
+        <p className="text-white/30 text-xs font-mono mb-8">VITE_GEMINI_API_KEY=votre_clé</p>
+        <button
+          onClick={onClose}
+          className="px-6 py-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+        >
+          Fermer
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "#000" }}>
       {/* Top status bar */}
       <div className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),16px)] pb-3">
         <div className="flex items-center gap-3">
-          <div className={cn(
-            "w-2.5 h-2.5 rounded-full",
-            callState === "connecting" ? "bg-yellow-500 animate-pulse" :
-            callState === "speaking" ? "bg-green-400 animate-pulse" :
-            callState === "listening" ? "bg-blue-400 animate-pulse" :
-            callState === "thinking" ? "bg-purple-400 animate-pulse" :
-            "bg-green-500"
-          )} />
-          <span className="text-white/80 text-sm font-medium">{statusLabel[callState]}</span>
+          <div
+            className={cn(
+              "w-2.5 h-2.5 rounded-full",
+              callState === "connecting" ? "bg-yellow-500 animate-pulse" :
+              callState === "speaking" ? "bg-green-400 animate-pulse" :
+              callState === "listening" ? "bg-blue-400 animate-pulse" :
+              callState === "thinking" ? "bg-purple-400 animate-pulse" :
+              "bg-green-500"
+            )}
+          />
+          <span className="text-white/80 text-sm font-medium">
+            {statusLabel[callState]}
+          </span>
         </div>
-        <span className="text-white/50 text-sm font-mono tabular-nums">{formatDuration(callDuration)}</span>
+        <span className="text-white/50 text-sm font-mono tabular-nums">
+          {formatDuration(callDuration)}
+        </span>
       </div>
 
       {/* Main content area */}
       <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-        {/* Camera viewfinder (takes most of screen when active) */}
+        {/* Camera viewfinder (full screen when active) */}
         {isVideoEnabled ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <video
@@ -371,10 +436,12 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
               className="w-full h-full object-cover"
               style={facingMode === "user" ? { transform: "scaleX(-1)" } : undefined}
             />
-            {/* Camera overlay gradient (top + bottom) */}
-            <div className="absolute inset-0 pointer-events-none"
+            {/* Camera overlay gradient */}
+            <div
+              className="absolute inset-0 pointer-events-none"
               style={{
-                background: "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 20%, transparent 75%, rgba(0,0,0,0.8) 100%)"
+                background:
+                  "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 20%, transparent 75%, rgba(0,0,0,0.8) 100%)",
               }}
             />
             {/* Switch camera button */}
@@ -395,20 +462,27 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
           <div className="flex flex-col items-center gap-8">
             <GeminiOrb state={callState} size="lg" />
             <p className="text-white/40 text-sm font-medium tracking-wide uppercase">
-              {callState === "listening" ? "Parlez maintenant" :
-               callState === "speaking" ? "Oscar vous répond" :
-               callState === "thinking" ? "Un instant..." :
-               callState === "connecting" ? "Démarrage..." :
-               "En attente"}
+              {callState === "listening"
+                ? "Parlez maintenant"
+                : callState === "speaking"
+                ? "Oscar vous répond"
+                : callState === "thinking"
+                ? "Un instant..."
+                : callState === "connecting"
+                ? "Connexion à Oscar..."
+                : "En attente"}
             </p>
           </div>
         )}
 
         {/* Live transcript overlay */}
-        {liveTranscript && (
+        {displayTranscript && (
           <div className="absolute bottom-6 left-4 right-4 z-10">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl px-5 py-3 border border-white/10">
-              <p className="text-white text-base text-center leading-relaxed">{liveTranscript}</p>
+              <p className="text-white/50 text-xs text-center mb-1">{transcriptLabel}</p>
+              <p className="text-white text-base text-center leading-relaxed">
+                {displayTranscript}
+              </p>
             </div>
           </div>
         )}
@@ -459,16 +533,15 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
   );
 }
 
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 // Animated Orb component (Gemini Live–style)
-// ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 function GeminiOrb({ state, size = "lg" }: { state: CallState; size?: "sm" | "lg" }) {
   const isSmall = size === "sm";
   const dim = isSmall ? "w-10 h-10" : "w-48 h-48";
   const blurLg = isSmall ? "blur-md" : "blur-3xl";
   const blurMd = isSmall ? "blur-sm" : "blur-xl";
 
-  // Colors and animation speed by state
   const config: Record<CallState, { gradient: string; speed: string; scale: string; glow: string }> = {
     connecting: {
       gradient: "conic-gradient(from 0deg, #4285F4, #34A853, #FBBC05, #EA4335, #4285F4)",
@@ -518,12 +591,12 @@ function GeminiOrb({ state, size = "lg" }: { state: CallState; size?: "sm" | "lg
           animation: `orbRotate ${c.speed} linear infinite`,
         }}
       />
-      {/* Middle ring */}
+      {/* Middle ring (reverse rotation) */}
       <div
         className={cn(
           "absolute inset-[-10%] rounded-full transition-all duration-500",
           blurMd,
-          c.scale,
+          c.scale
         )}
         style={{
           background: c.gradient,
@@ -542,28 +615,31 @@ function GeminiOrb({ state, size = "lg" }: { state: CallState; size?: "sm" | "lg
           boxShadow: `0 0 ${isSmall ? 15 : 60}px ${isSmall ? 5 : 20}px ${c.glow}`,
         }}
       />
-      {/* White center dot / breathing */}
+      {/* White center breathing */}
       {!isSmall && (
         <div
           className={cn(
             "absolute inset-[25%] rounded-full transition-all duration-500",
-            state === "speaking" ? "bg-white/20" :
-            state === "listening" ? "bg-white/15" :
-            "bg-white/10"
+            state === "speaking"
+              ? "bg-white/20"
+              : state === "listening"
+              ? "bg-white/15"
+              : "bg-white/10"
           )}
           style={{
-            animation: state === "speaking"
-              ? "orbPulse 0.8s ease-in-out infinite"
-              : state === "listening"
-              ? "orbPulse 1.5s ease-in-out infinite"
-              : state === "thinking"
-              ? "orbPulse 1s ease-in-out infinite"
-              : "orbPulse 3s ease-in-out infinite",
+            animation:
+              state === "speaking"
+                ? "orbPulse 0.8s ease-in-out infinite"
+                : state === "listening"
+                ? "orbPulse 1.5s ease-in-out infinite"
+                : state === "thinking"
+                ? "orbPulse 1s ease-in-out infinite"
+                : "orbPulse 3s ease-in-out infinite",
           }}
         />
       )}
 
-      {/* Inject keyframes once */}
+      {/* Keyframes */}
       <style>{`
         @keyframes orbRotate {
           from { transform: rotate(0deg); }
