@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Phone, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
+import { Phone, Video, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { OscarAvatar } from "@/components/OscarAvatar";
@@ -548,17 +548,24 @@ export function HomePage() {
             <span className="text-xs font-medium text-[#48A29E]">En ligne</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all active:scale-95"
             aria-label="Appel audio"
           >
             <Phone className="w-[18px] h-[18px]" />
           </button>
           <button
+            onClick={() => { setCallType("video"); setIsCallOpen(true); }}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all active:scale-95"
+            aria-label="Appel vidéo"
+          >
+            <Video className="w-[18px] h-[18px]" />
+          </button>
+          <button
             onClick={() => navigate("/settings")}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all active:scale-95"
             aria-label="Paramètres"
           >
             <Settings className="w-[18px] h-[18px]" />

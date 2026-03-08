@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { CallScreen } from "@/components/CallScreen";
 
 interface FamilyContact {
   id: string;
@@ -44,6 +45,8 @@ export function CommunicationPage() {
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState("");
   const [selectedContact, setSelectedContact] = useState<FamilyContact | null>(null);
+  const [isCallOpen, setIsCallOpen] = useState(false);
+  const [callType, setCallType] = useState<"audio" | "video">("audio");
 
   useEffect(() => {
     if (user) {
@@ -209,11 +212,11 @@ export function CommunicationPage() {
           <TabsContent value="calls" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
             {/* Quick call buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <Button className="h-auto py-4 flex-col gap-2 min-h-[72px]" size="lg" onClick={() => toast.info("Les appels seront bientôt disponibles")}>
+              <Button className="h-auto py-4 flex-col gap-2 min-h-[72px]" size="lg" onClick={() => { setCallType("audio"); setIsCallOpen(true); }}>
                 <Phone className="w-6 h-6" />
                 <span className="text-base">Appel audio</span>
               </Button>
-              <Button variant="secondary" className="h-auto py-4 flex-col gap-2 min-h-[72px]" size="lg" onClick={() => toast.info("Les appels seront bientôt disponibles")}>
+              <Button variant="secondary" className="h-auto py-4 flex-col gap-2 min-h-[72px]" size="lg" onClick={() => { setCallType("video"); setIsCallOpen(true); }}>
                 <Video className="w-6 h-6" />
                 <span className="text-base">Appel vidéo</span>
               </Button>
@@ -272,6 +275,13 @@ export function CommunicationPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Oscar Call Screen */}
+      <CallScreen
+        isOpen={isCallOpen}
+        onClose={() => setIsCallOpen(false)}
+        initialVideoEnabled={callType === "video"}
+      />
     </div>
   );
 }
