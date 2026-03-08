@@ -96,12 +96,10 @@ const App = () => (
             <Route path="/settings" element={<ProtectedRoute><SubPageLayout><SettingsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/settings/family-access" element={<ProtectedRoute><SubPageLayout><FamilyAccessPage /></SubPageLayout></ProtectedRoute>} />
             {/* Family Interface Routes */}
-            <Route path="/family" element={<ProtectedRoute><SubPageLayout><FamilyDashboard /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/family" element={<ProtectedRoute><FamilyIndex /></ProtectedRoute>} />
             <Route path="/family/senior/:seniorId" element={<ProtectedRoute><SubPageLayout><SeniorDetailPage /></SubPageLayout></ProtectedRoute>} />
-            <Route path="/family/messages" element={<ProtectedRoute><SubPageLayout><FamilyMessagesPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/notifications" element={<ProtectedRoute><SubPageLayout><FamilyNotificationsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/settings" element={<ProtectedRoute><SubPageLayout><FamilySettingsPage /></SubPageLayout></ProtectedRoute>} />
-            <Route path="/family/chat" element={<ProtectedRoute><FamilyChatPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
