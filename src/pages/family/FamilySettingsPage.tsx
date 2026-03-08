@@ -22,7 +22,7 @@ export default function FamilySettingsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleAcceptInvitation = async () => {
-    if (!invitationCode.trim()) { toast.error('Veuillez entrer un code d\'invitation'); return; }
+    if (!invitationCode.trim()) { toast.error("Veuillez entrer un code d'invitation"); return; }
     setSubmitting(true);
     const { error } = await acceptInvitation(invitationCode.trim().toUpperCase());
     setSubmitting(false);
@@ -37,93 +37,108 @@ export default function FamilySettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 pb-24">
-        <div className="bg-white/80 px-5 py-4 border-b border-stone-100"><Skeleton className="h-6 w-32" /></div>
-        <div className="p-5 space-y-6"><Skeleton className="h-56 w-full rounded-2xl" /><Skeleton className="h-40 w-full rounded-2xl" /></div>
+      <div className="min-h-screen bg-background pb-24">
+        <div className="bg-card px-4 py-4 border-b border-border"><Skeleton className="h-6 w-32" /></div>
+        <div className="p-4 space-y-4">
+          <Skeleton className="h-56 w-full rounded-xl" />
+          <Skeleton className="h-40 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-stone-100 px-5 py-4 sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <Link to="/family">
-            <Button variant="ghost" size="icon" className="rounded-full text-stone-500 hover:bg-stone-100 h-9 w-9"><ArrowLeft className="w-5 h-5" /></Button>
-          </Link>
-          <h1 className="text-lg font-bold text-stone-800">Paramètres</h1>
-        </div>
+      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3 sticky top-0 z-10">
+        <Link to="/family">
+          <button className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+        </Link>
+        <h1 className="text-lg font-bold text-foreground">Paramètres</h1>
       </header>
 
-      <main className="p-5 space-y-6">
-        {/* Invitation Code */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <UserPlus className="w-5 h-5 text-primary" />
+      <main className="p-4 space-y-4">
+        {/* Carte rejoindre un proche */}
+        <div className="bg-card rounded-xl p-5 border border-border">
+          <div className="flex items-start gap-4 mb-5">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <UserPlus className="w-6 h-6 text-primary" />
             </div>
-            <div>
-              <h2 className="font-bold text-stone-800">Rejoindre un proche</h2>
-              <p className="text-xs text-stone-400">Entrez le code de votre proche</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-foreground">Rejoindre un proche</h2>
+              <p className="text-sm text-muted-foreground">Entrez le code de votre proche</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="invitation-code" className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Code d'invitation</Label>
+              <Label htmlFor="invitation-code" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Code d'invitation</Label>
               <Input
                 id="invitation-code"
                 value={invitationCode}
                 onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
                 placeholder="A1B2C3D4"
                 maxLength={8}
-                className="font-mono text-2xl tracking-[0.4em] uppercase text-center h-14 rounded-xl border-stone-200 bg-stone-50 focus:bg-white mt-2"
+                className="font-mono text-2xl tracking-[0.4em] uppercase text-center h-14 rounded-xl mt-2"
               />
               <div className="flex justify-center gap-1.5 mt-3">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className={`w-2 h-2 rounded-full transition-all ${i < invitationCode.length ? 'bg-primary scale-110' : 'bg-stone-200'}`} />
+                  <div key={i} className={`w-2 h-2 rounded-full transition-all ${i < invitationCode.length ? 'bg-primary scale-110' : 'bg-border'}`} />
                 ))}
               </div>
             </div>
 
-            <Button onClick={handleAcceptInvitation} disabled={submitting || invitationCode.length < 8} className="w-full h-12 rounded-xl text-base font-semibold">
-              {submitting ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />Validation...</>) : 'Valider le code'}
+            <Button
+              onClick={handleAcceptInvitation}
+              disabled={submitting || invitationCode.length < 8}
+              className="w-full gap-2 min-h-[52px]"
+              size="lg"
+            >
+              {submitting ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Validation...</>
+              ) : 'Valider le code'}
             </Button>
           </div>
         </div>
 
-        {/* Linked Seniors */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 flex items-center justify-center">
-              <Users className="w-5 h-5 text-purple-500" />
+        {/* Proches liés */}
+        <div className="bg-card rounded-xl p-5 border border-border">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+              <Users className="w-6 h-6 text-muted-foreground" />
             </div>
-            <h2 className="font-bold text-stone-800">Mes proches liés</h2>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-foreground">Mes proches liés</h2>
+              <p className="text-sm text-muted-foreground">{linkedSeniors.length} proche{linkedSeniors.length > 1 ? 's' : ''}</p>
+            </div>
           </div>
 
           {linkedSeniors.length === 0 ? (
             <div className="text-center py-6">
               <div className="text-4xl mb-3">👥</div>
-              <p className="text-sm text-stone-400">Aucun proche lié pour le moment</p>
+              <p className="text-sm text-muted-foreground">Aucun proche lié pour le moment</p>
             </div>
           ) : (
             <div className="space-y-3">
               {linkedSeniors.map((link) => (
-                <div key={link.id} className="flex items-center justify-between p-3 rounded-xl bg-stone-50">
+                <div key={link.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary">
                   <div className="flex items-center gap-3">
-                    <Avatar className="w-11 h-11 border-2 border-white shadow-sm">
+                    <Avatar className="w-11 h-11">
                       <AvatarImage src={link.senior_profile?.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary/10 text-primary font-bold">{link.senior_profile?.full_name?.charAt(0).toUpperCase() || 'S'}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold text-stone-800 text-sm">{link.senior_profile?.full_name || 'Mon proche'}</p>
-                      <Badge variant="secondary" className="text-[10px] mt-0.5 bg-stone-200/50 text-stone-500">{link.relationship}</Badge>
+                      <p className="font-semibold text-foreground text-sm">{link.senior_profile?.full_name || 'Mon proche'}</p>
+                      <Badge variant="secondary" className="text-[10px] mt-0.5">{link.relationship}</Badge>
                     </div>
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-full h-9 w-9"><Trash2 className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-9 w-9">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -142,8 +157,11 @@ export default function FamilySettingsPage() {
           )}
         </div>
 
-        {/* Sign Out */}
-        <button onClick={() => signOut()} className="w-full py-3.5 rounded-xl text-sm font-semibold text-red-500 bg-white border border-red-100 hover:bg-red-50 transition-colors flex items-center justify-center gap-2">
+        {/* Déconnexion */}
+        <button
+          onClick={() => signOut()}
+          className="w-full py-4 rounded-xl text-sm font-semibold text-destructive bg-card border border-border hover:bg-destructive/5 transition-colors flex items-center justify-center gap-2"
+        >
           <LogOut className="w-4 h-4" />
           Se déconnecter
         </button>
