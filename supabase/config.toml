@@ -1,8 +1,5 @@
 project_id = "ehalcuqxjpdykpmjxxrn"
 
-[functions.gemini-key]
-verify_jwt = false
-
 [functions.oscar-chat]
 verify_jwt = false
 
@@ -24,4 +21,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-image]
+verify_jwt = false
+
+[functions.custom-sms-hook]
 verify_jwt = false

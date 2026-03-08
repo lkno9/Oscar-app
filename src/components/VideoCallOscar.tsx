@@ -17,10 +17,9 @@ import {
   RoomAudioRenderer,
   useAgent,
   useConnectionState,
-  useLocalParticipant,
+  useRoomContext,
   useTrackToggle,
 } from "@livekit/components-react";
-import { TokenSource } from "livekit-client";
 import { Track, ConnectionState } from "livekit-client";
 import {
   PhoneOff,
@@ -45,13 +44,10 @@ interface VideoCallOscarProps {
   initialVideoEnabled?: boolean;
 }
 
-// ─── Token Source ────────────────────────────────────────
+// ─── Token Server ────────────────────────────────────────
 // TODO (prod) : Proxifier via Xano pour ne pas exposer l'URL du token server
 const tokenServerUrl = import.meta.env.VITE_LIVEKIT_TOKEN_SERVER_URL || "";
-
-function getTokenSource() {
-  return TokenSource.endpoint(tokenServerUrl);
-}
+const livekitUrl = import.meta.env.VITE_LIVEKIT_URL || "";
 
 // ─── Main Component ─────────────────────────────────────
 export function VideoCallOscar({
@@ -86,8 +82,7 @@ export function VideoCallOscar({
   return (
     <LiveKitRoom
       token=""
-      serverUrl=""
-      tokenSource={getTokenSource()}
+      serverUrl={livekitUrl}
       connect={true}
       video={initialVideoEnabled}
       audio={true}
@@ -111,7 +106,7 @@ function CallContent({
 }) {
   const connectionState = useConnectionState();
   const agent = useAgent();
-  const { localParticipant } = useLocalParticipant();
+  const room = useRoomContext();
   const [callDuration, setCallDuration] = useState(0);
 
   // Timer
@@ -128,9 +123,9 @@ function CallContent({
   };
 
   const handleEndCall = useCallback(() => {
-    localParticipant?.disconnect();
+    room?.disconnect();
     onClose();
-  }, [localParticipant, onClose]);
+  }, [room, onClose]);
 
   // ── Connecting state ──
   if (
@@ -213,7 +208,7 @@ function CallContent({
         <AgentAudioVisualizerAura
           size="xl"
           state={agent.state ?? "connecting"}
-          audioTrack={agent.audioTrack}
+          audioTrack={agent.microphoneTrack}
           color={OSCAR_TEAL as `#${string}`}
           themeMode="dark"
         />
