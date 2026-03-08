@@ -10,7 +10,7 @@
 // ─── Constants ────────────────────────────────────────────
 const WS_URL =
   "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
-const MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
+const MODEL = "gemini-2.0-flash-live-001";
 const INPUT_SAMPLE_RATE = 16000;
 const OUTPUT_SAMPLE_RATE = 24000;
 const SCRIPT_BUFFER_SIZE = 4096;
@@ -339,15 +339,17 @@ export class GeminiLiveSession {
     this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {
+      console.log("[GeminiLive] WebSocket connected, sending setup...");
       this.sendSetup();
     };
 
     this.ws.onmessage = (event: MessageEvent) => {
       try {
         const msg = JSON.parse(event.data as string);
+        console.log("[GeminiLive] Received:", Object.keys(msg));
         this.handleMessage(msg);
       } catch (err) {
-        console.error("[GeminiLive] Parse error:", err);
+        console.error("[GeminiLive] Parse error:", err, event.data);
       }
     };
 
@@ -450,7 +452,19 @@ export class GeminiLiveSession {
     // Go-away (session termination warning)
     if (msg.goAway) {
       console.warn("[GeminiLive] GoAway received, time left:", msg.goAway.timeLeft);
+      return;
     }
+
+    // Error from server
+    if (msg.error) {
+      console.error("[GeminiLive] Server error:", msg.error);
+      const errMsg = msg.error.message || msg.error.status || JSON.stringify(msg.error);
+      this.config.onEvent({ type: "error", message: `Erreur serveur: ${errMsg}` });
+      return;
+    }
+
+    // Unknown message — log for debugging
+    console.warn("[GeminiLive] Unknown message:", JSON.stringify(msg).substring(0, 200));
   }
 
   sendAudio(base64Pcm: string): void {
