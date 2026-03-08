@@ -64,6 +64,10 @@ export function useMistralChat({
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
+      // Timeout: 45s for image requests, 30s for text-only
+      const timeoutMs = imageBase64 ? 45000 : 30000;
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
       try {
         // Build messages: history (text only) + current message (with image if any)
         const messagesToSend = imageBase64
@@ -83,7 +87,17 @@ export function useMistralChat({
           signal: controller.signal,
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
+          if (response.status === 413) {
+            onErrorRef.current("Le fichier est trop volumineux. Essayez une image plus petite.");
+            return;
+          }
+          if (response.status === 408 || response.status === 504) {
+            onErrorRef.current("Connexion trop lente. Vérifiez votre connexion internet et réessayez.");
+            return;
+          }
           const errorData = await response.json().catch(() => ({}));
           onErrorRef.current(
             errorData.error || "Une erreur est survenue avec Oscar."
@@ -165,8 +179,15 @@ export function useMistralChat({
 
         onDoneRef.current(fullText);
       } catch (err: unknown) {
-        if (err instanceof Error && err.name === "AbortError") return;
-        onErrorRef.current("Erreur de connexion. Veuillez réessayer.");
+        clearTimeout(timeoutId);
+        if (err instanceof Error && err.name === "AbortError") {
+          // Check if it was our timeout or a user cancel
+          if (!abortControllerRef.current || abortControllerRef.current === controller) {
+            onErrorRef.current("La connexion a pris trop de temps. Vérifiez votre réseau et réessayez.");
+          }
+          return;
+        }
+        onErrorRef.current("Erreur de connexion. Vérifiez votre réseau et réessayez.");
       }
     },
     []

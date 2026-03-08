@@ -185,7 +185,7 @@ export function PhotosPage() {
 
           {/* PHOTOS TAB */}
           <TabsContent value="photos" className="flex-1 overflow-y-auto p-4 space-y-6 pb-8 mt-0">
-            <input type="file" ref={fileInputRef} className="hidden" accept={IMAGE_ACCEPT} capture="environment" onChange={handlePhotoUpload} />
+            <input type="file" ref={fileInputRef} className="hidden" accept={IMAGE_ACCEPT} onChange={handlePhotoUpload} />
 
             <Button className="w-full min-h-[56px] gap-2" size="lg" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               <Camera className="w-6 h-6" />

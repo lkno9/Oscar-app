@@ -288,7 +288,6 @@ export function PrescriptionsPage() {
                 onChange={handleFileSelect}
                 className="hidden"
                 accept={DOCUMENT_ACCEPT}
-                capture="environment"
               />
               <Button
                 type="button"

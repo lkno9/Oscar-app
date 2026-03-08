@@ -664,22 +664,18 @@ export function HomePage() {
             }}
           />
           <div className="flex items-center justify-between gap-2">
-            {/* Plus/attach button */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#48A29E] hover:bg-[#48A29E]/5 transition-all"
-            >
+            {/* Plus/attach button — uses <label> for iOS Safari compat (input.click() unreliable) */}
+            <label className="w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center text-slate-400 hover:text-[#48A29E] hover:bg-[#48A29E]/5 transition-all cursor-pointer active:scale-95">
               <Paperclip className="w-[18px] h-[18px]" />
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple={false}
-              accept={ANALYSIS_ACCEPT}
-              onChange={handleFileChange}
-              className="hidden"
-            />
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple={false}
+                accept={ANALYSIS_ACCEPT}
+                onChange={handleFileChange}
+                className="sr-only"
+              />
+            </label>
 
             <div className="flex items-center gap-2.5">
               {/* Mic button */}
@@ -687,7 +683,7 @@ export function HomePage() {
                 <button
                   type="button"
                   onClick={handleVoiceToggle}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                  className={`w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center transition-all active:scale-95 ${
                     isRecording
                       ? "bg-red-500 text-white animate-pulse"
                       : "text-slate-400 hover:text-[#48A29E] hover:bg-[#48A29E]/5"
@@ -703,7 +699,7 @@ export function HomePage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!canSend}
-                className="w-9 h-9 rounded-full flex items-center justify-center transition-all disabled:opacity-30"
+                className="w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center transition-all disabled:opacity-30 active:scale-95"
                 style={{
                   background: canSend
                     ? "linear-gradient(135deg, #48A29E 0%, #38b2ac 100%)"

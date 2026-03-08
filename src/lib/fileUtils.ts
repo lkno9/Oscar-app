@@ -8,17 +8,25 @@
  * - MIME type normalization
  */
 
-/** Maximum image dimension (width or height) before compression */
-const MAX_IMAGE_DIMENSION = 1600;
+/** Detect mobile device for aggressive compression */
+const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(
+  typeof navigator !== "undefined" ? navigator.userAgent : ""
+);
 
-/** Maximum file size for direct base64 upload to AI analysis (5 MB) */
-const MAX_ANALYSIS_SIZE = 5 * 1024 * 1024;
+/** Maximum image dimension (width or height) before compression */
+const MAX_IMAGE_DIMENSION = IS_MOBILE ? 1200 : 1600;
+
+/** Maximum file size for direct base64 upload to AI analysis */
+const MAX_ANALYSIS_SIZE = IS_MOBILE ? 3 * 1024 * 1024 : 5 * 1024 * 1024;
 
 /** Maximum file size for Supabase storage upload (10 MB) */
 const MAX_STORAGE_SIZE = 10 * 1024 * 1024;
 
-/** JPEG quality for compressed images (0-1) */
-const JPEG_QUALITY = 0.82;
+/** JPEG quality for compressed images (0-1) — lower on mobile */
+const JPEG_QUALITY = IS_MOBILE ? 0.72 : 0.82;
+
+/** Compression threshold — always compress above this size */
+const COMPRESS_THRESHOLD = IS_MOBILE ? 200 * 1024 : 500 * 1024;
 
 /**
  * Accept string for image file inputs — works on both Chrome and Safari.
@@ -130,17 +138,21 @@ export function validateStorageSize(file: File): string | null {
  */
 export async function compressImage(file: File, maxDim = MAX_IMAGE_DIMENSION, quality = JPEG_QUALITY): Promise<File> {
   return new Promise((resolve, reject) => {
-    // For HEIC files on browsers that can't decode them natively,
-    // we still try — modern Safari/Chrome can handle HEIC via <img>
     const img = new Image();
     const url = URL.createObjectURL(file);
+
+    // Global timeout — if anything takes >8s, fallback to original
+    const globalTimeout = setTimeout(() => {
+      URL.revokeObjectURL(url);
+      console.warn("compressImage: global timeout, returning original");
+      resolve(file);
+    }, 8000);
 
     img.onload = () => {
       URL.revokeObjectURL(url);
 
       let { width, height } = img;
 
-      // Only resize if larger than maxDim
       if (width > maxDim || height > maxDim) {
         const ratio = Math.min(maxDim / width, maxDim / height);
         width = Math.round(width * ratio);
@@ -153,16 +165,26 @@ export async function compressImage(file: File, maxDim = MAX_IMAGE_DIMENSION, qu
 
       const ctx = canvas.getContext("2d");
       if (!ctx) {
-        reject(new Error("Canvas context unavailable"));
+        clearTimeout(globalTimeout);
+        resolve(file); // Fallback instead of reject
         return;
       }
 
       ctx.drawImage(img, 0, 0, width, height);
 
+      // toBlob timeout — Safari can hang on this
+      const blobTimeout = setTimeout(() => {
+        clearTimeout(globalTimeout);
+        console.warn("compressImage: toBlob timeout, returning original");
+        resolve(file);
+      }, 5000);
+
       canvas.toBlob(
         (blob) => {
+          clearTimeout(blobTimeout);
+          clearTimeout(globalTimeout);
           if (!blob) {
-            reject(new Error("Compression failed"));
+            resolve(file); // Fallback instead of reject
             return;
           }
           const compressedName = file.name.replace(/\.\w+$/, ".jpg");
@@ -178,8 +200,8 @@ export async function compressImage(file: File, maxDim = MAX_IMAGE_DIMENSION, qu
     };
 
     img.onerror = () => {
+      clearTimeout(globalTimeout);
       URL.revokeObjectURL(url);
-      // If browser can't decode (e.g. HEIC on old Chrome), return original
       console.warn("Image decode failed, returning original file:", file.name);
       resolve(file);
     };
@@ -195,8 +217,8 @@ export async function compressImage(file: File, maxDim = MAX_IMAGE_DIMENSION, qu
 export async function readFileAsBase64(file: File): Promise<string> {
   let fileToRead = file;
 
-  // Compress images before base64 conversion
-  if (isImageFile(file) && file.size > 500 * 1024) {
+  // Compress images before base64 conversion (lower threshold on mobile)
+  if (isImageFile(file) && file.size > COMPRESS_THRESHOLD) {
     try {
       fileToRead = await compressImage(file);
     } catch {
@@ -231,10 +253,11 @@ export function readFileAsText(file: File): Promise<string> {
  */
 export async function compressForUpload(file: File): Promise<File> {
   if (!isImageFile(file)) return file;
-  if (file.size <= 1024 * 1024) return file; // < 1MB, no need
+  const threshold = IS_MOBILE ? 500 * 1024 : 1024 * 1024;
+  if (file.size <= threshold) return file;
 
   try {
-    return await compressImage(file, 2000, 0.85);
+    return await compressImage(file, IS_MOBILE ? 1600 : 2000, IS_MOBILE ? 0.78 : 0.85);
   } catch {
     return file;
   }

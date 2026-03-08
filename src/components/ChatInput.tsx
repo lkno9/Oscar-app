@@ -120,25 +120,23 @@ export function ChatInput({
       )}
 
       <div className="flex items-center gap-2 bg-secondary rounded-full p-1.5 pl-2">
-        {/* Attach button */}
+        {/* Attach button — label for iOS Safari compat */}
         {!pendingFile && (
-          <button
-            type="button"
-            onClick={handleAttachClick}
-            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all"
+          <label
+            className="p-2 min-w-[44px] min-h-[44px] rounded-full text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all cursor-pointer flex items-center justify-center active:scale-95"
             aria-label="Joindre un fichier"
           >
             <Paperclip className="w-5 h-5" />
-          </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple={false}
+              accept={ANALYSIS_ACCEPT}
+              onChange={handleFileChange}
+              className="sr-only"
+            />
+          </label>
         )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple={false}
-          accept={ANALYSIS_ACCEPT}
-          onChange={handleFileChange}
-          className="hidden"
-        />
 
         <input
           type="text"
