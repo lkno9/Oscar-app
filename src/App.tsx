@@ -35,13 +35,11 @@ import { HangmanGame } from "./pages/services/games/HangmanGame";
 import { MathGame } from "./pages/services/games/MathGame";
 import { WordSearchGame } from "./pages/services/games/WordSearchGame";
 import { SettingsPage } from "./pages/SettingsPage";
-import FamilyDashboard from "./pages/family/FamilyDashboard";
+import FamilyIndex from "./pages/family/FamilyIndex";
 import SeniorDetailPage from "./pages/family/SeniorDetailPage";
-import FamilyMessagesPage from "./pages/family/FamilyMessagesPage";
 import FamilyNotificationsPage from "./pages/family/FamilyNotificationsPage";
 import FamilySettingsPage from "./pages/family/FamilySettingsPage";
 import FamilyAccessPage from "./pages/settings/FamilyAccessPage";
-import FamilyChatPage from "./pages/family/FamilyChatPage";
 import { SubPageLayout } from "./components/SubPageLayout";
 import { OscarAcademyPage } from "./pages/services/OscarAcademyPage";
 import { TransportPage } from "./pages/services/TransportPage";
@@ -95,12 +93,10 @@ const App = () => (
             <Route path="/settings" element={<ProtectedRoute><SubPageLayout><SettingsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/settings/family-access" element={<ProtectedRoute><SubPageLayout><FamilyAccessPage /></SubPageLayout></ProtectedRoute>} />
             {/* Family Interface Routes */}
-            <Route path="/family" element={<ProtectedRoute><SubPageLayout><FamilyDashboard /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/family" element={<ProtectedRoute><FamilyIndex /></ProtectedRoute>} />
             <Route path="/family/senior/:seniorId" element={<ProtectedRoute><SubPageLayout><SeniorDetailPage /></SubPageLayout></ProtectedRoute>} />
-            <Route path="/family/messages" element={<ProtectedRoute><SubPageLayout><FamilyMessagesPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/notifications" element={<ProtectedRoute><SubPageLayout><FamilyNotificationsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/settings" element={<ProtectedRoute><SubPageLayout><FamilySettingsPage /></SubPageLayout></ProtectedRoute>} />
-            <Route path="/family/chat" element={<ProtectedRoute><FamilyChatPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

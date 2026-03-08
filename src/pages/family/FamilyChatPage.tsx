@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
@@ -113,14 +112,9 @@ export default function FamilyChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-full bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3 sticky top-0 z-10">
-        <Link to="/family">
-          <button className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-        </Link>
+      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
         <OscarAvatar size="sm" />
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-bold text-foreground">Oscar Famille</h1>

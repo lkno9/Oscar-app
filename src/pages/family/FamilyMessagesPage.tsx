@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCheck } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Send, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -66,17 +66,11 @@ export default function FamilyMessagesPage() {
 
   const isDifferentDay = (d1: string, d2: string) => format(new Date(d1), 'yyyy-MM-dd') !== format(new Date(d2), 'yyyy-MM-dd');
   const quickReplies = ["Bonjour !", "Comment ça va ?", "Je pense à toi", "À bientôt !", "Merci"];
-  const backLink = isSenior ? '/settings/family-access' : '/family';
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-full bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3 sticky top-0 z-10">
-        <Link to={backLink}>
-          <button className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-        </Link>
+      <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
         {selectedContact ? (
           <>
             <Avatar className="w-10 h-10 border-2 border-background shadow-sm">
