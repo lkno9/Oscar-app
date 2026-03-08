@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { PhoneOff, Mic, MicOff, Loader2, AlertCircle, VideoOff } from "lucide-react";
+import { PhoneOff, Loader2, AlertCircle, VideoOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -56,12 +56,15 @@ async function createTavusConversation(): Promise<string> {
   return conversationUrl;
 }
 
-// ─── Check mic permissions ────────────────────────────────
+// ─── Check camera/mic permissions ─────────────────────────
 async function checkMediaPermissions(): Promise<boolean> {
   try {
     if (navigator.permissions) {
-      const mic = await navigator.permissions.query({ name: "microphone" as PermissionName });
-      if (mic.state === "denied") return false;
+      const [camera, mic] = await Promise.all([
+        navigator.permissions.query({ name: "camera" as PermissionName }),
+        navigator.permissions.query({ name: "microphone" as PermissionName }),
+      ]);
+      if (camera.state === "denied" || mic.state === "denied") return false;
     }
     return true;
   } catch {
@@ -75,8 +78,6 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   const [conversationUrl, setConversationUrl] = useState<string | null>(null);
   const [callDuration, setCallDuration] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isMuted, setIsMuted] = useState(false);
-
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mountedRef = useRef(false);
@@ -91,7 +92,6 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
     setStatus("loading");
     setCallDuration(0);
     setErrorMessage("");
-    setIsMuted(false);
   }, []);
 
   // ─── End call ───────────────────────────────────────────
@@ -110,7 +110,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
     if (!permOk) {
       setStatus("permission-denied");
       setErrorMessage(
-        "Oscar a besoin de votre microphone pour vous parler. Autorisez l'accès dans les réglages de votre navigateur."
+        "Oscar a besoin de votre caméra et microphone pour vous parler. Autorisez l'accès dans les réglages de votre navigateur."
       );
       return;
     }
@@ -146,7 +146,6 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
 
     mountedRef.current = true;
     setCallDuration(0);
-    setIsMuted(false);
 
     retryInit();
 
@@ -192,29 +191,11 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
         </div>
       )}
 
-      {/* ── Active state — Orb UI + hidden Tavus iframe ── */}
+      {/* ── Active state — Tavus iframe (plein écran) + contrôles ── */}
       {status === "active" && conversationUrl && (
         <>
-          {/* Hidden Tavus iframe — powers the conversation audio */}
-          <iframe
-            ref={iframeRef}
-            src={conversationUrl}
-            allow="camera; microphone; autoplay; display-capture"
-            title="Oscar conversation"
-            className="absolute"
-            style={{
-              width: "1px",
-              height: "1px",
-              opacity: 0,
-              pointerEvents: "none",
-              position: "absolute",
-              top: "-9999px",
-              left: "-9999px",
-            }}
-          />
-
-          {/* Top status bar */}
-          <div className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),16px)] pb-3">
+          {/* Top status bar (overlay) */}
+          <div className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),16px)] pb-2 bg-gradient-to-b from-black/70 to-transparent">
             <div className="flex items-center gap-3">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
               <span className="text-white/80 text-sm font-medium">
@@ -226,34 +207,21 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
             </span>
           </div>
 
-          {/* Main content — animated orb */}
-          <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-            <div className="flex flex-col items-center gap-8">
-              <OscarOrb state={isMuted ? "idle" : "speaking"} />
-              <p className="text-white/40 text-sm font-medium tracking-wide uppercase">
-                {isMuted ? "Micro coupé" : "Oscar vous écoute"}
-              </p>
-            </div>
+          {/* Tavus CVI iframe — plein écran, caméra active pour montrer des choses */}
+          <div className="flex-1 relative">
+            <iframe
+              ref={iframeRef}
+              src={conversationUrl}
+              allow="camera; microphone; autoplay; display-capture"
+              className="absolute inset-0 w-full h-full border-0"
+              style={{ background: "#000" }}
+              title="Appel vidéo avec Oscar"
+            />
           </div>
 
-          {/* Bottom controls */}
-          <div className="relative z-10 pb-[max(env(safe-area-inset-bottom),24px)] pt-4 px-6">
-            <div className="flex items-center justify-center gap-6">
-              {/* Mute toggle */}
-              <button
-                onClick={() => setIsMuted(!isMuted)}
-                className={cn(
-                  "w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95",
-                  !isMuted
-                    ? "bg-white/15 text-white"
-                    : "bg-red-500/30 text-red-400 ring-2 ring-red-500/50"
-                )}
-                aria-label={isMuted ? "Activer le micro" : "Couper le micro"}
-              >
-                {!isMuted ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
-              </button>
-
-              {/* End call */}
+          {/* Bottom controls (overlay) */}
+          <div className="relative z-10 pb-[max(env(safe-area-inset-bottom),24px)] pt-4 px-6 bg-gradient-to-t from-black/70 to-transparent">
+            <div className="flex items-center justify-center">
               <button
                 onClick={handleEndCall}
                 className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-all active:scale-95 shadow-lg shadow-red-500/30"
@@ -305,7 +273,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
           </div>
           <div className="text-center">
             <p className="text-white text-xl font-semibold mb-2">
-              Microphone nécessaire
+              Caméra et micro nécessaires
             </p>
             <p className="text-white/50 text-base max-w-xs leading-relaxed">
               {errorMessage}
@@ -315,7 +283,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
             <button
               onClick={() => {
                 toast.info(
-                  "Allez dans les réglages de votre navigateur pour autoriser le microphone, puis revenez ici.",
+                  "Allez dans les réglages de votre navigateur pour autoriser la caméra et le microphone, puis revenez ici.",
                   { duration: 6000 }
                 );
               }}
