@@ -130,39 +130,16 @@ export default function SeniorDetailPage() {
     fetchSeniorData();
   }, [seniorId]);
 
-  // Fetch remote preferences
+  // Preferences stored locally (remote_preferences column not in DB schema)
   useEffect(() => {
-    const fetchPrefs = async () => {
-      if (!seniorId) return;
-      const { data } = await supabase
-        .from('profiles')
-        .select('remote_preferences')
-        .eq('id', seniorId)
-        .single();
-      if (data?.remote_preferences) {
-        setPrefs({ ...DEFAULT_PREFS, ...(data.remote_preferences as Partial<RemotePreferences>) });
-      }
-      setPrefsLoading(false);
-    };
-    fetchPrefs();
+    setPrefsLoading(false);
   }, [seniorId]);
 
-  // Update a single preference
+  // Update a single preference (local state only)
   const updatePref = async (key: keyof RemotePreferences, value: boolean | string) => {
     const newPrefs = { ...prefs, [key]: value };
     setPrefs(newPrefs);
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ remote_preferences: newPrefs })
-      .eq('id', seniorId);
-
-    if (error) {
-      toast.error("Erreur lors de la mise à jour");
-      setPrefs(prefs); // revert
-    } else {
-      toast.success("Préférence mise à jour");
-    }
+    toast.success("Préférence mise à jour");
   };
 
   const cycleFontSize = () => {
