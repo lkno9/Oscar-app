@@ -33,7 +33,7 @@ export default function FamilyIndex() {
   const renderTab = () => {
     switch (activeTab) {
       case "accueil":
-        return <FamilyDashboard />;
+        return <FamilyDashboard onNavigate={setActiveTab} />;
       case "oscar":
         return <FamilyChatPage />;
       case "messages":
