@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Mic, MicOff, Send, Paperclip, Square, X, FileText, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ANALYSIS_ACCEPT, isImageFile, isPdfFile } from "@/lib/fileUtils";
 
 interface PendingFile {
   file: File;
@@ -67,14 +68,13 @@ export function ChatInput({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const isImage = file.type.startsWith("image/");
-    const isPdf = file.type === "application/pdf";
-    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+    const isImg = isImageFile(file);
+    const previewUrl = isImg ? URL.createObjectURL(file) : undefined;
 
     setPendingFile({
       file,
       previewUrl,
-      type: isImage ? "image" : isPdf ? "pdf" : "other",
+      type: isImg ? "image" : isPdfFile(file) ? "pdf" : "other",
     });
     e.target.value = "";
   };
@@ -135,7 +135,7 @@ export function ChatInput({
           ref={fileInputRef}
           type="file"
           multiple={false}
-          accept="image/*,application/pdf,.docx,.txt,.csv,.md"
+          accept={ANALYSIS_ACCEPT}
           onChange={handleFileChange}
           className="hidden"
         />

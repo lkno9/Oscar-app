@@ -7,6 +7,7 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { IMAGE_ACCEPT, compressForUpload, validateStorageSize } from "@/lib/fileUtils";
 
 interface Photo {
   id: string;
@@ -74,20 +75,32 @@ export function PhotosPage() {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+
+    // Validate size before upload
+    const sizeErr = validateStorageSize(file);
+    if (sizeErr) { toast.error(sizeErr); return; }
+
     setUploading(true);
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage.from("user-files").upload(fileName, file);
-    if (uploadError) { toast.error("Erreur lors de l'upload"); setUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from("user-files").getPublicUrl(fileName);
-    const { error: dbError } = await supabase.from("photos").insert({
-      user_id: user.id,
-      url: publicUrl,
-      title: null,
-    });
-    if (dbError) toast.error("Erreur lors de l'enregistrement");
-    else { toast.success("Photo ajoutée !"); fetchPhotos(); }
+    try {
+      // Compress image for storage (handles HEIC, large photos, etc.)
+      const compressed = await compressForUpload(file);
+      const fileExt = compressed.name.split(".").pop() || "jpg";
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("user-files").upload(fileName, compressed);
+      if (uploadError) { toast.error("Erreur lors de l'upload"); setUploading(false); return; }
+      const { data: { publicUrl } } = supabase.storage.from("user-files").getPublicUrl(fileName);
+      const { error: dbError } = await supabase.from("photos").insert({
+        user_id: user.id,
+        url: publicUrl,
+        title: null,
+      });
+      if (dbError) toast.error("Erreur lors de l'enregistrement");
+      else { toast.success("Photo ajoutée !"); fetchPhotos(); }
+    } catch {
+      toast.error("Impossible de traiter cette photo. Essayez un autre format.");
+    }
     setUploading(false);
+    e.target.value = "";
   };
 
   const handleDelete = async (id: string) => {
@@ -172,7 +185,7 @@ export function PhotosPage() {
 
           {/* PHOTOS TAB */}
           <TabsContent value="photos" className="flex-1 overflow-y-auto p-4 space-y-6 pb-8 mt-0">
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+            <input type="file" ref={fileInputRef} className="hidden" accept={IMAGE_ACCEPT} capture="environment" onChange={handlePhotoUpload} />
 
             <Button className="w-full min-h-[56px] gap-2" size="lg" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               <Camera className="w-6 h-6" />

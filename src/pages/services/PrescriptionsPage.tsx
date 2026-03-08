@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { DOCUMENT_ACCEPT, compressForUpload, validateStorageSize } from "@/lib/fileUtils";
 import { fr } from "date-fns/locale";
 
 interface HealthRecord {
@@ -81,9 +82,16 @@ export function PrescriptionsPage() {
     setLoading(false);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+    const sizeErr = validateStorageSize(file);
+    if (sizeErr) { toast.error(sizeErr); e.target.value = ""; return; }
+    // Compress image if needed (handles HEIC, large photos)
+    try {
+      const processed = await compressForUpload(file);
+      setSelectedFile(processed);
+    } catch {
       setSelectedFile(file);
     }
   };
@@ -279,7 +287,8 @@ export function PrescriptionsPage() {
                 type="file"
                 onChange={handleFileSelect}
                 className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept={DOCUMENT_ACCEPT}
+                capture="environment"
               />
               <Button
                 type="button"

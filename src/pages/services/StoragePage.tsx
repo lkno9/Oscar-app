@@ -7,6 +7,7 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { STORAGE_ACCEPT, compressForUpload, validateStorageSize, formatFileSize } from "@/lib/fileUtils";
 
 
 interface StoredDocument {
@@ -81,24 +82,34 @@ export function StoragePage() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user || !selectedFolder) return;
+
+    // Validate file size
+    const sizeErr = validateStorageSize(file);
+    if (sizeErr) { toast.error(sizeErr); e.target.value = ""; return; }
+
     setUploading(true);
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${user.id}/documents/${Date.now()}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage.from("user-files").upload(fileName, file);
-    if (uploadError) { toast.error("Erreur lors de l'upload"); setUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from("user-files").getPublicUrl(fileName);
-    const sizeKB = Math.round(file.size / 1024);
-    const sizeStr = sizeKB < 1024 ? `${sizeKB} KB` : `${(sizeKB / 1024).toFixed(1)} MB`;
-    const { error: dbError } = await supabase.from("documents").insert({
-      user_id: user.id,
-      name: file.name,
-      file_url: publicUrl,
-      file_size: sizeStr,
-      category: selectedFolder,
-      document_type: fileExt || "file",
-    });
-    if (dbError) toast.error("Erreur lors de l'enregistrement");
-    else { toast.success("Fichier ajouté !"); fetchDocuments(); }
+    try {
+      // Compress images if needed (handles HEIC, large photos from mobile)
+      const processed = await compressForUpload(file);
+      const fileExt = processed.name.split(".").pop() || "file";
+      const fileName = `${user.id}/documents/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("user-files").upload(fileName, processed);
+      if (uploadError) { toast.error("Erreur lors de l'upload"); setUploading(false); return; }
+      const { data: { publicUrl } } = supabase.storage.from("user-files").getPublicUrl(fileName);
+      const sizeStr = formatFileSize(processed.size);
+      const { error: dbError } = await supabase.from("documents").insert({
+        user_id: user.id,
+        name: file.name,
+        file_url: publicUrl,
+        file_size: sizeStr,
+        category: selectedFolder,
+        document_type: fileExt,
+      });
+      if (dbError) toast.error("Erreur lors de l'enregistrement");
+      else { toast.success("Fichier ajouté !"); fetchDocuments(); }
+    } catch {
+      toast.error("Impossible de traiter ce fichier.");
+    }
     setUploading(false);
     e.target.value = "";
   };
@@ -191,7 +202,7 @@ export function StoragePage() {
         ) : (
           <>
             {/* Upload button */}
-            <input type="file" ref={fileInputRef} className="hidden" onChange={handleUpload} />
+            <input type="file" ref={fileInputRef} className="hidden" accept={STORAGE_ACCEPT} onChange={handleUpload} />
             <Button className="w-full min-h-[56px] gap-2" size="lg" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               <Upload className="w-5 h-5" />
               {uploading ? "Envoi en cours..." : "Ajouter un fichier"}

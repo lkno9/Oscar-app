@@ -9,6 +9,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { RichCard } from "@/types/chat";
+import {
+  ANALYSIS_ACCEPT,
+  isImageFile,
+  isPdfFile,
+  isTextFile as isTextFileCheck,
+  isDocxFile,
+  isOldDocFile,
+  validateAnalysisSize,
+  readFileAsBase64 as readBase64,
+  readFileAsText as readText,
+} from "@/lib/fileUtils";
 
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
@@ -383,34 +394,16 @@ export function HomePage() {
     if (transcript) setInput(transcript);
   }, [transcript]);
 
-  // File reading helpers
-  const readFileAsText = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsText(file);
-    });
-  };
-
-  const readFileAsBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
+  // File handling — uses cross-browser utilities from fileUtils
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const isImage = file.type.startsWith("image/");
-    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+    const isImg = isImageFile(file);
+    const previewUrl = isImg ? URL.createObjectURL(file) : undefined;
     setPendingFile({
       file,
       previewUrl,
-      type: isImage ? "image" : file.type === "application/pdf" ? "pdf" : "other",
+      type: isImg ? "image" : isPdfFile(file) ? "pdf" : "other",
     });
     e.target.value = "";
   };
@@ -421,29 +414,32 @@ export function HomePage() {
   };
 
   const handleAttach = async (file: File, extraMessage?: string) => {
-    const isImage = file.type.startsWith("image/");
-    const isPdf = file.type === "application/pdf";
-    const isText = file.type === "text/plain" || file.name.endsWith(".txt");
-    const isCsv = file.type === "text/csv" || file.name.endsWith(".csv");
-    const isMarkdown = file.name.endsWith(".md");
-    const isTextFile = isText || isCsv || isMarkdown;
-    const isDocx = file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.name.endsWith(".docx");
-    const isDoc = file.type === "application/msword" || file.name.endsWith(".doc");
+    const isImg = isImageFile(file);
+    const isPdf = isPdfFile(file);
+    const isTxt = isTextFileCheck(file);
+    const isDocx = isDocxFile(file);
 
-    if (!isImage && !isPdf && !isTextFile && !isDocx && !isDoc) {
-      toast.error(`Format non supporté. Oscar peut lire : images, PDF, TXT, CSV et DOCX.`);
+    if (!isImg && !isPdf && !isTxt && !isDocx && !isOldDocFile(file)) {
+      toast.error("Format non supporté. Oscar peut lire : images (JPEG, PNG, HEIC), PDF, TXT, CSV et DOCX.");
       return;
     }
 
-    if (isDoc && !isDocx) {
+    if (isOldDocFile(file)) {
       toast.error("Le format .doc ancien n'est pas supporté. Convertissez le fichier en .docx ou .pdf.");
       return;
     }
 
+    // Validate file size (images will be compressed, but others might be too big)
+    if (!isImg) {
+      const sizeErr = validateAnalysisSize(file);
+      if (sizeErr) { toast.error(sizeErr); return; }
+    }
+
     setIsTyping(true);
     try {
-      if (isTextFile) {
-        const textContent = await readFileAsText(file);
+      // Text-based files: read as text
+      if (isTxt) {
+        const textContent = await readText(file);
         const truncated = textContent.length > 10000
           ? textContent.substring(0, 10000) + "\n\n[... fichier tronqué, trop long ...]"
           : textContent;
@@ -464,10 +460,10 @@ export function HomePage() {
         return;
       }
 
+      // DOCX: send as base64
       if (isDocx) {
         try {
-          // Send DOCX as base64 for server-side processing
-          const base64 = await readFileAsBase64(file);
+          const base64 = await readBase64(file);
           const contentLabel = `[Document Word : ${file.name}]`;
           const userMsg: ChatMessageData = {
             id: Date.now().toString(),
@@ -485,24 +481,25 @@ export function HomePage() {
         }
       }
 
-      const base64 = await readFileAsBase64(file);
-      const contentLabel = isImage ? `[Image envoyée : ${file.name}]` : `[Document envoyé : ${file.name}]`;
+      // Images (auto-compressed via readBase64) & PDFs: send as base64
+      const base64 = await readBase64(file);
+      const contentLabel = isImg ? `[Image envoyée : ${file.name}]` : `[Document envoyé : ${file.name}]`;
       const userMsg: ChatMessageData = {
         id: Date.now().toString(),
         role: "user",
         content: extraMessage ? `${contentLabel}\n${extraMessage}` : contentLabel,
-        imageUrl: isImage ? base64 : undefined,
+        imageUrl: isImg ? base64 : undefined,
       };
       setMessages(prev => [...prev, userMsg]);
       const promptText = extraMessage
         ? extraMessage
-        : isImage
+        : isImg
           ? `Peux-tu analyser cette image ? (${file.name})`
           : `Peux-tu analyser ce document ? (${file.name})`;
       sendToMistral(promptText, base64);
     } catch {
       setIsTyping(false);
-      toast.error("Impossible de lire le fichier");
+      toast.error("Impossible de lire le fichier. Vérifiez le format et réessayez.");
     }
   };
 
@@ -679,7 +676,7 @@ export function HomePage() {
               ref={fileInputRef}
               type="file"
               multiple={false}
-              accept="image/*,application/pdf,.docx,.txt,.csv,.md"
+              accept={ANALYSIS_ACCEPT}
               onChange={handleFileChange}
               className="hidden"
             />

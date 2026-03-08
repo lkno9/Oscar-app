@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { STORAGE_ACCEPT, compressForUpload, validateStorageSize } from "@/lib/fileUtils";
 import { useDocuments } from "@/hooks/useDocuments";
 import { useAdminTasks } from "@/hooks/useAdminTasks";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -21,6 +22,7 @@ import { ExpirationBadge, getExpirationStatus } from "@/components/documents/Exp
 import { DOCUMENT_TYPES, SOCIAL_AIDS, TASK_TEMPLATES, TASK_CATEGORIES, ADMIN_TIPS, RIGHTS_GUIDES } from "@/components/documents/TaskTemplates";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast as toastSonner } from "sonner";
 
 export function DocumentsPage() {
   const goBack = useBackNavigation();
@@ -52,9 +54,16 @@ export function DocumentsPage() {
     ).slice(0, 5);
   }, [currentMonth]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+    const sizeErr = validateStorageSize(file);
+    if (sizeErr) { toastSonner.error(sizeErr); e.target.value = ""; return; }
+    try {
+      const processed = await compressForUpload(file);
+      setSelectedFile(processed);
+      if (!docName) setDocName(file.name.replace(/\.[^/.]+$/, ""));
+    } catch {
       setSelectedFile(file);
       if (!docName) setDocName(file.name.replace(/\.[^/.]+$/, ""));
     }
@@ -334,7 +343,7 @@ export function DocumentsPage() {
                       type="file"
                       onChange={handleFileSelect}
                       className="hidden"
-                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      accept={STORAGE_ACCEPT}
                     />
                     <Button
                       type="button"
