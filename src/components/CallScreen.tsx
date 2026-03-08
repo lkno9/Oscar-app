@@ -303,12 +303,6 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
   useEffect(() => {
     if (!isOpen) return;
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
-      setNoApiKey(true);
-      return;
-    }
-
     mountedRef.current = true;
     setNoApiKey(false);
     setCallState("connecting");
@@ -319,6 +313,18 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = false }: Cal
     setOutputTranscript("");
 
     async function init() {
+      // 0. Fetch Gemini API key securely from edge function
+      const keyRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-key`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
+      );
+      const keyData = await keyRes.json();
+      const apiKey: string = keyData.key;
+      if (!apiKey) {
+        setNoApiKey(true);
+        return;
+      }
+
       // 1. Init audio player (for Gemini's responses)
       const player = new AudioPlayer();
       await player.init();
