@@ -36,6 +36,7 @@ import { MathGame } from "./pages/services/games/MathGame";
 import { WordSearchGame } from "./pages/services/games/WordSearchGame";
 import { SettingsPage } from "./pages/SettingsPage";
 import FamilyDashboard from "./pages/family/FamilyDashboard";
+import FamilyIndex from "./pages/family/FamilyIndex";
 import SeniorDetailPage from "./pages/family/SeniorDetailPage";
 import FamilyMessagesPage from "./pages/family/FamilyMessagesPage";
 import FamilyNotificationsPage from "./pages/family/FamilyNotificationsPage";
