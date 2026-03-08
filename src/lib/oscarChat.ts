@@ -11,7 +11,7 @@ const MISTRAL_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mist
 
 /**
  * Stream a chat response from Mistral AI via the mistral-chat edge function.
- * Used by CallScreen.tsx for voice call conversations.
+ * Used by the chat interface for text conversations with Oscar.
  */
 export async function streamChat({
   messages,
