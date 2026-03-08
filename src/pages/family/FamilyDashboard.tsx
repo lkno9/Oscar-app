@@ -338,7 +338,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
               <button
                 key={cat}
                 onClick={() => setActuCat(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
                   actuCat === cat
                     ? 'bg-primary text-white'
                     : 'bg-card text-muted-foreground border border-border'
@@ -353,11 +353,11 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
           {articlesLoading ? (
             <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-2">
               {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="flex-shrink-0 rounded-xl" style={{ width: 175, height: 130 }} />
+                <Skeleton key={i} className="flex-shrink-0 rounded-xl" style={{ width: 230, height: 160 }} />
               ))}
             </div>
           ) : filteredArticles.length > 0 ? (
-            <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-2">
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
               {filteredArticles.map((a, i) => (
                 <a
                   key={i}
@@ -366,22 +366,22 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
                   rel="noopener noreferrer"
                   className="flex-shrink-0 bg-card border border-border block no-underline active:scale-[0.98] transition-transform"
                   style={{
-                    width: 175,
-                    borderRadius: 14,
-                    padding: "12px 12px 10px",
+                    width: 230,
+                    borderRadius: 16,
+                    padding: "16px 16px 14px",
                     textDecoration: "none",
                   }}
                 >
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <span style={{ fontSize: 15 }}>{a.emoji}</span>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span style={{ fontSize: 18 }}>{a.emoji}</span>
                     <span
                       className="text-primary"
                       style={{
-                        fontSize: 9.5,
+                        fontSize: 12,
                         fontWeight: 600,
                         background: "rgba(72,162,158,0.08)",
                         borderRadius: 99,
-                        padding: "1px 6px",
+                        padding: "2px 8px",
                       }}
                     >
                       {a.category}
@@ -390,10 +390,10 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
                   <p
                     className="text-foreground"
                     style={{
-                      fontSize: 12.5,
+                      fontSize: 15,
                       fontWeight: 600,
                       lineHeight: 1.35,
-                      marginBottom: 4,
+                      marginBottom: 6,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: "vertical",
@@ -406,9 +406,9 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
                     <p
                       className="text-muted-foreground"
                       style={{
-                        fontSize: 11,
-                        lineHeight: 1.3,
-                        marginBottom: 6,
+                        fontSize: 13,
+                        lineHeight: 1.35,
+                        marginBottom: 8,
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
@@ -419,8 +419,8 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
                     </p>
                   )}
                   <div className="flex items-center justify-between">
-                    <span style={{ fontSize: 10, color: "#b0b8c4" }}>{a.source}</span>
-                    <span style={{ fontSize: 10, color: "#b0b8c4" }}>{timeAgo(a.pubDate)}</span>
+                    <span style={{ fontSize: 12, color: "#b0b8c4" }}>{a.source}</span>
+                    <span style={{ fontSize: 12, color: "#b0b8c4" }}>{timeAgo(a.pubDate)}</span>
                   </div>
                 </a>
               ))}

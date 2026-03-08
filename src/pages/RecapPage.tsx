@@ -509,9 +509,9 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               key={cat}
               onClick={() => setActuCat(cat)}
               style={{
-                padding: "6px 14px",
+                padding: "8px 16px",
                 borderRadius: 99,
-                fontSize: 12.5,
+                fontSize: 14,
                 fontWeight: 500,
                 border: "none",
                 cursor: "pointer",
@@ -531,7 +531,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             <p style={{ fontSize: 13, color: "#94a3b8" }}>Chargement des articles...</p>
           </div>
         ) : filteredArticles.length > 0 ? (
-          <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-2">
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
             {filteredArticles.map((a, i) => (
               <a
                 key={i}
@@ -540,34 +540,34 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 rel="noopener noreferrer"
                 className="flex-shrink-0 bg-card border border-border block no-underline"
                 style={{
-                  width: 175,
-                  borderRadius: 14,
-                  padding: "12px 12px 10px",
+                  width: 230,
+                  borderRadius: 16,
+                  padding: "16px 16px 14px",
                   textDecoration: "none",
                 }}
               >
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <span style={{ fontSize: 15 }}>{a.emoji}</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <span style={{ fontSize: 18 }}>{a.emoji}</span>
                   <span
                     style={{
-                      fontSize: 9.5,
+                      fontSize: 12,
                       fontWeight: 600,
                       color: "#48A29E",
                       background: "rgba(72,162,158,0.08)",
                       borderRadius: 99,
-                      padding: "1px 6px",
+                      padding: "2px 8px",
                     }}
                   >
                     {a.category}
                   </span>
                 </div>
-                <p className="text-foreground" style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.35, marginBottom: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
+                <p className="text-foreground" style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
                 {a.description && (
-                  <p className="text-muted-foreground" style={{ fontSize: 11, lineHeight: 1.3, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.description}</p>
+                  <p className="text-muted-foreground" style={{ fontSize: 13, lineHeight: 1.35, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.description}</p>
                 )}
                 <div className="flex items-center justify-between">
-                  <span style={{ fontSize: 10, color: "#b0b8c4" }}>{a.source}</span>
-                  <span style={{ fontSize: 10, color: "#b0b8c4" }}>{timeAgo(a.pubDate)}</span>
+                  <span style={{ fontSize: 12, color: "#b0b8c4" }}>{a.source}</span>
+                  <span style={{ fontSize: 12, color: "#b0b8c4" }}>{timeAgo(a.pubDate)}</span>
                 </div>
               </a>
             ))}
