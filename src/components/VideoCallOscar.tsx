@@ -44,13 +44,10 @@ interface VideoCallOscarProps {
   initialVideoEnabled?: boolean;
 }
 
-// ─── Token Source ────────────────────────────────────────
+// ─── Token Server ────────────────────────────────────────
 // TODO (prod) : Proxifier via Xano pour ne pas exposer l'URL du token server
 const tokenServerUrl = import.meta.env.VITE_LIVEKIT_TOKEN_SERVER_URL || "";
-
-function getTokenSource() {
-  return TokenSource.endpoint(tokenServerUrl);
-}
+const livekitUrl = import.meta.env.VITE_LIVEKIT_URL || "";
 
 // ─── Main Component ─────────────────────────────────────
 export function VideoCallOscar({
