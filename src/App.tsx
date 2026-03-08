@@ -45,6 +45,7 @@ import { OscarAcademyPage } from "./pages/services/OscarAcademyPage";
 import { TransportPage } from "./pages/services/TransportPage";
 import { EntertainmentPage } from "./pages/services/EntertainmentPage";
 import { ToolsPage } from "./pages/services/ToolsPage";
+import { KnowledgePage } from "./pages/services/KnowledgePage";
 import { DailyQuizPage } from "./pages/DailyQuizPage";
 
 const queryClient = new QueryClient();
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/services/transport" element={<ProtectedRoute><SubPageLayout><TransportPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/entertainment" element={<ProtectedRoute><SubPageLayout><EntertainmentPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/tools" element={<ProtectedRoute><SubPageLayout><ToolsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/knowledge" element={<ProtectedRoute><SubPageLayout><KnowledgePage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/daily-quiz" element={<ProtectedRoute><DailyQuizPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SubPageLayout><SettingsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/settings/family-access" element={<ProtectedRoute><SubPageLayout><FamilyAccessPage /></SubPageLayout></ProtectedRoute>} />

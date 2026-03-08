@@ -16,53 +16,13 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEngagement, getNextMilestone } from "@/hooks/useEngagement";
+import { useRssArticles, ACTU_CATEGORIES, timeAgo } from "@/hooks/useRssArticles";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 // --- Types ---
 interface Weather { temp: number; icon: string; label: string; }
-
-interface RssArticle {
-  title: string;
-  description: string;
-  link: string;
-  pubDate: string;
-  category: string;
-  source: string;
-  emoji: string;
-}
-
-const ACTU_CATEGORIES = ["Tout", "Droits", "Santé", "Loisirs", "Sécurité", "Actualité", "Bien-être"];
-
-interface RssSource {
-  url: string;
-  category: string;
-  source: string;
-  emoji: string;
-}
-
-// Sources par défaut — utilisées si Supabase est indisponible
-const DEFAULT_RSS_SOURCES: RssSource[] = [
-  // Droits & Retraite
-  { url: "https://www.capretraite.fr/feed/", category: "Droits", source: "Cap Retraite", emoji: "📋" },
-  { url: "https://www.pour-les-personnes-agees.gouv.fr/rss.xml", category: "Droits", source: "Pour les personnes âgées", emoji: "🏛️" },
-  // Santé
-  { url: "https://www.senioractu.com/xml/syndication.rss", category: "Santé", source: "Senior Actu", emoji: "🏥" },
-  { url: "https://www.santemagazine.fr/feeds/rss", category: "Santé", source: "Santé Magazine", emoji: "💊" },
-  // Loisirs
-  { url: "https://www.notretemps.com/feed", category: "Loisirs", source: "Notre Temps", emoji: "🎭" },
-  { url: "https://www.pleinevie.fr/feed", category: "Loisirs", source: "Pleine Vie", emoji: "🌸" },
-  // Sécurité
-  { url: "https://www.60millions-mag.com/feed", category: "Sécurité", source: "60 Millions", emoji: "🛡️" },
-  { url: "https://www.cybermalveillance.gouv.fr/feed", category: "Sécurité", source: "Cybermalveillance", emoji: "🔒" },
-  // Actualité
-  { url: "https://www.francetvinfo.fr/economie.rss", category: "Actualité", source: "France Info", emoji: "📰" },
-  { url: "https://www.silvereco.fr/feed", category: "Actualité", source: "Silver Eco", emoji: "🏠" },
-  // Bien-être
-  { url: "https://www.psychologies.com/feed", category: "Bien-être", source: "Psychologies", emoji: "🧘" },
-  { url: "https://www.femmeactuelle.fr/sante/feed", category: "Bien-être", source: "Femme Actuelle Santé", emoji: "🌿" },
-];
 
 // Conseils bien-être & citations — un par jour
 const DAILY_TIPS = [
@@ -144,84 +104,12 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [selectedActions, setSelectedActions] = useState<string[]>(["Mon agenda", "Ma santé & bien-être", "Mes communications", "Mon coffre-fort"]);
   const [showPersonnaliser, setShowPersonnaliser] = useState(false);
   const [notifs, setNotifs] = useState<{id: string; icon: string; title: string; sub: string; info: string; color: string}[]>([]);
-  const [actuCat, setActuCat] = useState("Tout");
-  const [articles, setArticles] = useState<RssArticle[]>([]);
-  const [articlesLoading, setArticlesLoading] = useState(true);
+  const { filteredArticles, loading: articlesLoading, actuCat, setActuCat } = useRssArticles();
 
   // Enregistrer l'activité quotidienne au chargement
   useEffect(() => {
     if (user) recordActivity();
   }, [user]);
-
-  // Fetch RSS sources from Supabase (fallback to defaults)
-  const [rssSources, setRssSources] = useState<RssSource[]>(DEFAULT_RSS_SOURCES);
-
-  useEffect(() => {
-    const loadSources = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("rss_sources")
-          .select("url, category, source_name, emoji")
-          .eq("is_active", true)
-          .order("display_order", { ascending: true });
-        if (!error && data && data.length > 0) {
-          setRssSources(data.map(d => ({
-            url: d.url,
-            category: d.category,
-            source: d.source_name,
-            emoji: d.emoji,
-          })));
-        }
-      } catch {
-        // Supabase indisponible → on garde les sources par défaut
-      }
-    };
-    loadSources();
-  }, []);
-
-  // Fetch RSS articles from sources
-  useEffect(() => {
-    const fetchRss = async () => {
-      setArticlesLoading(true);
-      const allArticles: RssArticle[] = [];
-
-      // Fetch all sources in parallel for faster loading
-      const results = await Promise.allSettled(
-        rssSources.map(async (src) => {
-          const res = await fetch(
-            `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`
-          );
-          if (!res.ok) return [];
-          const data = await res.json();
-          if (data.status !== "ok" || !data.items) return [];
-          return data.items.slice(0, 3).map((item: any) => {
-            const rawDesc = item.description || "";
-            const cleanDesc = rawDesc.replace(/<[^>]+>/g, "").trim();
-            const shortDesc = cleanDesc.length > 90 ? cleanDesc.slice(0, 90) + "..." : cleanDesc;
-            return {
-              title: item.title,
-              description: shortDesc,
-              link: item.link,
-              pubDate: item.pubDate,
-              category: src.category,
-              source: src.source,
-              emoji: src.emoji,
-            } as RssArticle;
-          });
-        })
-      );
-
-      for (const result of results) {
-        if (result.status === "fulfilled" && result.value) {
-          allArticles.push(...result.value);
-        }
-      }
-
-      setArticles(allArticles);
-      setArticlesLoading(false);
-    };
-    fetchRss();
-  }, [rssSources]);
 
   // Fetch weather
   useEffect(() => {
@@ -267,20 +155,6 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
   const dateStr = format(new Date(), "EEEE d MMMM yyyy", { locale: fr });
 
-  const filteredArticles = actuCat === "Tout" ? articles : articles.filter(a => a.category === actuCat);
-
-  const timeAgo = (dateStr: string) => {
-    try {
-      const diff = Date.now() - new Date(dateStr).getTime();
-      const mins = Math.floor(diff / 60000);
-      if (mins < 60) return `Il y a ${mins}min`;
-      const hrs = Math.floor(mins / 60);
-      if (hrs < 24) return `Il y a ${hrs}h`;
-      const days = Math.floor(hrs / 24);
-      if (days === 1) return "Hier";
-      return `Il y a ${days}j`;
-    } catch { return ""; }
-  };
 
   const dismissNotif = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id));
 
@@ -501,7 +375,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
 
       {/* À SAVOIR */}
       <div style={{ padding: "24px 16px 0" }}>
-        <SectionHeader title="À savoir" />
+        <SectionHeader title="À savoir" linkLabel="Voir tout" linkPath="/services/knowledge" />
         {/* Category pills */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12 }}>
           {ACTU_CATEGORIES.map(cat => (
@@ -854,12 +728,23 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
 }
 
 // --- Section header ---
-function SectionHeader({ title, noMargin }: { title: string; noMargin?: boolean }) {
+function SectionHeader({ title, noMargin, linkLabel, linkPath }: { title: string; noMargin?: boolean; linkLabel?: string; linkPath?: string }) {
+  const navigate = useNavigate();
   return (
     <div className="flex items-center gap-3" style={{ marginBottom: noMargin ? 0 : 14 }}>
       <div className="flex-1 h-px bg-border" />
       <span className="text-muted-foreground" style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase" }}>{title}</span>
-      <div className="flex-1 h-px bg-border" />
+      {linkLabel && linkPath ? (
+        <button
+          onClick={() => navigate(linkPath)}
+          className="text-primary"
+          style={{ fontSize: 12, fontWeight: 600, background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+        >
+          {linkLabel} →
+        </button>
+      ) : (
+        <div className="flex-1 h-px bg-border" />
+      )}
     </div>
   );
 }

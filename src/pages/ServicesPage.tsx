@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Navigation,
   Wrench,
+  Newspaper,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 
@@ -31,6 +32,7 @@ const PRIMARY_SERVICES = [
   { icon: <Gamepad2 className="w-8 h-8" />, label: "Mes jeux & mémoire", path: "/services/games" },
   { icon: <Sparkles className="w-8 h-8" />, label: "Mes avantages", path: "/services/partners" },
   { icon: <ShieldAlert className="w-8 h-8" />, label: "Ma sécurité", path: "/services/scam-protection" },
+  { icon: <Newspaper className="w-8 h-8" />, label: "À savoir", path: "/services/knowledge" },
 ];
 
 const SUPPORT_ITEMS = [
