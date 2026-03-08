@@ -375,7 +375,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
 
       {/* À SAVOIR */}
       <div style={{ padding: "24px 16px 0" }}>
-        <SectionHeader title="À savoir" linkLabel="Voir tout" linkPath="/services/knowledge" />
+        <SectionHeader title="À savoir" />
         {/* Category pills */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12 }}>
           {ACTU_CATEGORIES.map(cat => (
@@ -458,6 +458,16 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             <p className="text-muted-foreground" style={{ fontSize: 13.5 }}>Aucun article dans cette catégorie</p>
           </div>
         )}
+        {/* Lien "Voir tout" en bas à droite */}
+        <div className="flex justify-end" style={{ marginTop: 8 }}>
+          <button
+            onClick={() => navigate("/services/knowledge")}
+            className="text-primary"
+            style={{ fontSize: 13, fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}
+          >
+            Voir tout →
+          </button>
+        </div>
       </div>
 
       {/* MES RAPPELS */}
