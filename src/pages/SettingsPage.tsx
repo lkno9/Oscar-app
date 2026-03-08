@@ -87,18 +87,9 @@ export function SettingsPage() {
     fetchMFAFactors();
   };
 
-  // Helper : met à jour une clé dans remote_preferences en DB
-  const syncRemotePref = async (key: string, value: boolean | string) => {
-    if (!user) return;
-    const { data: current } = await supabase.from('profiles').select('remote_preferences').eq('id', user.id).single();
-    const rp = (current?.remote_preferences as Record<string, any>) || {};
-    await supabase.from('profiles').update({ remote_preferences: { ...rp, [key]: value } }).eq('id', user.id);
-  };
-
   const handleVoiceChange = (enabled: boolean) => {
     setVoiceEnabled(enabled);
     localStorage.setItem("oscar_voice_enabled", String(enabled));
-    syncRemotePref('voice_enabled', enabled);
     toast.success(enabled ? "Mode vocal activé" : "Mode vocal désactivé");
   };
 
