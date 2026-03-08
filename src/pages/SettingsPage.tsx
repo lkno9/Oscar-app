@@ -53,6 +53,29 @@ export function SettingsPage() {
     if (data) {
       setProfile(data);
       setSmsNotificationsEnabled(data.sms_notifications_enabled || false);
+
+      // Synchroniser les préférences configurées à distance par les proches
+      const rp = data.remote_preferences as Record<string, any> | null;
+      if (rp) {
+        if (typeof rp.voice_enabled === 'boolean') {
+          setVoiceEnabled(rp.voice_enabled);
+          localStorage.setItem("oscar_voice_enabled", String(rp.voice_enabled));
+        }
+        if (typeof rp.notifications_enabled === 'boolean') {
+          setNotificationsEnabled(rp.notifications_enabled);
+          localStorage.setItem("oscar_notifications_enabled", String(rp.notifications_enabled));
+        }
+        if (typeof rp.dark_mode_enabled === 'boolean') {
+          setDarkMode(rp.dark_mode_enabled);
+          if (rp.dark_mode_enabled) {
+            document.documentElement.classList.add("dark");
+            localStorage.setItem("oscar_dark_mode", "true");
+          } else {
+            document.documentElement.classList.remove("dark");
+            localStorage.setItem("oscar_dark_mode", "false");
+          }
+        }
+      }
     }
     setLoading(false);
   };
@@ -87,15 +110,25 @@ export function SettingsPage() {
     fetchMFAFactors();
   };
 
+  // Helper : met à jour une clé dans remote_preferences en DB
+  const syncRemotePref = async (key: string, value: boolean | string) => {
+    if (!user) return;
+    const { data: current } = await supabase.from('profiles').select('remote_preferences').eq('id', user.id).single();
+    const rp = (current?.remote_preferences as Record<string, any>) || {};
+    await supabase.from('profiles').update({ remote_preferences: { ...rp, [key]: value } }).eq('id', user.id);
+  };
+
   const handleVoiceChange = (enabled: boolean) => {
     setVoiceEnabled(enabled);
     localStorage.setItem("oscar_voice_enabled", String(enabled));
+    syncRemotePref('voice_enabled', enabled);
     toast.success(enabled ? "Mode vocal activé" : "Mode vocal désactivé");
   };
 
   const handleNotificationsChange = (enabled: boolean) => {
     setNotificationsEnabled(enabled);
     localStorage.setItem("oscar_notifications_enabled", String(enabled));
+    syncRemotePref('notifications_enabled', enabled);
     toast.success(enabled ? "Notifications activées" : "Notifications désactivées");
   };
 
@@ -108,6 +141,7 @@ export function SettingsPage() {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("oscar_dark_mode", "false");
     }
+    syncRemotePref('dark_mode_enabled', enabled);
   };
 
   const handleSmsNotificationsChange = async (enabled: boolean) => {
