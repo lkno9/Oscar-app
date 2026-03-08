@@ -22,7 +22,11 @@ interface SeniorStatus {
   lastActivityTime?: string;
 }
 
-export default function FamilyDashboard() {
+interface FamilyDashboardProps {
+  onNavigate?: (tab: "accueil" | "oscar" | "messages") => void;
+}
+
+export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {}) {
   const { user } = useAuth();
   const { linkedSeniors, loading: linksLoading } = useFamilyLinks();
   const { unreadCount } = useFamilyMessages();
@@ -169,7 +173,7 @@ export default function FamilyDashboard() {
       <main className="px-4 space-y-5">
         {/* Quick Actions — 3 colonnes */}
         <div className="grid grid-cols-3 gap-3">
-          <Link to="/family/messages">
+          <button onClick={() => onNavigate?.("messages")} className="w-full text-left">
             <div className="bg-card rounded-xl p-4 border border-border active:scale-[0.98] transition-transform">
               <div className="flex items-center justify-between mb-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -182,9 +186,9 @@ export default function FamilyDashboard() {
               <p className="font-semibold text-foreground text-xs">Messages</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">{unreadCount > 0 ? `${unreadCount} non lu${unreadCount > 1 ? 's' : ''}` : 'Discuter'}</p>
             </div>
-          </Link>
+          </button>
 
-          <Link to="/family/chat">
+          <button onClick={() => onNavigate?.("oscar")} className="w-full text-left">
             <div className="bg-card rounded-xl p-4 border border-border active:scale-[0.98] transition-transform">
               <div className="flex items-center justify-between mb-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -194,7 +198,7 @@ export default function FamilyDashboard() {
               <p className="font-semibold text-foreground text-xs">Chat Oscar</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Assistant IA</p>
             </div>
-          </Link>
+          </button>
 
           <Link to="/family/notifications">
             <div className="bg-card rounded-xl p-4 border border-border active:scale-[0.98] transition-transform">
