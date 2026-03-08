@@ -1,4 +1,4 @@
-import { ArrowLeft, GraduationCap, Play, CheckCircle, Clock, Star, ChevronRight, Video, PlayCircle } from "lucide-react";
+import { ArrowLeft, GraduationCap, Play, CheckCircle, Clock, Star, ChevronRight, Video, PlayCircle, ExternalLink, BookOpen, Globe } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useState } from "react";
 
@@ -101,6 +101,10 @@ interface VideoTutorial {
   duration: string;
   emoji: string;
   category: string;
+  /** YouTube video ID — when present, embeds real YouTube player */
+  youtubeId?: string;
+  /** Key tips shown in the video detail view */
+  tips?: string[];
 }
 
 const VIDEO_TUTORIALS: VideoTutorial[] = [
@@ -111,6 +115,12 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "3 min",
     emoji: "👋",
     category: "Premiers pas",
+    tips: [
+      "Oscar est votre assistant numérique personnel, disponible 24h/24.",
+      "Vous pouvez lui parler par écrit ou par la voix.",
+      "Il vous aide pour vos rendez-vous, vos médicaments, vos messages et bien plus.",
+      "Vos proches peuvent aussi suivre votre bien-être via l'interface famille."
+    ],
   },
   {
     id: "vid-parler-oscar",
@@ -119,6 +129,12 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "2 min",
     emoji: "🎙️",
     category: "Premiers pas",
+    tips: [
+      "Appuyez sur l'icône microphone en bas de la conversation.",
+      "Parlez naturellement, comme avec un ami — Oscar comprend le français.",
+      "Attendez qu'Oscar réponde, puis il peut aussi vous lire sa réponse à voix haute.",
+      "Astuce : commencez par 'Oscar...' suivi de votre question."
+    ],
   },
   {
     id: "vid-agenda",
@@ -127,6 +143,12 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "3 min",
     emoji: "📅",
     category: "Services",
+    tips: [
+      "Ouvrez 'Agenda & rendez-vous' depuis Mes Services.",
+      "Les jours avec un point coloré ont des événements — appuyez dessus.",
+      "Le bouton '+' en bas permet d'ajouter un nouveau rendez-vous.",
+      "Activez le rappel Oscar pour ne jamais oublier un rendez-vous important."
+    ],
   },
   {
     id: "vid-medicaments",
@@ -135,6 +157,12 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "3 min",
     emoji: "💊",
     category: "Services",
+    tips: [
+      "Allez dans 'Santé & bien-être' puis l'onglet 'Médicaments'.",
+      "Ajoutez chaque médicament avec son nom, dosage et fréquence.",
+      "Chaque jour, cochez les médicaments pris — Oscar peut vous le rappeler.",
+      "Photographiez vos ordonnances pour les garder en sécurité."
+    ],
   },
   {
     id: "vid-famille",
@@ -143,6 +171,12 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "4 min",
     emoji: "👨‍👩‍👧",
     category: "Services",
+    tips: [
+      "Ouvrez 'Communication' depuis Mes Services.",
+      "Choisissez un proche dans la liste pour lui envoyer un message.",
+      "L'onglet 'Appels' permet d'appeler directement vos proches.",
+      "Un badge rouge apparaît quand vous avez des messages non lus."
+    ],
   },
   {
     id: "vid-photos",
@@ -151,6 +185,12 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "2 min",
     emoji: "📷",
     category: "Services",
+    tips: [
+      "Ouvrez 'Photos & souvenirs' depuis Mes Services.",
+      "Appuyez sur '+' pour ajouter une photo depuis votre galerie.",
+      "L'onglet 'Reçues' affiche les photos envoyées par votre famille.",
+      "Appuyez sur une photo pour l'afficher en grand et ajouter une légende."
+    ],
   },
   {
     id: "vid-sos",
@@ -159,6 +199,12 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "2 min",
     emoji: "🆘",
     category: "Sécurité",
+    tips: [
+      "Le bouton SOS se trouve dans les Réglages, en haut.",
+      "Maintenez-le appuyé pour confirmer l'alerte (évite les erreurs).",
+      "Vous pouvez appeler votre famille, le 15 (SAMU) ou envoyer votre position.",
+      "Votre famille reçoit automatiquement une notification d'urgence."
+    ],
   },
   {
     id: "vid-arnaques",
@@ -167,6 +213,12 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "4 min",
     emoji: "🛡️",
     category: "Sécurité",
+    tips: [
+      "Ne communiquez jamais vos codes bancaires par téléphone ou email.",
+      "Méfiez-vous des messages urgents qui vous demandent de cliquer sur un lien.",
+      "Vérifiez l'adresse de l'expéditeur — les arnaques imitent souvent La Poste, la banque, etc.",
+      "En cas de doute, demandez à Oscar : 'Est-ce une arnaque ?' avec une capture d'écran."
+    ],
   },
   {
     id: "vid-documents",
@@ -175,6 +227,12 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "3 min",
     emoji: "📂",
     category: "Services",
+    tips: [
+      "Ouvrez 'Documents' depuis Mes Services.",
+      "Appuyez sur '+' pour scanner un document avec l'appareil photo.",
+      "Classez vos documents par catégorie : santé, administratif, personnel.",
+      "Retrouvez-les facilement grâce à la barre de recherche."
+    ],
   },
   {
     id: "vid-reglages",
@@ -183,6 +241,53 @@ const VIDEO_TUTORIALS: VideoTutorial[] = [
     duration: "2 min",
     emoji: "⚙️",
     category: "Réglages",
+    tips: [
+      "Allez dans 'Réglages' depuis le menu en bas.",
+      "Activez le mode sombre pour un écran plus doux le soir.",
+      "Réglez la taille du texte : petit, normal, grand ou très grand.",
+      "Choisissez quelles notifications vous souhaitez recevoir."
+    ],
+  },
+];
+
+/** External learning resources for seniors */
+interface ExternalResource {
+  title: string;
+  description: string;
+  url: string;
+  emoji: string;
+}
+
+const EXTERNAL_RESOURCES: ExternalResource[] = [
+  {
+    title: "Premiers Clics",
+    description: "Cours d'informatique gratuits pour seniors et débutants, étape par étape.",
+    url: "https://www.premiers-clics.fr/",
+    emoji: "🖱️",
+  },
+  {
+    title: "Xyoos",
+    description: "Cours gratuits sur l'ordinateur, la tablette et le smartphone pour débutants.",
+    url: "https://cours-informatique-gratuit.fr/",
+    emoji: "💻",
+  },
+  {
+    title: "Cybermalveillance.gouv.fr",
+    description: "Conseils officiels pour se protéger des arnaques et de la cybercriminalité.",
+    url: "https://www.cybermalveillance.gouv.fr/",
+    emoji: "🔒",
+  },
+  {
+    title: "Pour les personnes âgées",
+    description: "Portail officiel d'information pour les personnes âgées et les aidants.",
+    url: "https://www.pour-les-personnes-agees.gouv.fr/",
+    emoji: "🏛️",
+  },
+  {
+    title: "Les Bases du numérique",
+    description: "Fiches pratiques de l'ANCT : WhatsApp, email, démarches en ligne...",
+    url: "https://lesbases.anct.gouv.fr/",
+    emoji: "📚",
   },
 ];
 
@@ -228,8 +333,9 @@ export function OscarAcademyPage() {
     }
   };
 
-  // Video player view
+  // Video / tutorial detail view
   if (playingVideo) {
+    const hasYouTube = !!playingVideo.youtubeId;
     return (
       <div className="flex flex-col h-full bg-background">
         <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
@@ -243,15 +349,28 @@ export function OscarAcademyPage() {
           <span className="text-2xl">{playingVideo.emoji}</span>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-          {/* Video placeholder */}
-          <div className="bg-muted rounded-2xl aspect-video flex flex-col items-center justify-center border border-border">
-            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-              <PlayCircle className="w-12 h-12 text-primary" />
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
+          {/* YouTube embed OR visual card */}
+          {hasYouTube ? (
+            <div className="rounded-2xl overflow-hidden border border-border aspect-video">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${playingVideo.youtubeId}?rel=0&modestbranding=1`}
+                title={playingVideo.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              />
             </div>
-            <p className="text-base font-semibold text-foreground mb-1">{playingVideo.title}</p>
-            <p className="text-sm text-muted-foreground">{playingVideo.duration}</p>
-          </div>
+          ) : (
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl aspect-video flex flex-col items-center justify-center border border-primary/20">
+              <div className="text-5xl mb-3">{playingVideo.emoji}</div>
+              <p className="text-base font-semibold text-foreground mb-1">{playingVideo.title}</p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full text-xs font-medium text-primary mt-2">
+                <Clock className="w-3 h-3" />
+                Vidéo en préparation
+              </span>
+            </div>
+          )}
 
           {/* Description */}
           <div className="bg-card rounded-2xl border border-border p-5">
@@ -259,18 +378,34 @@ export function OscarAcademyPage() {
             <p className="text-base text-muted-foreground leading-relaxed">{playingVideo.description}</p>
           </div>
 
+          {/* Tips — always shown as practical guide */}
+          {playingVideo.tips && playingVideo.tips.length > 0 && (
+            <div className="bg-card rounded-2xl border border-border p-5 space-y-3">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Les points essentiels
+              </h2>
+              <div className="space-y-3">
+                {playingVideo.tips.map((tip, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-primary">{i + 1}</span>
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed flex-1">{tip}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Mark as watched */}
           <button
             onClick={() => { markVideoWatched(playingVideo.id); setPlayingVideo(null); }}
             className="w-full min-h-[56px] bg-primary text-primary-foreground rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-primary/90 transition-colors"
           >
             <CheckCircle className="w-5 h-5" />
-            Marquer comme vu
+            {watchedVideos.includes(playingVideo.id) ? "Déjà consulté !" : "J'ai compris, marquer comme vu"}
           </button>
-
-          <p className="text-center text-xs text-muted-foreground">
-            Les tutoriels vidéo seront bientôt disponibles en lecture. En attendant, consultez les modules interactifs !
-          </p>
         </div>
       </div>
     );
@@ -444,8 +579,8 @@ export function OscarAcademyPage() {
             {/* Video tutorials */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Tutoriels vidéo</h2>
-                <span className="text-xs text-muted-foreground">{watchedVideos.length}/{VIDEO_TUTORIALS.length} vus</span>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Guides Oscar</h2>
+                <span className="text-xs text-muted-foreground">{watchedVideos.length}/{VIDEO_TUTORIALS.length} consultés</span>
               </div>
 
               {(() => {
@@ -455,6 +590,7 @@ export function OscarAcademyPage() {
                     <p className="text-xs font-semibold text-primary uppercase tracking-wide">{cat}</p>
                     {VIDEO_TUTORIALS.filter(v => v.category === cat).map(vid => {
                       const isWatched = watchedVideos.includes(vid.id);
+                      const hasVideo = !!vid.youtubeId;
                       return (
                         <button
                           key={vid.id}
@@ -468,7 +604,11 @@ export function OscarAcademyPage() {
                               <>
                                 <span className="text-2xl">{vid.emoji}</span>
                                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                  <PlayCircle className="w-3.5 h-3.5 text-primary-foreground" />
+                                  {hasVideo ? (
+                                    <PlayCircle className="w-3.5 h-3.5 text-primary-foreground" />
+                                  ) : (
+                                    <BookOpen className="w-3 h-3 text-primary-foreground" />
+                                  )}
                                 </div>
                               </>
                             )}
@@ -486,7 +626,8 @@ export function OscarAcademyPage() {
                                 <Clock className="w-3 h-3" />{vid.duration}
                               </span>
                               <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Video className="w-3 h-3" />Vidéo
+                                {hasVideo ? <Video className="w-3 h-3" /> : <BookOpen className="w-3 h-3" />}
+                                {hasVideo ? "Vidéo" : "Guide"}
                               </span>
                             </div>
                           </div>
@@ -497,6 +638,35 @@ export function OscarAcademyPage() {
                   </div>
                 ));
               })()}
+            </div>
+
+            {/* External resources */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <Globe className="w-3.5 h-3.5" />
+                Ressources recommandées
+              </h2>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Sites gratuits pour apprendre le numérique en toute confiance.
+              </p>
+              {EXTERNAL_RESOURCES.map((res) => (
+                <a
+                  key={res.url}
+                  href={res.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-card rounded-2xl border border-border p-4 text-left flex items-center gap-4 hover:border-primary/40 transition-all active:scale-[0.98] block"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center flex-shrink-0 text-xl">
+                    {res.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-foreground text-sm">{res.title}</p>
+                    <p className="text-xs text-muted-foreground leading-tight mt-0.5">{res.description}</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                </a>
+              ))}
             </div>
           </>
         )}
