@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Phone, Video, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
+import { Phone, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { OscarAvatar } from "@/components/OscarAvatar";
@@ -552,16 +552,9 @@ export function HomePage() {
           <button
             onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
             className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all active:scale-95"
-            aria-label="Appel audio"
+            aria-label="Appeler Oscar"
           >
             <Phone className="w-[18px] h-[18px]" />
-          </button>
-          <button
-            onClick={() => { setCallType("video"); setIsCallOpen(true); }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all active:scale-95"
-            aria-label="Appel vidéo"
-          >
-            <Video className="w-[18px] h-[18px]" />
           </button>
           <button
             onClick={() => navigate("/settings")}
