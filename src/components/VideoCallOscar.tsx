@@ -106,7 +106,7 @@ function CallContent({
 }) {
   const connectionState = useConnectionState();
   const agent = useAgent();
-  const { localParticipant } = useLocalParticipant();
+  const room = useRoomContext();
   const [callDuration, setCallDuration] = useState(0);
 
   // Timer
@@ -123,9 +123,9 @@ function CallContent({
   };
 
   const handleEndCall = useCallback(() => {
-    localParticipant?.disconnect();
+    room?.disconnect();
     onClose();
-  }, [localParticipant, onClose]);
+  }, [room, onClose]);
 
   // ── Connecting state ──
   if (
