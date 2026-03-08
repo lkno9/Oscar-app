@@ -82,8 +82,7 @@ export function VideoCallOscar({
   return (
     <LiveKitRoom
       token=""
-      serverUrl=""
-      tokenSource={getTokenSource()}
+      serverUrl={livekitUrl}
       connect={true}
       video={initialVideoEnabled}
       audio={true}
