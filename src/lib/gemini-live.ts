@@ -10,7 +10,7 @@
 // ─── Constants ────────────────────────────────────────────
 const WS_URL =
   "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
-const MODEL = "gemini-2.5-flash-preview-native-audio-dialog";
+const MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
 const INPUT_SAMPLE_RATE = 16000;
 const OUTPUT_SAMPLE_RATE = 24000;
 const SCRIPT_BUFFER_SIZE = 4096;
