@@ -16,9 +16,6 @@ import {
   LiveKitRoom,
   RoomAudioRenderer,
   useAgent,
-  useSession,
-  useSessionMessages,
-  SessionProvider,
   useConnectionState,
   useLocalParticipant,
   useTrackToggle,
@@ -31,7 +28,6 @@ import {
   MicOff,
   Video,
   VideoOff,
-  Loader2,
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -49,12 +45,12 @@ interface VideoCallOscarProps {
   initialVideoEnabled?: boolean;
 }
 
-// ─── Token Source (Sandbox pour MVP) ────────────────────
-// TODO (prod) : Remplacer par TokenSource.endpoint("https://votre-xano.com/api/livekit-token")
-const sandboxId = import.meta.env.VITE_LIVEKIT_SANDBOX_ID || "";
+// ─── Token Source ────────────────────────────────────────
+// TODO (prod) : Proxifier via Xano pour ne pas exposer l'URL du token server
+const tokenServerUrl = import.meta.env.VITE_LIVEKIT_TOKEN_SERVER_URL || "";
 
 function getTokenSource() {
-  return TokenSource.sandboxTokenServer(sandboxId);
+  return TokenSource.endpoint(tokenServerUrl);
 }
 
 // ─── Main Component ─────────────────────────────────────
@@ -65,7 +61,7 @@ export function VideoCallOscar({
 }: VideoCallOscarProps) {
   if (!isOpen) return null;
 
-  if (!sandboxId) {
+  if (!tokenServerUrl) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black p-8">
         <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6">
@@ -75,7 +71,7 @@ export function VideoCallOscar({
           Configuration manquante
         </p>
         <p className="text-white/50 text-base max-w-xs text-center leading-relaxed">
-          Ajoutez VITE_LIVEKIT_SANDBOX_ID dans votre fichier .env
+          Ajoutez VITE_LIVEKIT_TOKEN_SERVER_URL dans votre fichier .env
         </p>
         <button
           onClick={onClose}
@@ -231,8 +227,7 @@ function CallContent({
             : "Oscar se prépare..."}
         </p>
 
-        {/* Transcription en temps réel */}
-        <TranscriptPanel />
+        {/* TODO: Ajouter transcription en temps réel (useSessionMessages) */}
       </div>
 
       {/* Bottom controls */}
@@ -311,31 +306,4 @@ function CameraToggleButton({
   );
 }
 
-// ─── Transcript Panel ───────────────────────────────────
-function TranscriptPanel() {
-  const session = useSession(getTokenSource());
-  const { messages } = useSessionMessages(session);
-
-  if (!messages || messages.length === 0) return null;
-
-  // Show last 3 messages
-  const recentMessages = messages.slice(-3);
-
-  return (
-    <div className="w-full max-w-md space-y-2 mt-4">
-      {recentMessages.map((msg, i) => (
-        <div
-          key={i}
-          className={cn(
-            "px-4 py-2 rounded-2xl text-base leading-relaxed max-w-[85%]",
-            msg.role === "assistant"
-              ? "bg-white/10 text-white/90 mr-auto"
-              : "bg-teal-600/30 text-white ml-auto"
-          )}
-        >
-          {msg.content}
-        </div>
-      ))}
-    </div>
-  );
-}
+// TODO: Ajouter TranscriptPanel avec useSessionMessages quand le flow session sera confirmé
