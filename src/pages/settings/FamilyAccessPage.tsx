@@ -17,7 +17,7 @@ import { useFamilyLinks } from '@/hooks/useFamilyLinks';
 import { toast } from 'sonner';
 
 export default function FamilyAccessPage() {
-  const { linkedFamily, pendingInvitations, loading, createInvitation, removeLink } = useFamilyLinks();
+  const { linkedFamily, pendingInvitations, loading, createInvitation, removeLink, canCreateInvitation, MAX_FAMILY_PER_SENIOR } = useFamilyLinks();
   const [relationship, setRelationship] = useState('enfant');
   const [creatingInvitation, setCreatingInvitation] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
@@ -128,7 +128,7 @@ export default function FamilyAccessPage() {
 
             <Button
               onClick={handleCreateInvitation}
-              disabled={creatingInvitation}
+              disabled={creatingInvitation || !canCreateInvitation}
               className="w-full gap-2 min-h-[52px]"
               size="lg"
             >
@@ -137,6 +137,18 @@ export default function FamilyAccessPage() {
                 : "Créer un code d'invitation"
               }
             </Button>
+
+            {!canCreateInvitation && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 text-center bg-amber-50 dark:bg-amber-950/20 rounded-lg p-2 border border-amber-200 dark:border-amber-800">
+                Limite de {MAX_FAMILY_PER_SENIOR} membres famille atteinte
+              </p>
+            )}
+
+            {canCreateInvitation && (linkedFamily.length + pendingInvitations.length) > 0 && (
+              <p className="text-xs text-muted-foreground text-center">
+                {linkedFamily.length + pendingInvitations.length}/{MAX_FAMILY_PER_SENIOR} places utilisées
+              </p>
+            )}
 
             {generatedCode && (
               <div className="bg-accent rounded-xl p-5 border border-primary/20 text-center space-y-3">

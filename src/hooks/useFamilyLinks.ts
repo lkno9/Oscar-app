@@ -78,8 +78,20 @@ export function useFamilyLinks() {
     fetchLinks();
   }, [user]);
 
+  // Max 5 family members per senior
+  const MAX_FAMILY_PER_SENIOR = 5;
+  const seniorLinkCount = links.filter(
+    l => l.senior_id === user?.id && (l.status === 'accepted' || l.status === 'pending')
+  ).length;
+  const canCreateInvitation = seniorLinkCount < MAX_FAMILY_PER_SENIOR;
+
   const createInvitation = async (relationship: string) => {
     if (!user) return { error: new Error('Not authenticated') };
+
+    // Check family member limit (max 5 per senior)
+    if (!canCreateInvitation) {
+      return { error: new Error('Vous avez atteint la limite de 5 membres famille') };
+    }
 
     // Use crypto API for secure random code generation
     const bytes = new Uint8Array(6);
@@ -166,6 +178,8 @@ export function useFamilyLinks() {
     createInvitation,
     acceptInvitation,
     removeLink,
-    refetch: fetchLinks
+    refetch: fetchLinks,
+    canCreateInvitation,
+    MAX_FAMILY_PER_SENIOR
   };
 }

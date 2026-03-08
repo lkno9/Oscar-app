@@ -98,6 +98,7 @@ export default function FamilyNotificationsPage() {
     { key: 'all', label: 'Tout' },
     { key: 'mood', label: 'Humeur' },
     { key: 'activity', label: 'Activité' },
+    { key: 'medication', label: 'Médicaments' },
     { key: 'alert', label: 'Alertes' },
   ];
 

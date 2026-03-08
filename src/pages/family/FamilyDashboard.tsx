@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Activity, Settings, RefreshCw, Clock, UserPlus, ChevronRight, Sparkles, Bell } from 'lucide-react';
+import { Heart, Activity, Settings, RefreshCw, Clock, UserPlus, ChevronRight, Sparkles, Bell, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -114,8 +114,16 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
     "Encouragez vos proches à noter leur humeur quotidiennement pour mieux suivre leur bien-être.",
     "Un appel de 5 minutes par jour peut faire une grande différence dans la vie de vos proches.",
     "N'hésitez pas à féliciter vos proches quand ils maintiennent une bonne routine de bien-être.",
+    "Partagez des photos ou des souvenirs avec vos proches pour renforcer le lien au quotidien.",
+    "Proposez une activité commune, même à distance : lecture, musique, jeu de mots...",
+    "Vérifiez que vos proches ont bien pris leurs médicaments — un rappel bienveillant aide beaucoup.",
+    "Demandez à Oscar un résumé hebdomadaire du bien-être de votre proche pour rester informé.",
+    "Un message vocal est souvent plus chaleureux qu'un texto. Pensez-y de temps en temps !",
+    "La régularité compte plus que la durée : mieux vaut un appel court chaque jour qu'un long appel une fois par mois.",
+    "Pensez à varier les sujets de conversation : actualités, souvenirs, projets… la diversité nourrit l'échange.",
+    "Encouragez votre proche à sortir se promener — même 15 minutes améliorent le moral.",
   ];
-  const dailyTip = tips[new Date().getDay() % tips.length];
+  const dailyTip = tips[Math.floor((new Date().getFullYear() * 366 + new Date().getMonth() * 31 + new Date().getDate()) % tips.length)];
 
   const getGreeting = () => {
     const h = new Date().getHours();
@@ -247,6 +255,26 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
             </div>
           )}
         </div>
+
+        {/* Card Demander à Oscar */}
+        {seniors.length > 0 && (
+          <button
+            onClick={() => onNavigate?.("oscar")}
+            className="w-full text-left rounded-2xl p-4 active:scale-[0.98] transition-all border-0"
+            style={{ background: 'linear-gradient(135deg, #48A29E 0%, #38b2ac 50%, #319795 100%)' }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm text-white">Demander à Oscar</h3>
+                <p className="text-xs text-white/80 mt-0.5">Résumé, conseils, suivi de vos proches</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/60 flex-shrink-0" />
+            </div>
+          </button>
+        )}
 
         {/* Conseil du jour */}
         <div className="bg-accent rounded-2xl p-4 border border-primary/20">
