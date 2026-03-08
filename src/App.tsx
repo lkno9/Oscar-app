@@ -41,6 +41,7 @@ import FamilyMessagesPage from "./pages/family/FamilyMessagesPage";
 import FamilyNotificationsPage from "./pages/family/FamilyNotificationsPage";
 import FamilySettingsPage from "./pages/family/FamilySettingsPage";
 import FamilyAccessPage from "./pages/settings/FamilyAccessPage";
+import FamilyChatPage from "./pages/family/FamilyChatPage";
 import { SubPageLayout } from "./components/SubPageLayout";
 import { OscarAcademyPage } from "./pages/services/OscarAcademyPage";
 import { TransportPage } from "./pages/services/TransportPage";
