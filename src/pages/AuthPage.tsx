@@ -160,13 +160,14 @@ export function AuthPage() {
         toast.error(errMsg);
         setPinCode('');
       } else {
-        // Créer la session Supabase côté client
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
+        // Utiliser le hashed_token du magic link pour créer une session
+        const { error: sessionError } = await supabase.auth.verifyOtp({
+          token_hash: data.hashed_token,
+          type: 'magiclink',
         });
 
         if (sessionError) {
+          console.error('[Auth] Session error:', sessionError.message);
           toast.error('Erreur de connexion. Réessayez.');
           setPinCode('');
           return;
