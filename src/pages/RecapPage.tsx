@@ -12,8 +12,6 @@ import {
   Heart,
   Flame,
   Zap,
-  Radio as RadioIcon,
-  ChefHat,
   ShieldAlert,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,8 +140,6 @@ const ALL_ACTIONS: QuickAction[] = [
   { label: "Mon coffre-fort", icon: <Cloud className="w-5 h-5 text-[#48A29E]" /> },
   { label: "Mes jeux & mémoire", icon: <Gamepad2 className="w-5 h-5 text-[#48A29E]" /> },
   { label: "Mes avantages", icon: <Sparkles className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Ma radio", icon: <RadioIcon className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mes recettes", icon: <ChefHat className="w-5 h-5 text-[#48A29E]" /> },
   { label: "Ma sécurité", icon: <ShieldAlert className="w-5 h-5 text-[#48A29E]" /> },
 ];
 
@@ -163,6 +159,18 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [showPersonnaliser, setShowPersonnaliser] = useState(false);
   const [notifs, setNotifs] = useState<{id: string; icon: string; title: string; sub: string; info: string; color: string}[]>([]);
   const { filteredArticles, loading: articlesLoading, actuCat, setActuCat } = useRssArticles();
+
+  // Rediriger vers l'onboarding si pas encore fait
+  useEffect(() => {
+    try {
+      const onboarding = localStorage.getItem("oscar_onboarding");
+      if (!onboarding || !JSON.parse(onboarding).completed) {
+        navigate("/onboarding", { replace: true });
+      }
+    } catch {
+      navigate("/onboarding", { replace: true });
+    }
+  }, []);
 
   // Enregistrer l'activité quotidienne au chargement
   useEffect(() => {
@@ -611,8 +619,6 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     "Mon coffre-fort": "/services/storage",
                     "Mes jeux & mémoire": "/services/games",
                     "Mes avantages": "/services/partners",
-                    "Ma radio": "/services/radio",
-                    "Mes recettes": "/services/recipes",
                     "Ma sécurité": "/services/scam-protection",
                   };
                   navigate(pathMap[label] || "/services/agenda");
