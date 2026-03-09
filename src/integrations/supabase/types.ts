@@ -989,6 +989,33 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_otps: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          otp_code: string
+          phone_number: string
+          used: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          otp_code: string
+          phone_number: string
+          used?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          otp_code?: string
+          phone_number?: string
+          used?: boolean | null
+        }
+        Relationships: []
+      }
       wellness_activities: {
         Row: {
           activity_date: string
