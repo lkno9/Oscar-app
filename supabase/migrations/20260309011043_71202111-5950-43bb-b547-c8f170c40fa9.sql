@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS auth_pin text;
+COMMENT ON COLUMN public.profiles.auth_pin IS 'Code PIN 4 chiffres fourni au senior à la souscription, utilisé comme 2e facteur lors de la connexion par téléphone';
