@@ -137,9 +137,12 @@ export function AuthPage() {
       );
 
       const data = await response.json();
+      console.log('[Auth] verify-voice-otp response:', response.status, data);
 
       if (!response.ok || !data.valid) {
-        toast.error('Code incorrect. Vérifiez et réessayez.');
+        const errMsg = data?.error || 'Code incorrect';
+        console.error('[Auth] OTP verification failed:', errMsg);
+        toast.error(errMsg);
         setOtpCode('');
       } else {
         // Set the session in Supabase client
