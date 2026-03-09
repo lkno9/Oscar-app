@@ -26,8 +26,8 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Check OTP
-    const { data, error } = await supabase
+    // Check OTP validity
+    const { data: otpData, error: otpError } = await supabase
       .from('voice_otps')
       .select('*')
       .eq('phone_number', phone_number)
@@ -36,7 +36,7 @@ serve(async (req) => {
       .gt('expires_at', new Date().toISOString())
       .single();
 
-    if (error || !data) {
+    if (otpError || !otpData) {
       return new Response(JSON.stringify({ valid: false, error: 'Code invalide ou expiré' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -44,44 +44,56 @@ serve(async (req) => {
     }
 
     // Mark OTP as used
-    await supabase.from('voice_otps').update({ used: true }).eq('id', data.id);
+    await supabase.from('voice_otps').update({ used: true }).eq('id', otpData.id);
 
-    // Sign in or create user with phone via admin
-    const { data: authData, error: authError } = await supabase.auth.admin.getUserByPhone(phone_number).catch(() => ({ data: null, error: null }));
+    // Get or create user with this phone
+    const { data: listData } = await supabase.auth.admin.listUsers();
+    const existingUser = listData?.users?.find(u => u.phone === phone_number);
 
     let userId: string;
 
-    if (authData?.user) {
-      userId = authData.user.id;
+    if (existingUser) {
+      userId = existingUser.id;
     } else {
       // Create new user
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+      const { data: newUserData, error: createError } = await supabase.auth.admin.createUser({
         phone: phone_number,
         phone_confirm: true,
         user_metadata: { role: 'senior' },
       });
 
-      if (createError || !newUser.user) {
+      if (createError || !newUserData.user) {
         console.error('Create user error:', createError);
         return new Response(JSON.stringify({ valid: false, error: 'Erreur création utilisateur' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      userId = newUser.user.id;
+      userId = newUserData.user.id;
     }
 
-    // Generate a session link (magic link approach for phone)
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: `${phone_number.replace('+', '')}@oscar-phone.app`,
-    }).catch(() => ({ data: null, error: null }));
-
-    // Alternative: create a custom session token
-    // For now return the userId for client-side session creation
-    return new Response(JSON.stringify({ valid: true, user_id: userId }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Create a session for this user
+    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
+      user_id: userId,
     });
+
+    if (sessionError || !sessionData) {
+      console.error('Session error:', sessionError);
+      return new Response(JSON.stringify({ valid: false, error: 'Erreur création session' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        access_token: sessionData.session.access_token,
+        refresh_token: sessionData.session.refresh_token,
+        user: sessionData.session.user,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
     console.error('Error:', error);
     return new Response(JSON.stringify({ error: 'Erreur interne' }), {
