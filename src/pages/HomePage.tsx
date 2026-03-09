@@ -535,30 +535,39 @@ export function HomePage() {
   const canSend = !isTyping && !isRecording && (pendingFile !== null || input.trim().length > 0);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ fontFamily: "'Inter', 'Nunito', sans-serif" }}>
-      {/* Header */}
+    <div className="flex flex-col h-full overflow-hidden" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      {/* Header — frosted glass iOS style */}
       <header
-        className={`flex items-center justify-between flex-shrink-0 bg-white dark:bg-card ${started ? "border-b border-border" : ""}`}
-        style={{ padding: "16px 20px 14px" }}
+        className="flex items-center justify-between flex-shrink-0"
+        style={{
+          padding: "16px 20px 14px",
+          background: "rgba(255,255,255,0.88)",
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          borderBottom: started ? "0.5px solid rgba(0,0,0,0.08)" : "none",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
       >
         <div className="flex items-center gap-2.5">
-          <OscarAvatar size="sm" className="w-9 h-9 shadow-[0_2px_8px_rgba(72,162,158,0.3)]" />
+          <OscarAvatar size="sm" className="w-9 h-9 shadow-[0_2px_8px_rgba(45,212,191,0.3)]" />
           <div className="flex flex-col gap-px">
-            <span className="font-bold text-slate-800 dark:text-foreground" style={{ fontSize: "15.5px", letterSpacing: "-0.2px", lineHeight: 1.2 }}>Oscar</span>
-            <span className="text-xs font-medium text-[#48A29E]">En ligne</span>
+            <span style={{ fontSize: "15.5px", fontWeight: 500, color: "#1A1A2E", letterSpacing: "-0.2px", lineHeight: 1.2 }}>Oscar</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: "#2DD4BF" }}>En ligne</span>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all active:scale-95"
-            aria-label="Appeler Oscar"
+style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+            aria-label="Appel audio"
           >
             <Phone className="w-[18px] h-[18px]" />
           </button>
           <button
             onClick={() => navigate("/settings")}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all active:scale-95"
+style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "#F2F2F7", color: "#8E8E93", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
             aria-label="Paramètres"
           >
             <Settings className="w-[18px] h-[18px]" />
@@ -570,15 +579,16 @@ export function HomePage() {
       {!started && (
         <div className="flex-1 flex flex-col items-center justify-center px-7 pb-10 animate-fade-in">
           <h1
-            className="font-playfair text-center text-slate-800 dark:text-foreground animate-fade-in"
+            className="text-center text-slate-800 dark:text-foreground animate-fade-in"
             style={{
-              fontSize: 32,
-              fontWeight: 500,
+              fontSize: 30,
+              fontWeight: 400,
               lineHeight: 1.3,
-              letterSpacing: "-0.5px",
+              letterSpacing: "-0.3px",
               marginBottom: 36,
               animationDelay: "0.15s",
               animationFillMode: "both",
+              fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
             }}
           >
             Comment puis-je<br />vous aider {getGreeting()} ?
@@ -602,7 +612,7 @@ export function HomePage() {
 
       {/* Messages */}
       {started && (
-        <div className="flex-1 overflow-y-auto px-4 py-5 thin-scrollbar bg-background" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="flex-1 overflow-y-auto px-4 py-5 thin-scrollbar oscar-page-bg" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {messages.map((message) => (
             <ChatMessage
               key={message.id}
@@ -622,16 +632,25 @@ export function HomePage() {
         </div>
       )}
 
-      {/* Input Bar */}
-      <div className="flex-shrink-0 bg-white dark:bg-card border-t border-transparent dark:border-border" style={{ padding: "10px 16px 24px" }}>
+      {/* Input Bar — frosted glass */}
+      <div
+        className="flex-shrink-0"
+        style={{
+          padding: "10px 16px 24px",
+          background: "rgba(255,255,255,0.88)",
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          borderTop: "0.5px solid rgba(0,0,0,0.08)",
+        }}
+      >
         {/* File preview */}
         {pendingFile && (
           <div className="mb-2 flex items-center gap-2 bg-slate-50 dark:bg-secondary rounded-2xl p-2 pr-3">
             {pendingFile.type === "image" && pendingFile.previewUrl ? (
               <img src={pendingFile.previewUrl} alt="Aperçu" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
             ) : (
-              <div className="w-12 h-12 rounded-xl bg-[#48A29E]/10 flex items-center justify-center flex-shrink-0">
-                <FileTextIcon className="w-6 h-6 text-[#48A29E]" />
+              <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center flex-shrink-0">
+                <FileTextIcon className="w-6 h-6 text-[#2DD4BF]" />
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -660,12 +679,12 @@ export function HomePage() {
               maxHeight: 120,
               overflowY: "auto",
               marginBottom: 10,
-              fontFamily: "'Inter', 'Nunito', sans-serif",
+              fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
             }}
           />
           <div className="flex items-center justify-between gap-2">
             {/* Plus/attach button — uses <label> for iOS Safari compat (input.click() unreliable) */}
-            <label className="w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center text-slate-400 hover:text-[#48A29E] hover:bg-[#48A29E]/5 transition-all cursor-pointer active:scale-95">
+            <label className="w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center text-slate-400 hover:text-[#2DD4BF] hover:bg-[#2DD4BF]/5 transition-all cursor-pointer active:scale-95">
               <Paperclip className="w-[18px] h-[18px]" />
               <input
                 ref={fileInputRef}
@@ -686,7 +705,7 @@ export function HomePage() {
                   className={`w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center transition-all active:scale-95 ${
                     isRecording
                       ? "bg-red-500 text-white animate-pulse"
-                      : "text-slate-400 hover:text-[#48A29E] hover:bg-[#48A29E]/5"
+                      : "text-slate-400 hover:text-[#2DD4BF] hover:bg-[#2DD4BF]/5"
                   }`}
                   aria-label={isRecording ? "Arrêter" : "Parler"}
                 >
@@ -702,7 +721,7 @@ export function HomePage() {
                 className="w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center transition-all disabled:opacity-30 active:scale-95"
                 style={{
                   background: canSend
-                    ? "linear-gradient(135deg, #48A29E 0%, #38b2ac 100%)"
+                    ? "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)"
                     : "#e2e8f0",
                 }}
                 aria-label="Envoyer"

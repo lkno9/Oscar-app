@@ -33,7 +33,7 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-background shadow-lg relative">
+    <div className="flex flex-col h-screen max-w-md mx-auto shadow-lg relative" style={{ background: "white" }}>
       <main className="flex-1 overflow-hidden">
         {renderTab()}
       </main>

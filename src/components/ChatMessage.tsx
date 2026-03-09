@@ -40,8 +40,8 @@ function TextWithLinks({ text, isUser }: { text: string; isUser: boolean }) {
                 className={cn(
                   "underline underline-offset-2 break-all",
                   isUser
-                    ? "text-[#48A29E] hover:text-[#3a8a87]"
-                    : "text-[#48A29E] hover:text-[#3a8a87]"
+                    ? "text-white/80 hover:text-white"
+                    : "text-[#2DD4BF] hover:text-[#0F766E]"
                 )}
               >
                 {cleanUrl}
@@ -101,17 +101,19 @@ export function ChatMessage({
       style={{ alignItems: "flex-end", gap: 8 }}
     >
       <div
-        className={cn(
-          "max-w-[75%] text-foreground",
-          isUser
-            ? "bg-[rgba(72,162,158,0.1)] dark:bg-[rgba(72,162,158,0.15)] border border-[rgba(72,162,158,0.2)]"
-            : "bg-[#f8fafc] dark:bg-secondary border border-[#f1f5f9] dark:border-border"
-        )}
+        className={cn("max-w-[75%]")}
         style={{
           padding: "10px 14px",
           borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
           fontSize: "14.5px",
           lineHeight: 1.65,
+          background: isUser
+            ? "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)"
+            : "white",
+          color: isUser ? "white" : "#1A1A2E",
+          boxShadow: isUser
+            ? "0 4px 16px rgba(45,212,191,0.3)"
+            : "0 1px 4px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.06)",
         }}
       >
         {imageUrl && (
@@ -126,12 +128,17 @@ export function ChatMessage({
           {!isUser && onSpeak && content && (
             <button
               onClick={handleSpeakClick}
-              className={cn(
-                "flex-shrink-0 p-1 rounded-full transition-colors mt-0.5",
-                isThisMessageSpeaking
-                  ? "text-[#48A29E] bg-[#48A29E]/10"
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-              )}
+              style={{
+                flexShrink: 0,
+                padding: 4,
+                borderRadius: 99,
+                border: "none",
+                cursor: "pointer",
+                marginTop: 2,
+                background: isThisMessageSpeaking ? "rgba(45,212,191,0.1)" : "transparent",
+                color: isThisMessageSpeaking ? "#2DD4BF" : "#94A3B8",
+                transition: "all 0.15s",
+              }}
               aria-label={isThisMessageSpeaking ? "Arrêter la lecture" : "Écouter"}
             >
               {isThisMessageSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -156,17 +163,18 @@ export function TypingIndicator() {
   return (
     <div className="flex justify-start msg-fade-up" style={{ alignItems: "flex-end" }}>
       <div
-        className="bg-[#f8fafc] dark:bg-secondary border border-[#f1f5f9] dark:border-border"
         style={{
           padding: "10px 16px",
           borderRadius: "18px 18px 18px 4px",
+          background: "white",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.06)",
         }}
       >
         <div className="flex gap-1.5 items-center py-0.5">
           {[0, 1, 2].map(i => (
             <div
               key={i}
-              className="w-[7px] h-[7px] rounded-full bg-[#48A29E]"
+              className="w-[7px] h-[7px] rounded-full bg-[#2DD4BF]"
               style={{
                 animation: "bounce 1.2s ease-in-out infinite",
                 animationDelay: `${i * 0.2}s`,

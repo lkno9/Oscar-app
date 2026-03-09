@@ -82,13 +82,13 @@ interface QuickAction {
 }
 
 const ALL_ACTIONS: QuickAction[] = [
-  { label: "Mon agenda", icon: <CalendarDays className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Ma santé & bien-être", icon: <Heart className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mes communications", icon: <MessageCircle className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mon coffre-fort", icon: <Cloud className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mes jeux & mémoire", icon: <Gamepad2 className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Mes avantages", icon: <Sparkles className="w-5 h-5 text-[#48A29E]" /> },
-  { label: "Ma sécurité", icon: <ShieldAlert className="w-5 h-5 text-[#48A29E]" /> },
+  { label: "Mon agenda", icon: <CalendarDays className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Ma santé & bien-être", icon: <Heart className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Mes communications", icon: <MessageCircle className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Mon coffre-fort", icon: <Cloud className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Mes jeux & mémoire", icon: <Gamepad2 className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Mes avantages", icon: <Sparkles className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Ma sécurité", icon: <ShieldAlert className="w-5 h-5 text-[#2DD4BF]" /> },
 ];
 
 
@@ -181,10 +181,19 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide bg-background" style={{ fontFamily: "'Inter', 'Nunito', sans-serif" }}>
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide oscar-page-bg" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
 
-      {/* HEADER */}
-      <div className="flex-shrink-0 bg-white dark:bg-card" style={{ padding: "22px 20px 18px" }}>
+      {/* HEADER — iOS Large Title style */}
+      <div
+        className="flex-shrink-0 sticky top-0 z-10"
+        style={{
+          padding: "20px 20px 16px",
+          background: "rgba(255,255,255,0.82)",
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          borderBottom: "0.5px solid rgba(0,0,0,0.08)",
+        }}
+      >
         <div className="flex items-start justify-between gap-3">
           {/* Left: date + greeting */}
           <div className="flex flex-col flex-1 min-w-0" style={{ gap: 8 }}>
@@ -198,24 +207,24 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           {weather && (
             <div
               style={{
-                background: "rgba(72,162,158,0.15)",
+                background: "rgba(45,212,191,0.15)",
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
-                border: "1.5px solid rgba(72,162,158,0.25)",
+                border: "1.5px solid rgba(45,212,191,0.25)",
                 borderRadius: 18,
                 padding: "10px 14px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 flexShrink: 0,
-                boxShadow: "0 2px 12px rgba(72,162,158,0.12)",
+                boxShadow: "0 2px 12px rgba(45,212,191,0.12)",
                 minWidth: 90,
               }}
             >
               {/* Emoji + temp on same row */}
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ fontSize: 24, lineHeight: 1 }}>{weather.icon}</span>
-                <span style={{ fontSize: 20, fontWeight: 700, color: "#1e293b", lineHeight: 1 }}
+                <span style={{ fontSize: 20, fontWeight: 500, color: "#1e293b", lineHeight: 1 }}
                   className="dark:text-foreground">
                   {weather.temp}°
                 </span>
@@ -234,10 +243,10 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           onClick={onGoToOscar}
           className="w-full text-left"
           style={{
-            background: "linear-gradient(135deg, #48A29E 0%, #2d9e99 100%)",
+            background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
             borderRadius: 22,
             padding: "18px 20px",
-            boxShadow: "0 8px 28px rgba(72,162,158,0.25)",
+            boxShadow: "0 8px 28px rgba(45,212,191,0.25)",
             display: "flex",
             alignItems: "center",
             gap: 14,
@@ -249,7 +258,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           <OscarAvatar size="sm" className="w-9 h-9 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Oscar</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#fff" }}>Oscar</span>
               <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.75)", background: "rgba(255,255,255,0.18)", borderRadius: 99, padding: "2px 8px", fontWeight: 500 }}>En ligne</span>
             </div>
             <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Posez-moi vos questions, je suis là pour vous aider !</p>
@@ -293,7 +302,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               />
             )}
             <Flame className="w-5 h-5 text-white" style={{ marginBottom: 4 }} />
-            <p style={{ fontSize: 28, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+            <p style={{ fontSize: 28, fontWeight: 600, color: "#fff", lineHeight: 1 }}>
               {streak.current_streak}
             </p>
             <p style={{ fontSize: 10, color: "rgba(255,255,255,0.8)", marginTop: 2, textAlign: "center" }}>
@@ -339,7 +348,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className={todayQuiz ? "text-foreground" : ""} style={{ fontSize: 14, fontWeight: 700, color: todayQuiz ? undefined : "#fff" }}>
+              <p className={todayQuiz ? "text-foreground" : ""} style={{ fontSize: 14, fontWeight: 500, color: todayQuiz ? undefined : "#fff" }}>
                 {todayQuiz ? "Quiz fait !" : "Quiz du jour"}
               </p>
               <p className={todayQuiz ? "text-muted-foreground" : ""} style={{ fontSize: 11.5, color: todayQuiz ? undefined : "rgba(255,255,255,0.8)" }}>
@@ -375,7 +384,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             >
               <span style={{ fontSize: 28, flexShrink: 0, lineHeight: 1 }}>{tip.emoji}</span>
               <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#e67e22", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
+                <p style={{ fontSize: 11, fontWeight: 500, color: "#e67e22", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
                   Conseil du jour
                 </p>
                 <p className="text-foreground/80" style={{ fontSize: 13.5, lineHeight: 1.45 }}>
@@ -405,7 +414,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 border: "none",
                 cursor: "pointer",
                 flexShrink: 0,
-                background: actuCat === cat ? "#48A29E" : "#f1f5f9",
+                background: actuCat === cat ? "#2DD4BF" : "#f1f5f9",
                 color: actuCat === cat ? "#fff" : "#64748b",
                 transition: "all 0.15s",
               }}
@@ -439,10 +448,10 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   <span style={{ fontSize: 18 }}>{a.emoji}</span>
                   <span
                     style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "#48A29E",
-                      background: "rgba(72,162,158,0.08)",
+                      fontSize: 9.5,
+                      fontWeight: 500,
+                      color: "#2DD4BF",
+                      background: "rgba(45,212,191,0.08)",
                       borderRadius: 99,
                       padding: "2px 8px",
                     }}
@@ -450,7 +459,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     {a.category}
                   </span>
                 </div>
-                <p className="text-foreground" style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
+                <p className="text-foreground" style={{ fontSize: 12.5, fontWeight: 500, lineHeight: 1.35, marginBottom: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
                 {a.description && (
                   <p className="text-muted-foreground" style={{ fontSize: 13, lineHeight: 1.35, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.description}</p>
                 )}
@@ -508,10 +517,10 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             onClick={() => setShowPersonnaliser(true)}
             style={{
               fontSize: 12,
-              color: "#48A29E",
+              color: "#2DD4BF",
               fontWeight: 600,
-              background: "rgba(72,162,158,0.1)",
-              border: "1.5px solid rgba(72,162,158,0.3)",
+              background: "rgba(45,212,191,0.1)",
+              border: "1.5px solid rgba(45,212,191,0.3)",
               borderRadius: 99,
               padding: "5px 14px",
               cursor: "pointer",
@@ -542,12 +551,15 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   };
                   navigate(pathMap[label] || "/services/agenda");
                 }}
-                className="flex items-center gap-3 text-left bg-card border border-border"
+                className="flex items-center gap-3 text-left"
                 style={{
-                  borderRadius: 16,
-                  padding: "14px 14px",
+                  borderRadius: 14,
+                  padding: "13px 14px",
                   cursor: "pointer",
                   transition: "all 0.18s",
+                  background: "white",
+                  border: "none",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.06)",
                 }}
               >
                 <div
@@ -556,7 +568,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     width: 36,
                     height: 36,
                     borderRadius: 10,
-                    background: "rgba(72,162,158,0.08)",
+                    background: "rgba(45,212,191,0.08)",
                   }}
                 >
                   {action.icon}
@@ -615,7 +627,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   {n.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-foreground" style={{ fontSize: 13.5, fontWeight: 600 }}>{n.title}</p>
+                  <p className="text-foreground" style={{ fontSize: 13.5, fontWeight: 500 }}>{n.title}</p>
                   <p className="text-muted-foreground" style={{ fontSize: 12, marginTop: 1 }}>{n.sub}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -666,23 +678,28 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       {showPersonnaliser && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: "rgba(0,0,0,0.4)" }}
+          style={{ background: "rgba(15,118,110,0.15)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
           onClick={() => setShowPersonnaliser(false)}
         >
           <div
             onClick={e => e.stopPropagation()}
-            className="bg-card"
             style={{
               width: "100%",
               maxWidth: 480,
-              borderRadius: "24px 24px 0 0",
-              padding: "24px 20px 32px",
-              maxHeight: "70vh",
+              background: "white",
+              borderRadius: "28px 28px 0 0",
+              border: "1px solid rgba(45,212,191,0.15)",
+              padding: "12px 20px 32px",
+              maxHeight: "75vh",
               overflowY: "auto",
             }}
           >
+            {/* Handle bar — Apple sheet style */}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+              <div style={{ width: 36, height: 4, borderRadius: 99, background: "#E2E8F0" }} />
+            </div>
             <div className="flex items-center justify-between" style={{ marginBottom: 18 }}>
-              <h3 className="text-foreground" style={{ fontSize: 18, fontWeight: 700 }}>Personnaliser</h3>
+              <h3 className="text-foreground" style={{ fontSize: 18, fontWeight: 500 }}>Personnaliser</h3>
               <span style={{ fontSize: 13, color: "#94a3b8" }}>{selectedActions.length}/4</span>
             </div>
             <div className="flex flex-col gap-2">
@@ -696,7 +713,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     style={{
                       padding: "12px 14px",
                       borderRadius: 14,
-                      border: `1.5px solid ${isSelected ? "rgba(72,162,158,0.3)" : "hsl(var(--border))"}`,
+                      border: `1.5px solid ${isSelected ? "rgba(45,212,191,0.3)" : "hsl(var(--border))"}`,
                       cursor: "pointer",
                       transition: "all 0.15s",
                     }}
@@ -707,7 +724,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                         width: 36,
                         height: 36,
                         borderRadius: 10,
-                        background: "rgba(72,162,158,0.08)",
+                        background: "rgba(45,212,191,0.08)",
                       }}
                     >
                       {action.icon}
@@ -719,7 +736,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                         width: 24,
                         height: 24,
                         borderRadius: "50%",
-                        background: isSelected ? "#48A29E" : "#e2e8f0",
+                        background: isSelected ? "#2DD4BF" : "#e2e8f0",
                         transition: "all 0.15s",
                       }}
                     >
@@ -736,7 +753,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 marginTop: 20,
                 padding: "14px",
                 borderRadius: 14,
-                background: "linear-gradient(135deg, #48A29E 0%, #2d9e99 100%)",
+                background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
                 color: "#fff",
                 fontSize: 15,
                 fontWeight: 600,
@@ -753,23 +770,28 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   );
 }
 
-// --- Section header ---
+// --- Section header — Apple iOS style ---
 function SectionHeader({ title, noMargin, linkLabel, linkPath }: { title: string; noMargin?: boolean; linkLabel?: string; linkPath?: string }) {
   const navigate = useNavigate();
   return (
-    <div className="flex items-center gap-3" style={{ marginBottom: noMargin ? 0 : 14 }}>
-      <div className="flex-1 h-px bg-border" />
-      <span className="text-muted-foreground" style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase" }}>{title}</span>
-      {linkLabel && linkPath ? (
+    <div className="flex items-center justify-between" style={{ marginBottom: noMargin ? 0 : 10, paddingLeft: 4 }}>
+      <p style={{
+        fontSize: 12,
+        fontWeight: 400,
+        letterSpacing: "0.6px",
+        textTransform: "uppercase",
+        color: "#94A3B8",
+        margin: 0,
+      }}>
+        {title}
+      </p>
+      {linkLabel && linkPath && (
         <button
           onClick={() => navigate(linkPath)}
-          className="text-primary"
-          style={{ fontSize: 12, fontWeight: 600, background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+          style={{ fontSize: 12, fontWeight: 500, color: "#2DD4BF", background: "none", border: "none", cursor: "pointer" }}
         >
           {linkLabel} →
         </button>
-      ) : (
-        <div className="flex-1 h-px bg-border" />
       )}
     </div>
   );

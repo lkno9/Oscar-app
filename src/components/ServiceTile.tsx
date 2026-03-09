@@ -12,19 +12,38 @@ export function ServiceTile({ icon, label, intent = "default", onClick }: Servic
     <button
       onClick={onClick}
       className={cn(
-        "p-5 rounded-xl flex flex-col items-center gap-3 text-sm font-medium text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-tile",
+        "p-5 flex flex-col items-center gap-3 text-sm font-normal text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
         intent === "danger"
-          ? "bg-danger text-danger-foreground ring-1 ring-danger-foreground/20"
-          : "bg-card text-foreground ring-1 ring-border hover:ring-primary/30"
+          ? "bg-danger text-danger-foreground"
+          : "bg-white text-foreground"
       )}
+      style={{
+        borderRadius: 20,
+        border: intent === "danger"
+          ? "1px solid rgba(239,68,68,0.2)"
+          : "1px solid rgba(45,212,191,0.15)",
+        boxShadow: intent === "danger"
+          ? "0 4px 16px rgba(239,68,68,0.08)"
+          : "0 4px 20px rgba(45,212,191,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+      }}
     >
-      <div className={cn(
-        "text-primary",
-        intent === "danger" && "text-danger-foreground"
-      )}>
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          background: intent === "danger"
+            ? "rgba(239,68,68,0.1)"
+            : "rgba(45,212,191,0.12)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: intent === "danger" ? "#ef4444" : "#2DD4BF",
+        }}
+      >
         {icon}
       </div>
-      <span className="leading-tight">{label}</span>
+      <span style={{ fontSize: 12.5, lineHeight: 1.3 }}>{label}</span>
     </button>
   );
 }

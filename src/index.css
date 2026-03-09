@@ -7,26 +7,27 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 210 40% 10%;
+    --background: 166 60% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 40% 10%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 40% 10%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 174 74% 40%;
+    /* Primary = #2DD4BF  HSL(172, 66%, 50%) */
+    --primary: 172 66% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 210 40% 10%;
+    --secondary: 166 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 20% 96%;
-    --muted-foreground: 210 10% 50%;
+    --muted: 166 30% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 174 74% 95%;
-    --accent-foreground: 174 74% 35%;
+    --accent: 166 80% 93%;
+    --accent-foreground: 172 66% 30%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -34,48 +35,50 @@
     --danger: 0 80% 95%;
     --danger-foreground: 0 72% 45%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 174 74% 40%;
+    --border: 172 30% 88%;
+    --input: 172 30% 88%;
+    --ring: 172 66% 50%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
-    /* Oscar specific colors */
-    --oscar-teal: 174 74% 40%;
-    --oscar-navy: 210 60% 12%;
-    --oscar-light: 174 50% 97%;
-    --oscar-chat-user: 174 74% 40%;
-    --oscar-chat-assistant: 210 20% 96%;
+    /* Oscar specific */
+    --oscar-teal: 172 66% 50%;
+    --oscar-teal-dark: 175 77% 26%;
+    --oscar-teal-light: 167 85% 89%;
+    --oscar-navy: 222 47% 11%;
+    --oscar-light: 166 80% 97%;
+    --oscar-chat-user: 172 66% 50%;
+    --oscar-chat-assistant: 166 30% 96%;
 
     /* Category colors */
     --category-daily: 45 90% 50%;
     --category-family: 280 60% 70%;
     --category-health: 350 70% 60%;
-    --category-leisure: 174 74% 40%;
+    --category-leisure: 172 66% 50%;
     --category-security: 0 72% 51%;
   }
 
   .dark {
-    --background: 210 40% 8%;
+    --background: 222 47% 8%;
     --foreground: 0 0% 95%;
 
-    --card: 210 40% 12%;
+    --card: 222 47% 12%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 210 40% 12%;
+    --popover: 222 47% 12%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 174 74% 45%;
+    --primary: 172 66% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 30% 18%;
+    --secondary: 222 30% 18%;
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 210 30% 18%;
-    --muted-foreground: 210 15% 60%;
+    --muted: 222 30% 18%;
+    --muted-foreground: 215 20% 60%;
 
-    --accent: 174 50% 20%;
-    --accent-foreground: 174 74% 70%;
+    --accent: 172 50% 20%;
+    --accent-foreground: 172 66% 70%;
 
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 100%;
@@ -83,9 +86,9 @@
     --danger: 0 50% 20%;
     --danger-foreground: 0 72% 70%;
 
-    --border: 210 30% 20%;
-    --input: 210 30% 20%;
-    --ring: 174 74% 45%;
+    --border: 222 30% 20%;
+    --input: 222 30% 20%;
+    --ring: 172 66% 55%;
   }
 }
 
@@ -95,120 +98,200 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Nunito', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Nunito', sans-serif;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
     font-weight: 700;
   }
 }
 
 @layer utilities {
+  /* ── Scrollbar ── */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  .thin-scrollbar::-webkit-scrollbar { width: 3px; }
+  .thin-scrollbar::-webkit-scrollbar-thumb { background: #CCFBF1; border-radius: 4px; }
+
+  /* ── Page background gradient ── */
+  .oscar-page-bg {
+    background: linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 40%, #F8FAFC 100%);
   }
 
-  /* Microphone pulse animation */
-  .animate-pulse-mic {
-    animation: pulse-mic 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes pulse-mic {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.7;
-      transform: scale(1.1);
-    }
-  }
-
-  /* Mirror video for selfie camera */
-  .mirror {
-    transform: scaleX(-1);
-  }
-
-  /* Oscar navy background */
-  .bg-oscar-navy {
-    background: hsl(var(--oscar-navy));
-  }
-
-  /* Glassmorphism input */
-  .glass-input {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1.5px solid rgba(72, 162, 158, 0.2);
+  /* ── Cards ── */
+  .oscar-card {
+    background: white;
     border-radius: 20px;
-    padding: 14px 16px;
+    border: 1px solid rgba(45, 212, 191, 0.12);
+    box-shadow: 0 4px 20px rgba(45, 212, 191, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+  .oscar-card:hover {
+    transform: translateX(3px);
+    transition: all 0.2s ease;
+  }
+
+  /* ── CTA primary button ── */
+  .oscar-btn-primary {
+    background: linear-gradient(135deg, #2DD4BF, #0F766E);
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(45, 212, 191, 0.35);
+    transition: all 0.2s ease;
+  }
+  .oscar-btn-primary:hover {
+    box-shadow: 0 6px 24px rgba(45, 212, 191, 0.45);
+    transform: translateY(-1px);
+  }
+
+  /* ── Badge / pill tag ── */
+  .oscar-badge {
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* ── Filter button ── */
+  .oscar-filter-btn {
+    background: white;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 12px;
+    color: #64748B;
+    transition: all 0.15s ease;
+  }
+  .oscar-filter-btn.active {
+    background: rgba(45, 212, 191, 0.15);
+    border-color: #2DD4BF;
+    color: #2DD4BF;
+  }
+
+  /* ── Glassmorphism input ── */
+  .glass-input {
+    background: #FAFAFA;
+    border: 1.5px solid #CCFBF1;
+    border-radius: 16px;
+    padding: 13px 16px;
+    color: #1E293B;
+    caret-color: #2DD4BF;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
   .dark .glass-input {
     background: rgba(30, 41, 59, 0.7);
-    border-color: rgba(72, 162, 158, 0.3);
+    border-color: rgba(45, 212, 191, 0.2);
   }
   .glass-input:focus-within {
-    border-color: rgba(72, 162, 158, 0.45);
-    box-shadow: 0 0 0 3px rgba(72, 162, 158, 0.08);
+    border-color: #2DD4BF;
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
   }
 
-  /* Playfair Display heading */
-  .font-playfair {
-    font-family: 'Playfair Display', serif;
-  }
-
-  /* Message bubble animation */
-  .msg-fade-up {
-    animation: fadeUp 0.25s ease forwards;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Suggestion button style */
+  /* ── Suggestion buttons (chat) ── */
   .suggestion-btn {
     width: 100%;
     padding: 14px 18px;
-    background: #f8fafc;
-    border: 1.5px solid #eef2f7;
+    background: #FAFAFA;
+    border: 1.5px solid rgba(45, 212, 191, 0.2);
     border-radius: 16px;
-    font-size: 14.5px;
-    color: #334155;
+    font-size: 14px;
+    font-weight: 400;
+    color: #1E293B;
     text-align: left;
     cursor: pointer;
     transition: all 0.18s;
-    font-family: 'Inter', 'Nunito', sans-serif;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
   }
   .dark .suggestion-btn {
-    background: hsl(210 30% 18%);
-    border-color: hsl(210 30% 25%);
+    background: hsl(222 30% 18%);
+    border-color: rgba(45, 212, 191, 0.2);
     color: hsl(0 0% 90%);
   }
   .suggestion-btn:hover {
-    border-color: rgba(72, 162, 158, 0.35);
-    background: rgba(72, 162, 158, 0.04);
-  }
-  .dark .suggestion-btn:hover {
-    border-color: rgba(72, 162, 158, 0.45);
-    background: rgba(72, 162, 158, 0.1);
+    border-color: #2DD4BF;
+    background: rgba(45, 212, 191, 0.06);
   }
 
-  /* Thin scrollbar */
-  .thin-scrollbar::-webkit-scrollbar { width: 3px; }
-  .thin-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+  /* ── Microphone pulse ── */
+  .animate-pulse-mic {
+    animation: pulse-mic 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes pulse-mic {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+  }
 
-  /* Typing dots bounce */
+  /* ── Selfie mirror ── */
+  .mirror { transform: scaleX(-1); }
+
+  /* ── Playfair heading ── */
+  .font-playfair { font-family: 'Playfair Display', serif; }
+
+  /* ── Oscar navy bg ── */
+  .bg-oscar-navy { background: hsl(var(--oscar-navy)); }
+
+  /* ── Message animation ── */
+  .msg-fade-up { animation: fadeUp 0.25s ease forwards; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Fade slide (list items) ── */
+  .fade-slide { animation: fadeSlide 0.25s ease forwards; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Pop (item added) ── */
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+  .animate-pop { animation: pop 0.4s ease; }
+
+  /* ── Progress bar ── */
+  .oscar-progress-bar {
+    height: 6px;
+    border-radius: 99px;
+    background: rgba(45, 212, 191, 0.1);
+    overflow: hidden;
+  }
+  .oscar-progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #2DD4BF, #0F766E);
+    transition: width 0.4s ease;
+  }
+
+  /* ── Toggle switch ── */
+  .oscar-toggle-track-on  { background: linear-gradient(90deg, #2DD4BF, #0F766E); }
+  .oscar-toggle-track-off { background: #E2E8F0; }
+  .oscar-toggle-thumb { background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+
+  /* ── FAB ── */
+  .oscar-fab {
+    background: linear-gradient(135deg, #2DD4BF, #0F766E);
+    border-radius: 20px;
+    width: 58px; height: 58px;
+    box-shadow: 0 8px 30px rgba(45, 212, 191, 0.4);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.25s ease;
+  }
+  .oscar-fab:hover { transform: scale(1.08) rotate(45deg); }
+
+  /* ── Typing dots ── */
   @keyframes bounce {
     0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-6px); }
+    30%           { transform: translateY(-6px); }
   }
 }
