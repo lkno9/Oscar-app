@@ -2,7 +2,7 @@ export interface ScamAlert {
   id: string;
   title: string;
   description: string;
-  category: 'sms' | 'email' | 'telephone' | 'social';
+  category: 'sms' | 'email' | 'telephone' | 'social' | 'porte-a-porte' | 'web';
   danger_level: 'low' | 'medium' | 'high';
   date_detected: string;
   source?: string;
