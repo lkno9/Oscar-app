@@ -12,10 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { phone_number, otp_code } = await req.json();
+    const { phone_number, otp_code, pin_code } = await req.json();
 
-    if (!phone_number || !otp_code) {
-      return new Response(JSON.stringify({ error: 'phone_number et otp_code requis' }), {
+    if (!phone_number || !otp_code || !pin_code) {
+      return new Response(JSON.stringify({ valid: false, error: 'Numéro, code OTP et code secret requis' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -26,7 +26,7 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Check OTP validity
+    // 1. Vérifier le code OTP (preuve de possession du téléphone)
     const { data: otpData, error: otpError } = await supabase
       .from('voice_otps')
       .select('*')
@@ -37,44 +37,53 @@ serve(async (req) => {
       .single();
 
     if (otpError || !otpData) {
-      return new Response(JSON.stringify({ valid: false, error: 'Code invalide ou expiré' }), {
+      console.error('OTP check failed:', otpError?.message);
+      return new Response(JSON.stringify({ valid: false, error: 'Code OTP invalide ou expiré' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Mark OTP as used
+    // Marquer l'OTP comme utilisé
     await supabase.from('voice_otps').update({ used: true }).eq('id', otpData.id);
 
-    // Get or create user with this phone
+    // 2. Trouver l'utilisateur existant par son numéro de téléphone
+    //    (le compte a été pré-créé à la souscription)
     const { data: listData } = await supabase.auth.admin.listUsers();
     const existingUser = listData?.users?.find(u => u.phone === phone_number);
 
-    let userId: string;
-
-    if (existingUser) {
-      userId = existingUser.id;
-    } else {
-      // Create new user
-      const { data: newUserData, error: createError } = await supabase.auth.admin.createUser({
-        phone: phone_number,
-        phone_confirm: true,
-        user_metadata: { role: 'senior' },
+    if (!existingUser) {
+      return new Response(JSON.stringify({ valid: false, error: 'Aucun compte trouvé pour ce numéro. Contactez le support Oscar.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-
-      if (createError || !newUserData.user) {
-        console.error('Create user error:', createError);
-        return new Response(JSON.stringify({ valid: false, error: 'Erreur création utilisateur' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      userId = newUserData.user.id;
     }
 
-    // Create a session for this user
+    // 3. Vérifier le code PIN (preuve d'identité)
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('auth_pin')
+      .eq('id', existingUser.id)
+      .single();
+
+    if (profileError || !profileData) {
+      console.error('Profile lookup failed:', profileError?.message);
+      return new Response(JSON.stringify({ valid: false, error: 'Erreur de vérification du profil' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!profileData.auth_pin || profileData.auth_pin !== pin_code) {
+      return new Response(JSON.stringify({ valid: false, error: 'Code secret incorrect' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 4. Tout est vérifié — créer une session pour cet utilisateur
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
-      user_id: userId,
+      user_id: existingUser.id,
     });
 
     if (sessionError || !sessionData) {
@@ -96,7 +105,7 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({ error: 'Erreur interne' }), {
+    return new Response(JSON.stringify({ valid: false, error: 'Erreur interne' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

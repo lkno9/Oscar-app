@@ -17,9 +17,10 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 type AccountType = 'senior' | 'family_member';
 type AuthStep =
   | 'choose_type'       // Étape 1 : Senior ou Famille ?
-  | 'senior_phone'      // Étape 2a : Numéro + nom (si 1ère fois)
+  | 'senior_phone'      // Étape 2a : Numéro de téléphone
   | 'senior_calling'    // Étape 3a : Oscar vous appelle...
-  | 'senior_code'       // Étape 4a : Saisir le code
+  | 'senior_code'       // Étape 4a : Saisir le code OTP
+  | 'senior_pin'        // Étape 5a : Saisir le code secret (PIN 4 chiffres)
   | 'family_auth';      // Étape 2b : Email/password classique
 
 export function AuthPage() {
@@ -31,6 +32,8 @@ export function AuthPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [seniorName, setSeniorName] = useState('');
   const [otpCode, setOtpCode] = useState('');
+  const [pinCode, setPinCode] = useState('');
+  const [storedOtpCode, setStoredOtpCode] = useState('');
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [verifyLoading, setVerifyLoading] = useState(false);
 
@@ -117,8 +120,16 @@ export function AuthPage() {
     }
   };
 
-  const handleVerifyCode = async (code: string) => {
+  // Quand le senior a saisi le code OTP → passer à l'étape PIN
+  const handleOtpEntered = (code: string) => {
     if (code.length !== 6) return;
+    setStoredOtpCode(code);
+    setStep('senior_pin');
+  };
+
+  // Vérification finale : OTP + PIN → connexion
+  const handleVerifyWithPin = async (pin: string) => {
+    if (pin.length !== 4) return;
 
     setVerifyLoading(true);
     const formattedPhone = formatPhoneForApi(phoneNumber);
@@ -132,7 +143,11 @@ export function AuthPage() {
             'Content-Type': 'application/json',
             'apikey': SUPABASE_ANON_KEY,
           },
-          body: JSON.stringify({ phone_number: formattedPhone, otp_code: code }),
+          body: JSON.stringify({
+            phone_number: formattedPhone,
+            otp_code: storedOtpCode,
+            pin_code: pin,
+          }),
         }
       );
 
@@ -140,12 +155,12 @@ export function AuthPage() {
       console.log('[Auth] verify-voice-otp response:', response.status, data);
 
       if (!response.ok || !data.valid) {
-        const errMsg = data?.error || 'Code incorrect';
-        console.error('[Auth] OTP verification failed:', errMsg);
+        const errMsg = data?.error || 'Vérification échouée';
+        console.error('[Auth] Verification failed:', errMsg);
         toast.error(errMsg);
-        setOtpCode('');
+        setPinCode('');
       } else {
-        // Set the session in Supabase client
+        // Créer la session Supabase côté client
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: data.access_token,
           refresh_token: data.refresh_token,
@@ -153,17 +168,8 @@ export function AuthPage() {
 
         if (sessionError) {
           toast.error('Erreur de connexion. Réessayez.');
-          setOtpCode('');
+          setPinCode('');
           return;
-        }
-
-        // Update profile if name provided
-        if (seniorName.trim() && data.user?.id) {
-          await supabase.from('profiles').upsert({
-            id: data.user.id,
-            full_name: seniorName.trim(),
-            phone_number: formattedPhone,
-          });
         }
 
         toast.success('Connexion réussie !');
@@ -172,7 +178,7 @@ export function AuthPage() {
     } catch (err) {
       console.error('[Auth] Verify error:', err);
       toast.error('Erreur de vérification. Réessayez.');
-      setOtpCode('');
+      setPinCode('');
     } finally {
       setVerifyLoading(false);
     }
@@ -333,23 +339,6 @@ export function AuthPage() {
           </div>
 
           <div className="space-y-5">
-            {/* Nom (optionnel — pour la 1ère fois) */}
-            <div className="space-y-2">
-              <Label htmlFor="seniorName" className="text-base">Votre prénom</Label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="seniorName"
-                  type="text"
-                  placeholder="Jean"
-                  value={seniorName}
-                  onChange={(e) => setSeniorName(e.target.value)}
-                  className="pl-12 h-14 text-lg"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Nécessaire seulement la première fois</p>
-            </div>
-
             {/* Téléphone */}
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-base">Numéro de téléphone</Label>
@@ -452,10 +441,9 @@ export function AuthPage() {
               onChange={(value) => {
                 setOtpCode(value);
                 if (value.length === 6) {
-                  handleVerifyCode(value);
+                  handleOtpEntered(value);
                 }
               }}
-              disabled={verifyLoading}
             >
               <InputOTPGroup>
                 <InputOTPSlot index={0} className="w-12 h-14 text-xl" />
@@ -467,12 +455,6 @@ export function AuthPage() {
               </InputOTPGroup>
             </InputOTP>
 
-            {verifyLoading && (
-              <div className="flex items-center gap-2 text-primary">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-base">Vérification...</span>
-              </div>
-            )}
           </div>
 
           {/* Renvoyer le code */}
@@ -491,6 +473,70 @@ export function AuthPage() {
               Rappeler
             </Button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // ÉTAPE 5a : Senior — Code secret (PIN 4 chiffres)
+  // ─────────────────────────────────────────────────────────
+  if (step === 'senior_pin') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-sm space-y-8">
+          {/* Retour */}
+          <button
+            onClick={() => { setStep('senior_code'); setPinCode(''); }}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm">Retour</span>
+          </button>
+
+          <div className="text-center space-y-3 flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Lock className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Votre code secret</h1>
+              <p className="text-muted-foreground mt-1 text-base leading-relaxed">
+                Entrez le code à 4 chiffres qui vous a été remis lors de votre inscription.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-6">
+            <InputOTP
+              maxLength={4}
+              value={pinCode}
+              onChange={(value) => {
+                setPinCode(value);
+                if (value.length === 4) {
+                  handleVerifyWithPin(value);
+                }
+              }}
+              disabled={verifyLoading}
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} className="w-14 h-16 text-2xl" />
+                <InputOTPSlot index={1} className="w-14 h-16 text-2xl" />
+                <InputOTPSlot index={2} className="w-14 h-16 text-2xl" />
+                <InputOTPSlot index={3} className="w-14 h-16 text-2xl" />
+              </InputOTPGroup>
+            </InputOTP>
+
+            {verifyLoading && (
+              <div className="flex items-center gap-2 text-primary">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="text-base">Vérification...</span>
+              </div>
+            )}
+          </div>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Code oublié ? Contactez le support Oscar.
+          </p>
         </div>
       </div>
     );
