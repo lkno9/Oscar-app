@@ -670,6 +670,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_pin: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
@@ -681,6 +682,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auth_pin?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -692,6 +694,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auth_pin?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
