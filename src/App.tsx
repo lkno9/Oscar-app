@@ -46,6 +46,8 @@ import { TransportPage } from "./pages/services/TransportPage";
 import { EntertainmentPage } from "./pages/services/EntertainmentPage";
 import { ToolsPage } from "./pages/services/ToolsPage";
 import { KnowledgePage } from "./pages/services/KnowledgePage";
+import { RadioPage } from "./pages/services/RadioPage";
+import { RecipesPage } from "./pages/services/RecipesPage";
 import { DailyQuizPage } from "./pages/DailyQuizPage";
 
 const queryClient = new QueryClient();
@@ -91,6 +93,8 @@ const App = () => (
             <Route path="/services/entertainment" element={<ProtectedRoute><SubPageLayout><EntertainmentPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/tools" element={<ProtectedRoute><SubPageLayout><ToolsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/knowledge" element={<ProtectedRoute><SubPageLayout><KnowledgePage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/radio" element={<ProtectedRoute><SubPageLayout><RadioPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/recipes" element={<ProtectedRoute><SubPageLayout><RecipesPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/daily-quiz" element={<ProtectedRoute><DailyQuizPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SubPageLayout><SettingsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/settings/family-access" element={<ProtectedRoute><SubPageLayout><FamilyAccessPage /></SubPageLayout></ProtectedRoute>} />
