@@ -10,18 +10,27 @@ import { cn } from "@/lib/utils";
 
 type QuizState = 'intro' | 'playing' | 'result';
 
+// Sélectionne N questions aléatoires à partir de la banque complète
+function pickRandomQuestions(allQuestions: typeof securityQuizQuestions, count: number) {
+  const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+const QUIZ_SIZE = 5;
+
 export function SecurityQuiz() {
   const [state, setState] = useState<QuizState>('intro');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [questions, setQuestions] = useState(pickRandomQuestions(securityQuizQuestions, QUIZ_SIZE));
   const { user } = useAuth();
 
-  const questions = securityQuizQuestions;
   const totalQuestions = questions.length;
 
   const startQuiz = () => {
+    setQuestions(pickRandomQuestions(securityQuizQuestions, QUIZ_SIZE));
     setCurrentQuestion(0);
     setScore(0);
     setSelectedAnswer(null);

@@ -1,15 +1,21 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Shield, AlertTriangle, GraduationCap, BookOpen, Phone, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Shield, AlertTriangle, GraduationCap, BookOpen, Phone, ChevronDown, ChevronUp, MessageCircle, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScamChecker } from "@/components/scam-protection/ScamChecker";
 import { ScamAlertCard } from "@/components/scam-protection/ScamAlertCard";
 import { SecurityQuiz } from "@/components/scam-protection/SecurityQuiz";
 import { SafetyTipsAccordion } from "@/components/scam-protection/SafetyTipsAccordion";
 import { EmergencyContacts } from "@/components/scam-protection/EmergencyContacts";
+import { fallbackAlerts } from "@/components/scam-protection/ScamAlertsData";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface ScamAlert {
   id: string;
@@ -21,15 +27,27 @@ interface ScamAlert {
   source: string | null;
 }
 
+interface ScamCheckHistory {
+  id: string;
+  content_checked: string;
+  risk_level: string;
+  created_at: string;
+}
+
 export function ScamProtectionPage() {
   const goBack = useBackNavigation();
+  const navigate = useNavigate();
   const [alerts, setAlerts] = useState<ScamAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
+  const [checkHistory, setCheckHistory] = useState<ScamCheckHistory[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchAlerts();
-  }, []);
+    if (user) fetchHistory();
+  }, [user]);
 
   const fetchAlerts = async () => {
     try {
@@ -40,11 +58,27 @@ export function ScamProtectionPage() {
         .order('date_detected', { ascending: false });
 
       if (error) throw error;
-      setAlerts(data || []);
+      // Utiliser les alertes de la DB, ou les fallback si la DB est vide
+      setAlerts(data && data.length > 0 ? data : fallbackAlerts as any);
     } catch (error) {
-      // Error fetching alerts
+      // En cas d'erreur, afficher les alertes de fallback
+      setAlerts(fallbackAlerts as any);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const { data } = await supabase
+        .from('scam_checks')
+        .select('id, content_checked, risk_level, created_at')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      setCheckHistory(data || []);
+    } catch {
+      // silently fail
     }
   };
 
@@ -70,10 +104,58 @@ export function ScamProtectionPage() {
 
       {/* Main Content */}
       <div className="flex-1 p-4 space-y-6 pb-24">
+        {/* Ask Oscar Banner */}
+        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => navigate("/chat")}>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <MessageCircle className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground text-base">Un message vous semble suspect ?</h3>
+              <p className="text-sm text-muted-foreground">Envoyez-le à Oscar par chat — il l'analysera et vous dira quoi faire.</p>
+            </div>
+            <ArrowLeft className="w-5 h-5 text-primary rotate-180 shrink-0" />
+          </CardContent>
+        </Card>
+
         {/* Scam Checker - Main Feature */}
         <section>
           <ScamChecker />
         </section>
+
+        {/* Check History */}
+        {checkHistory.length > 0 && (
+          <section>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3 hover:text-foreground transition-colors"
+            >
+              <History className="w-4 h-4" />
+              Mes vérifications récentes ({checkHistory.length})
+              {showHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {showHistory && (
+              <div className="space-y-2">
+                {checkHistory.map((check) => (
+                  <Card key={check.id} className="bg-card">
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <span className="text-lg">
+                        {check.risk_level === 'safe' ? '✅' : check.risk_level === 'suspicious' ? '⚠️' : '🚨'}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground truncate">{check.content_checked}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(check.created_at), "d MMM yyyy 'à' HH:mm", { locale: fr })}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Tabs for other sections */}
         <Tabs defaultValue="alerts" className="w-full">
