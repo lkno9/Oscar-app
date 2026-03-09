@@ -48,9 +48,12 @@ serve(async (req) => {
     await supabase.from('voice_otps').update({ used: true }).eq('id', otpData.id);
 
     // 2. Trouver l'utilisateur existant par son numéro de téléphone
-    //    (le compte a été pré-créé à la souscription)
-    const { data: listData } = await supabase.auth.admin.listUsers();
-    const existingUser = listData?.users?.find(u => u.phone === phone_number);
+    //    Normaliser : supprimer le + et les espaces pour comparaison souple
+    const normalizePhone = (p: string) => p.replace(/[\s+]/g, '');
+    const normalizedInput = normalizePhone(phone_number);
+
+    const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const existingUser = listData?.users?.find(u => u.phone && normalizePhone(u.phone) === normalizedInput);
 
     if (!existingUser) {
       return new Response(JSON.stringify({ valid: false, error: 'Aucun compte trouvé pour ce numéro. Contactez le support Oscar.' }), {
