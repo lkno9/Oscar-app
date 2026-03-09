@@ -1028,6 +1028,7 @@ export type Database = {
         Args: { _family_member_id: string; _invitation_code: string }
         Returns: Json
       }
+      custom_sms_hook: { Args: { event: Json }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
