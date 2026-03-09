@@ -11,6 +11,9 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, Users, Heart, Phone, ArrowLeft, PhoneCall, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
 type AccountType = 'senior' | 'family_member';
 type AuthStep =
   | 'choose_type'       // Étape 1 : Senior ou Famille ?
