@@ -1,4 +1,4 @@
-import { ArrowLeft, AlertTriangle, Phone, MapPin, Users, Plus, UserPlus, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Phone, MapPin, Users, Plus, UserPlus, ChevronDown, ChevronUp, Loader2, Navigation } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +6,8 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { getCurrentPosition, formatDistance, googleMapsDirectionsUrl } from "@/lib/geo";
+import { searchNearbyPOIs, getPOIEmoji, type OverpassPOI, type POIType } from "@/lib/overpass";
 
 interface Contact {
   id: string;
@@ -97,6 +99,30 @@ export function EmergencyPage() {
   const [loading, setLoading] = useState(true);
   const [openCategories, setOpenCategories] = useState<string[]>(["Urgences vitales"]);
 
+  // Recherche à proximité
+  const [nearbyPOIs, setNearbyPOIs] = useState<OverpassPOI[]>([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [nearbySearched, setNearbySearched] = useState(false);
+  const [nearbyType, setNearbyType] = useState<POIType>("hospital");
+
+  const searchNearbyEmergency = async (type?: POIType) => {
+    const searchType = type || nearbyType;
+    setNearbyLoading(true);
+    setNearbyPOIs([]);
+    try {
+      const coords = await getCurrentPosition();
+      const radius = searchType === "hospital" ? 10000 : searchType === "police" ? 5000 : 3000;
+      const results = await searchNearbyPOIs(coords, searchType, radius);
+      setNearbyPOIs(results);
+      setNearbySearched(true);
+      if (results.length === 0) toast("Aucun résultat trouvé à proximité.");
+    } catch (err: any) {
+      toast.error(err.message || "Impossible d'obtenir votre position.");
+    } finally {
+      setNearbyLoading(false);
+    }
+  };
+
   const nationalEmergencies = [
     { id: 1, name: "SAMU", number: "15", description: "Urgences médicales" },
     { id: 2, name: "Pompiers", number: "18", description: "Incendie, accident" },
@@ -167,6 +193,82 @@ export function EmergencyPage() {
           <Button size="sm" variant="outline" className="border-orange-300" onClick={() => toast.info("Le partage de position sera bientôt disponible")}>
             Partager
           </Button>
+        </div>
+
+        {/* Trouver un lieu d'urgence à proximité */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Trouver à proximité
+          </h2>
+          <div className="flex gap-2">
+            {([
+              { type: "hospital" as POIType, label: "Hôpitaux", emoji: "🏥" },
+              { type: "pharmacy" as POIType, label: "Pharmacies", emoji: "💊" },
+              { type: "police" as POIType, label: "Police", emoji: "🚔" },
+            ]).map(f => (
+              <button
+                key={f.type}
+                onClick={() => { setNearbyType(f.type); if (nearbySearched) searchNearbyEmergency(f.type); }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-all"
+                style={{
+                  background: nearbyType === f.type ? "rgba(239,68,68,0.08)" : undefined,
+                  border: `1.5px solid ${nearbyType === f.type ? "#ef4444" : "hsl(var(--border))"}`,
+                  color: nearbyType === f.type ? "#ef4444" : undefined,
+                }}
+              >
+                <span>{f.emoji}</span> {f.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => searchNearbyEmergency()}
+            disabled={nearbyLoading}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold transition-all"
+            style={{
+              background: nearbyLoading ? "#94a3b8" : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+              border: "none",
+              cursor: nearbyLoading ? "wait" : "pointer",
+              fontSize: 15,
+            }}
+          >
+            {nearbyLoading ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /> Recherche en cours...</>
+            ) : (
+              <><MapPin className="w-5 h-5" /> Trouver le plus proche</>
+            )}
+          </button>
+
+          {nearbySearched && !nearbyLoading && (
+            <div className="space-y-2">
+              {nearbyPOIs.length > 0 ? nearbyPOIs.slice(0, 5).map(poi => (
+                <div key={poi.id} className="bg-card rounded-xl p-3 border border-border flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center text-lg flex-shrink-0">
+                    {getPOIEmoji(poi.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground text-sm">{poi.name}</p>
+                    {poi.address && <p className="text-xs text-muted-foreground">{poi.address}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs font-medium text-destructive">{formatDistance(poi.distance)}</span>
+                    <a
+                      href={googleMapsDirectionsUrl({ lat: poi.lat, lon: poi.lon })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-lg bg-blue-500/10"
+                    >
+                      <Navigation className="w-4 h-4 text-blue-600" />
+                    </a>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground text-sm">Aucun résultat à proximité</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Emergency numbers grid */}

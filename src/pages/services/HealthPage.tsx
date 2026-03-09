@@ -55,10 +55,20 @@ const WELLNESS_TIPS = [
   "Manger des fruits et légumes colorés chaque jour.",
 ];
 
+const DOCTOLIB_SPECIALTIES = [
+  { key: "medecin-generaliste", label: "Médecin généraliste", emoji: "🩺" },
+  { key: "dentiste", label: "Dentiste", emoji: "🦷" },
+  { key: "ophtalmologue", label: "Ophtalmologue", emoji: "👁️" },
+  { key: "dermatologue", label: "Dermatologue", emoji: "🧴" },
+  { key: "kinesitherapeute", label: "Kinésithérapeute", emoji: "💆" },
+  { key: "cardiologue", label: "Cardiologue", emoji: "❤️" },
+  { key: "orl", label: "ORL", emoji: "👂" },
+  { key: "radiologue", label: "Radiologue", emoji: "🔬" },
+];
+
 const HEALTH_PLATFORMS = [
   { name: "Mon Espace Santé", desc: "Dossier médical partagé (DMP), ordonnances, résultats", url: "https://www.monespacesante.fr", emoji: "🏥" },
   { name: "Ameli.fr", desc: "Assurance maladie, remboursements, attestations", url: "https://www.ameli.fr", emoji: "💳" },
-  { name: "Doctolib", desc: "Prendre un rendez-vous médical en ligne", url: "https://www.doctolib.fr", emoji: "📅" },
   { name: "Pharmacie en ligne", desc: "Commander vos médicaments (1001Pharmacies)", url: "https://www.1001pharmacies.com", emoji: "💊" },
   { name: "Service-Public Santé", desc: "Vos droits santé, aides et démarches", url: "https://www.service-public.fr/particuliers/vosdroits/N17", emoji: "📋" },
   { name: "Pour les personnes âgées", desc: "Guide officiel des aides et droits seniors", url: "https://www.pour-les-personnes-agees.gouv.fr", emoji: "🤝" },
@@ -387,6 +397,36 @@ export function HealthPage() {
 
           {/* PLATFORMS TAB */}
           <TabsContent value="platforms" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
+            {/* Doctolib RDV Tool */}
+            <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: "rgba(0,127,243,0.1)" }}>
+                  📅
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground">Prendre rendez-vous</h3>
+                  <p className="text-sm text-muted-foreground">Via Doctolib — choisissez un spécialiste</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {DOCTOLIB_SPECIALTIES.map(spec => (
+                  <button
+                    key={spec.key}
+                    onClick={() => window.open(`https://www.doctolib.fr/${spec.key}`, "_blank")}
+                    className="flex items-center gap-2 p-3 rounded-xl text-left transition-all hover:border-primary"
+                    style={{
+                      border: "1.5px solid hsl(var(--border))",
+                      background: "hsl(var(--background))",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span className="text-lg">{spec.emoji}</span>
+                    <span className="text-sm font-medium text-foreground leading-tight">{spec.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Oscar banner */}
             <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-start gap-3">
               <span className="text-lg mt-0.5">💡</span>
@@ -395,7 +435,13 @@ export function HealthPage() {
                 Dites-lui : « Oscar, explique-moi mon relevé Ameli »
               </p>
             </div>
-            <p className="text-sm text-muted-foreground">Accédez directement à vos services de santé en ligne.</p>
+
+            {/* Plateformes de santé */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Services en ligne</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
             <div className="space-y-3">
               {HEALTH_PLATFORMS.map((p, i) => (
                 <button
@@ -561,10 +607,90 @@ export function HealthPage() {
               ))}
             </div>
 
-            {/* Sport links */}
+            {/* Recherche lieux sport/parcs proches */}
             <div className="flex items-center gap-3 pt-2">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Bouger près de chez moi</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Près de chez moi</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            <div className="flex gap-2">
+              {([
+                { type: "park" as POIType, label: "Parcs", emoji: "🌳" },
+                { type: "sports_centre" as POIType, label: "Sport", emoji: "🏋️" },
+              ]).map(f => (
+                <button
+                  key={f.type}
+                  onClick={() => {
+                    setNearbyType(f.type);
+                    searchNearbyHealth(f.type);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-all"
+                  style={{
+                    background: nearbyType === f.type ? "rgba(72,162,158,0.12)" : undefined,
+                    border: `1.5px solid ${nearbyType === f.type ? "#48A29E" : "hsl(var(--border))"}`,
+                    color: nearbyType === f.type ? "#48A29E" : undefined,
+                  }}
+                >
+                  <span>{f.emoji}</span> {f.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => searchNearbyHealth(nearbyType === "park" || nearbyType === "sports_centre" ? nearbyType : "park")}
+              disabled={nearbyLoading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold transition-all"
+              style={{
+                background: nearbyLoading ? "#94a3b8" : "linear-gradient(135deg, #48A29E 0%, #2d9e99 100%)",
+                border: "none",
+                cursor: nearbyLoading ? "wait" : "pointer",
+                fontSize: 14,
+              }}
+            >
+              {nearbyLoading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Recherche...</>
+              ) : (
+                <><MapPin className="w-4 h-4" /> Trouver près de moi</>
+              )}
+            </button>
+
+            {nearbySearched && !nearbyLoading && (nearbyType === "park" || nearbyType === "sports_centre") && (
+              <div className="space-y-3">
+                {nearbyPOIs.length > 0 ? nearbyPOIs.map(poi => (
+                  <div key={poi.id} className="bg-card rounded-xl p-4 border border-border flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
+                      {getPOIEmoji(poi.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground">{poi.name}</p>
+                      {poi.address && <p className="text-sm text-muted-foreground">{poi.address}</p>}
+                    </div>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className="text-sm font-medium text-primary">{formatDistance(poi.distance)}</span>
+                      <a
+                        href={googleMapsDirectionsUrl({ lat: poi.lat, lon: poi.lon })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 font-medium"
+                      >
+                        Y aller →
+                      </a>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center py-6">
+                    <span className="text-3xl block mb-2">🔍</span>
+                    <p className="text-muted-foreground">Aucun lieu trouvé à proximité</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Sport links — en ligne */}
+            <div className="flex items-center gap-3 pt-2">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Ressources en ligne</span>
               <div className="flex-1 h-px bg-border" />
             </div>
             <div className="space-y-3">

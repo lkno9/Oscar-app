@@ -13,16 +13,29 @@ export interface OverpassPOI {
   openingHours?: string;
 }
 
-export type POIType = "pharmacy" | "bus_stop" | "subway" | "doctor" | "hospital" | "restaurant";
+export type POIType =
+  | "pharmacy" | "bus_stop" | "subway" | "doctor" | "hospital" | "restaurant"
+  | "post_office" | "library" | "cinema" | "park" | "sports_centre"
+  | "police" | "bank" | "supermarket" | "bakery" | "cafe";
 
 // --- Configuration requêtes Overpass par type ---
 const POI_CONFIGS: Record<POIType, { filter: string; defaultRadius: number; emoji: string; label: string }> = {
-  pharmacy:   { filter: '["amenity"="pharmacy"]',   defaultRadius: 1500, emoji: "💊", label: "Pharmacie" },
-  bus_stop:   { filter: '["highway"="bus_stop"]',    defaultRadius: 1000, emoji: "🚌", label: "Arrêt de bus" },
-  subway:     { filter: '["station"="subway"]',      defaultRadius: 2000, emoji: "🚇", label: "Métro" },
-  doctor:     { filter: '["amenity"="doctors"]',     defaultRadius: 2000, emoji: "👨‍⚕️", label: "Médecin" },
-  hospital:   { filter: '["amenity"="hospital"]',    defaultRadius: 5000, emoji: "🏥", label: "Hôpital" },
-  restaurant: { filter: '["amenity"="restaurant"]',  defaultRadius: 1000, emoji: "🍽️", label: "Restaurant" },
+  pharmacy:       { filter: '["amenity"="pharmacy"]',       defaultRadius: 1500, emoji: "💊", label: "Pharmacie" },
+  bus_stop:       { filter: '["highway"="bus_stop"]',       defaultRadius: 1000, emoji: "🚌", label: "Arrêt de bus" },
+  subway:         { filter: '["station"="subway"]',         defaultRadius: 2000, emoji: "🚇", label: "Métro" },
+  doctor:         { filter: '["amenity"="doctors"]',        defaultRadius: 2000, emoji: "👨‍⚕️", label: "Médecin" },
+  hospital:       { filter: '["amenity"="hospital"]',       defaultRadius: 5000, emoji: "🏥", label: "Hôpital" },
+  restaurant:     { filter: '["amenity"="restaurant"]',     defaultRadius: 1000, emoji: "🍽️", label: "Restaurant" },
+  post_office:    { filter: '["amenity"="post_office"]',    defaultRadius: 2000, emoji: "🏤", label: "Bureau de poste" },
+  library:        { filter: '["amenity"="library"]',        defaultRadius: 3000, emoji: "📚", label: "Bibliothèque" },
+  cinema:         { filter: '["amenity"="cinema"]',         defaultRadius: 5000, emoji: "🎬", label: "Cinéma" },
+  park:           { filter: '["leisure"="park"]',           defaultRadius: 1500, emoji: "🌳", label: "Parc" },
+  sports_centre:  { filter: '["leisure"="sports_centre"]',  defaultRadius: 3000, emoji: "🏋️", label: "Salle de sport" },
+  police:         { filter: '["amenity"="police"]',         defaultRadius: 5000, emoji: "🚔", label: "Commissariat" },
+  bank:           { filter: '["amenity"="bank"]',           defaultRadius: 1500, emoji: "🏦", label: "Banque" },
+  supermarket:    { filter: '["shop"="supermarket"]',       defaultRadius: 1500, emoji: "🛒", label: "Supermarché" },
+  bakery:         { filter: '["shop"="bakery"]',            defaultRadius: 1000, emoji: "🥖", label: "Boulangerie" },
+  cafe:           { filter: '["amenity"="cafe"]',           defaultRadius: 1000, emoji: "☕", label: "Café" },
 };
 
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";

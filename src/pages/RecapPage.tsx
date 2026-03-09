@@ -25,58 +25,6 @@ import { fr } from "date-fns/locale";
 // --- Types ---
 interface Weather { temp: number; icon: string; label: string; }
 
-// --- Ce jour-là dans l'histoire (nostalgie) ---
-const HISTORY_EVENTS: Record<string, { year: string; event: string; emoji: string }[]> = {
-  "01-01": [{ year: "1804", event: "Haïti proclame son indépendance, devenant la première république noire.", emoji: "🗽" }],
-  "01-15": [{ year: "1622", event: "Molière naît à Paris. Il deviendra le plus grand dramaturge français.", emoji: "🎭" }],
-  "02-14": [{ year: "1779", event: "James Cook est tué à Hawaï lors de son troisième voyage d'exploration.", emoji: "🌊" }],
-  "03-08": [{ year: "1910", event: "Clara Zetkin propose la Journée internationale des femmes.", emoji: "🌸" }],
-  "03-09": [{ year: "1959", event: "La poupée Barbie est présentée au monde pour la première fois.", emoji: "🎀" }],
-  "03-20": [{ year: "1811", event: "Naissance de Napoléon II, fils de Napoléon Bonaparte.", emoji: "👑" }],
-  "04-01": [{ year: "1564", event: "Charles IX fixe le début de l'année au 1er janvier, créant le poisson d'avril.", emoji: "🐟" }],
-  "04-15": [{ year: "1874", event: "Première exposition impressionniste à Paris avec Monet, Renoir, Degas.", emoji: "🎨" }],
-  "05-01": [{ year: "1886", event: "Les ouvriers de Chicago revendiquent la journée de 8 heures de travail.", emoji: "✊" }],
-  "05-08": [{ year: "1945", event: "L'Allemagne capitule. Fin de la Seconde Guerre mondiale en Europe.", emoji: "🕊️" }],
-  "05-29": [{ year: "1953", event: "Edmund Hillary et Tenzing Norgay atteignent le sommet de l'Everest.", emoji: "🏔️" }],
-  "06-06": [{ year: "1944", event: "Débarquement allié en Normandie. Le jour le plus long.", emoji: "⚓" }],
-  "06-18": [{ year: "1940", event: "Le général de Gaulle lance son appel depuis Londres.", emoji: "📻" }],
-  "07-14": [{ year: "1789", event: "Prise de la Bastille. La Révolution française commence.", emoji: "🇫🇷" }],
-  "07-20": [{ year: "1969", event: "Neil Armstrong marche sur la Lune pour la première fois.", emoji: "🌙" }],
-  "08-15": [{ year: "1947", event: "L'Inde obtient son indépendance du Royaume-Uni.", emoji: "🇮🇳" }],
-  "08-25": [{ year: "1944", event: "Libération de Paris. Les Alliés entrent dans la capitale.", emoji: "🗼" }],
-  "09-01": [{ year: "1715", event: "Mort de Louis XIV, le Roi-Soleil, après 72 ans de règne.", emoji: "☀️" }],
-  "10-14": [{ year: "1947", event: "Chuck Yeager franchit le mur du son pour la première fois.", emoji: "✈️" }],
-  "11-09": [{ year: "1989", event: "Chute du mur de Berlin. L'Europe se réunifie.", emoji: "🧱" }],
-  "11-11": [{ year: "1918", event: "Armistice de la Première Guerre mondiale. La Grande Guerre est finie.", emoji: "🕊️" }],
-  "12-10": [{ year: "1948", event: "L'ONU adopte la Déclaration universelle des droits de l'homme.", emoji: "📜" }],
-  "12-25": [{ year: "1066", event: "Guillaume le Conquérant est couronné roi d'Angleterre.", emoji: "👑" }],
-};
-
-// Événements génériques par mois (fallback)
-const MONTHLY_EVENTS: Record<string, { year: string; event: string; emoji: string }> = {
-  "01": { year: "1863", event: "Le Métro de Londres inaugure le premier métro souterrain au monde.", emoji: "🚇" },
-  "02": { year: "1858", event: "Bernadette Soubirous a ses visions à Lourdes.", emoji: "⛪" },
-  "03": { year: "1889", event: "La Tour Eiffel est inaugurée pour l'Exposition universelle de Paris.", emoji: "🗼" },
-  "04": { year: "1961", event: "Youri Gagarine devient le premier homme dans l'espace.", emoji: "🚀" },
-  "05": { year: "1789", event: "Ouverture des États généraux à Versailles.", emoji: "🏛️" },
-  "06": { year: "1940", event: "L'Appel du 18 juin du général de Gaulle.", emoji: "📻" },
-  "07": { year: "1903", event: "Départ du premier Tour de France cycliste.", emoji: "🚴" },
-  "08": { year: "1944", event: "Débarquement allié en Provence (Opération Dragoon).", emoji: "⚓" },
-  "09": { year: "1981", event: "La France abolit la peine de mort sous Robert Badinter.", emoji: "⚖️" },
-  "10": { year: "1793", event: "Inauguration du Musée du Louvre.", emoji: "🖼️" },
-  "11": { year: "1918", event: "L'Armistice met fin à la Première Guerre mondiale.", emoji: "🕊️" },
-  "12": { year: "1903", event: "Les frères Wright effectuent le premier vol motorisé.", emoji: "✈️" },
-};
-
-function getDailyHistory() {
-  const now = new Date();
-  const key = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const monthKey = String(now.getMonth() + 1).padStart(2, '0');
-  const events = HISTORY_EVENTS[key];
-  if (events && events.length > 0) return events[0];
-  return MONTHLY_EVENTS[monthKey] || { year: "1889", event: "La Tour Eiffel est inaugurée pour l'Exposition universelle de Paris.", emoji: "🗼" };
-}
-
 // Conseils bien-être & citations — un par jour
 const DAILY_TIPS = [
   { emoji: "🌿", text: "Prenez 5 minutes pour respirer profondément. Inspirez par le nez, expirez par la bouche. Votre corps vous remerciera." },
@@ -439,35 +387,6 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         );
       })()}
 
-      {/* CE JOUR-LÀ — Nostalgie & Histoire */}
-      {(() => {
-        const history = getDailyHistory();
-        return (
-          <div style={{ padding: "16px 16px 0" }}>
-            <div
-              className="dark:bg-card dark:border dark:border-border"
-              style={{
-                background: "linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%)",
-                borderRadius: 18,
-                padding: "16px 18px",
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 12,
-              }}
-            >
-              <span style={{ fontSize: 32, flexShrink: 0, lineHeight: 1 }}>{history.emoji}</span>
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                  Ce jour-là — {history.year}
-                </p>
-                <p className="text-foreground/80" style={{ fontSize: 14, lineHeight: 1.5 }}>
-                  {history.event}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* À SAVOIR */}
       <div style={{ padding: "24px 16px 0" }}>
