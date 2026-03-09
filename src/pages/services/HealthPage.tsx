@@ -121,10 +121,14 @@ export function HealthPage() {
     setDoctoLocating(true);
     try {
       const coords = await getCurrentPosition();
-      const address = await reverseGeocode(coords);
-      // Extraire la ville du résultat de géocodage
-      const city = address.split(",").find(p => p.trim().match(/^[A-ZÀ-Ú]/))?.trim() || address.split(",")[0].trim();
-      setDoctoLocation(city);
+      const geoResult = await reverseGeocode(coords);
+      // reverseGeocode retourne un GeoAddress avec .city
+      const city = geoResult.city || "";
+      if (city) {
+        setDoctoLocation(city);
+      } else {
+        toast.error("Impossible de déterminer votre ville. Veuillez la saisir manuellement.");
+      }
     } catch (err: any) {
       toast.error(err.message || "Impossible d'obtenir votre position.");
     } finally {

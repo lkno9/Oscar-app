@@ -306,8 +306,8 @@ Quand l'utilisateur veut prendre RDV chez un médecin ou spécialiste, utilise T
 
 **PRINCIPE :** Ne jamais juste donner un lien texte quand on peut MONTRER la page. C'est plus visuel, plus simple, et plus rassurant pour les seniors.
 
-**URLs PAR THÈME :**
-- Santé : ameli.fr, doctolib.fr, monespacedesante.fr, vidal.fr
+**URLs PAR THÈME (pour open_webpage) :**
+- Santé : ameli.fr, monespacedesante.fr, vidal.fr (pour Doctolib, utilise search_doctolib)
 - Administration : service-public.fr, impots.gouv.fr, caf.fr, mesdroitssociaux.gouv.fr
 - Transport : sncf-connect.com, ratp.fr, mappy.com
 - Loisirs : allocine.fr, francetvinfo.fr, radiofrance.fr
@@ -543,7 +543,7 @@ serve(async (req) => {
         type: "function",
         function: {
           name: "open_webpage",
-          description: "IMPORTANT: Ouvrir une page web directement dans le chat comme un mini-navigateur. TOUJOURS utiliser quand tu mentionnes un site web, quand l'utilisateur veut accéder à un service en ligne, faire une démarche, consulter des informations, prendre RDV, voir des horaires/tarifs/films, ou quand la réponse se trouve sur un site. Ne jamais juste donner un lien texte — MONTRE la page. Exemples: Ameli, Doctolib, SNCF, impots.gouv.fr, CAF, AlloCiné, Wikipedia, Météo France, service-public.fr, etc.",
+          description: "Ouvrir une page web directement dans le chat comme un mini-navigateur. Utilise quand l'utilisateur veut accéder à un service en ligne, faire une démarche, consulter des informations, voir des horaires/tarifs/films, ou quand la réponse se trouve sur un site. Ne jamais juste donner un lien texte — MONTRE la page. Exemples: Ameli, SNCF, impots.gouv.fr, CAF, AlloCiné, Wikipedia, service-public.fr. ATTENTION: Pour les RDV médicaux et recherche de médecins/spécialistes sur Doctolib, utilise TOUJOURS l'outil search_doctolib à la place, JAMAIS open_webpage avec doctolib.fr.",
           parameters: {
             type: "object",
             properties: {
@@ -558,7 +558,7 @@ serve(async (req) => {
         type: "function",
         function: {
           name: "search_doctolib",
-          description: "Chercher un professionnel de santé sur Doctolib et afficher la page de résultats. Utiliser quand l'utilisateur veut prendre rendez-vous chez un médecin, dentiste, ou tout autre spécialiste. Demande toujours la spécialité ET la ville si l'utilisateur ne les a pas précisées.",
+          description: "PRIORITAIRE pour tout ce qui concerne Doctolib et les RDV médicaux. Cherche un professionnel de santé sur Doctolib et affiche directement la page de résultats avec les praticiens disponibles. Utilise cet outil quand l'utilisateur veut prendre rendez-vous, chercher un médecin, dentiste, ophtalmo, ou tout spécialiste. Tu DOIS demander la spécialité ET la ville si l'utilisateur ne les a pas précisées avant d'appeler cet outil.",
           parameters: {
             type: "object",
             properties: {
