@@ -431,8 +431,8 @@ export function AuthPage() {
           </button>
 
           <div className="text-center space-y-3 flex flex-col items-center">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-              <Phone className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Phone className="w-8 h-8 text-primary" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Entrez votre code</h1>
