@@ -11,6 +11,9 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, Users, Heart, Phone, ArrowLeft, PhoneCall, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
 type AccountType = 'senior' | 'family_member';
 type AuthStep =
   | 'choose_type'       // Étape 1 : Senior ou Famille ?
@@ -72,7 +75,7 @@ export function AuthPage() {
     }
   };
 
-  // --- Senior phone flow handlers ---
+  // --- Senior phone flow handlers (direct voice OTP via edge function) ---
   const handleSendPhoneCode = async () => {
     const formattedPhone = formatPhoneForApi(phoneNumber);
     if (formattedPhone.length < 12) {
@@ -84,17 +87,29 @@ export function AuthPage() {
     setStep('senior_calling');
 
     try {
-      const { error } = await signInWithPhone(formattedPhone);
-      if (error) {
-        console.error('[Auth] Phone OTP error:', error);
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/send-voice-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ phone_number: formattedPhone }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        console.error('[Auth] Voice OTP error:', data.error);
         toast.error("Impossible d'appeler ce numéro. Vérifiez-le et réessayez.");
         setStep('senior_phone');
       } else {
-        // L'appel a été initié, passer à la saisie du code
         setStep('senior_code');
       }
     } catch (err) {
-      console.error('[Auth] Phone OTP exception:', err);
+      console.error('[Auth] Voice OTP exception:', err);
       toast.error("Erreur lors de l'appel. Réessayez.");
       setStep('senior_phone');
     } finally {
@@ -109,20 +124,42 @@ export function AuthPage() {
     const formattedPhone = formatPhoneForApi(phoneNumber);
 
     try {
-      const { error, user } = await verifyPhoneOtp(formattedPhone, code);
-      if (error) {
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/verify-voice-otp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ phone_number: formattedPhone, otp_code: code }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.valid) {
         toast.error('Code incorrect. Vérifiez et réessayez.');
         setOtpCode('');
       } else {
-        // Si un nom a été fourni (1ère connexion), mettre à jour le profil
-        if (seniorName.trim() && user?.id) {
+        // Set the session in Supabase client
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+
+        if (sessionError) {
+          toast.error('Erreur de connexion. Réessayez.');
+          setOtpCode('');
+          return;
+        }
+
+        // Update profile if name provided
+        if (seniorName.trim() && data.user?.id) {
           await supabase.from('profiles').upsert({
-            id: user.id,
+            id: data.user.id,
             full_name: seniorName.trim(),
             phone_number: formattedPhone,
-          });
-          await supabase.auth.updateUser({
-            data: { full_name: seniorName.trim(), role: 'senior' },
           });
         }
 
@@ -394,8 +431,8 @@ export function AuthPage() {
           </button>
 
           <div className="text-center space-y-3 flex flex-col items-center">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-              <Phone className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Phone className="w-8 h-8 text-primary" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Entrez votre code</h1>
