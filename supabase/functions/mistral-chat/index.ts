@@ -259,6 +259,7 @@ Oscar sait que l'application dispose de ces fonctionnalités et peut guider l'ut
 - **Aide administrative** : démarches Ameli, impôts, retraite, CAF pas à pas
 - **Rédaction** : messages, lettres, emails
 - **Questions quotidiennes** : santé, droits, aides sociales, etc.
+- **Prise de rendez-vous Doctolib** : chercher un médecin par spécialité et ville, afficher les résultats directement
 
 **Comportement :**
 Oscar évalue d'abord s'il peut répondre directement. Si la demande nécessite une fonctionnalité de l'app, Oscar oriente vers la bonne page et explique comment l'utiliser. Oscar ne peut pas modifier la base de données, mais il guide dans l'interface.
@@ -294,8 +295,14 @@ Oscar dispose d'un outil open_webpage qui affiche une page web DIRECTEMENT dans 
 - "Comment accéder à Ameli ?" → open_webpage("https://www.ameli.fr", "Ameli - Assurance Maladie") + explication
 - "Je veux voir les trains pour Lyon" → open_webpage("https://www.sncf-connect.com", "SNCF Connect") + guide
 - "C'est quoi l'APA ?" → open_webpage("https://www.service-public.fr/particuliers/vosdroits/F10009", "Service Public - APA") + explication
-- "Prendre RDV médecin" → open_webpage("https://www.doctolib.fr", "Doctolib") + guide
 - "Simuler mes aides" → open_webpage("https://www.mesdroitssociaux.gouv.fr", "Mes Droits Sociaux") + explication
+
+**DOCTOLIB — OUTIL search_doctolib (PRIORITAIRE pour les RDV médicaux) :**
+Quand l'utilisateur veut prendre RDV chez un médecin ou spécialiste, utilise TOUJOURS l'outil search_doctolib plutôt que open_webpage. Cet outil construit automatiquement la bonne URL Doctolib avec la spécialité et la ville.
+- "Je cherche un dentiste à Paris" → search_doctolib("dentiste", "Paris")
+- "RDV ophtalmo à Lyon" → search_doctolib("ophtalmologue", "Lyon")
+- "Je veux un médecin" → Demande la ville AVANT d'appeler l'outil : "Bien sûr ! Dans quelle ville souhaitez-vous chercher ?"
+- "Prendre RDV médecin" → Demande spécialité + ville : "Quel type de spécialiste cherchez-vous ? Et dans quelle ville ?"
 
 **PRINCIPE :** Ne jamais juste donner un lien texte quand on peut MONTRER la page. C'est plus visuel, plus simple, et plus rassurant pour les seniors.
 
@@ -547,6 +554,27 @@ serve(async (req) => {
           },
         },
       },
+      {
+        type: "function",
+        function: {
+          name: "search_doctolib",
+          description: "Chercher un professionnel de santé sur Doctolib et afficher la page de résultats. Utiliser quand l'utilisateur veut prendre rendez-vous chez un médecin, dentiste, ou tout autre spécialiste. Demande toujours la spécialité ET la ville si l'utilisateur ne les a pas précisées.",
+          parameters: {
+            type: "object",
+            properties: {
+              specialty: {
+                type: "string",
+                description: "La spécialité médicale recherchée. Valeurs possibles : medecin-generaliste, dentiste, ophtalmologue, dermatologue, kinesitherapeute, cardiologue, orl, radiologue, gynécologue, psychiatre, rhumatologue, podologue, sage-femme, osteopathe, nutritionniste",
+              },
+              city: {
+                type: "string",
+                description: "La ville ou commune où chercher (ex: Paris, Lyon, Marseille, Aix-en-Provence). Si l'utilisateur dit 'près de chez moi' ou 'autour de moi', demandez-lui sa ville.",
+              },
+            },
+            required: ["specialty", "city"],
+          },
+        },
+      },
     ];
 
     // ─── Emergency numbers database for search_emergency tool ─────
@@ -678,6 +706,47 @@ serve(async (req) => {
       };
     }
 
+    function executeSearchDoctolib(args: { specialty: string; city: string }) {
+      // Construire le slug pour la spécialité et la ville
+      const specialtySlug = args.specialty
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      const citySlug = args.city
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+
+      // Labels pour l'affichage
+      const specialtyLabels: Record<string, string> = {
+        "medecin-generaliste": "Médecin généraliste",
+        "dentiste": "Dentiste",
+        "ophtalmologue": "Ophtalmologue",
+        "dermatologue": "Dermatologue",
+        "kinesitherapeute": "Kinésithérapeute",
+        "cardiologue": "Cardiologue",
+        "orl": "ORL",
+        "radiologue": "Radiologue",
+        "gynecologue": "Gynécologue",
+        "psychiatre": "Psychiatre",
+        "rhumatologue": "Rhumatologue",
+        "podologue": "Podologue",
+        "sage-femme": "Sage-femme",
+        "osteopathe": "Ostéopathe",
+        "nutritionniste": "Nutritionniste",
+      };
+      const label = specialtyLabels[specialtySlug] || args.specialty;
+      const url = `https://www.doctolib.fr/${specialtySlug}/${citySlug}`;
+      const title = `Doctolib — ${label} à ${args.city}`;
+
+      return {
+        toolResult: { type: "webview", data: { url, title } },
+        textForMistral: `Page Doctolib affichée : recherche de ${label} à ${args.city}. URL: ${url}. L'utilisateur peut voir les résultats et prendre rendez-vous directement.`,
+      };
+    }
+
     // ─── Mistral API call helper ─────
     async function callMistral(body: Record<string, unknown>) {
       const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -772,6 +841,9 @@ serve(async (req) => {
           break;
         case "open_webpage":
           execResult = executeOpenWebpage(args as { url: string; title: string });
+          break;
+        case "search_doctolib":
+          execResult = executeSearchDoctolib(args as { specialty: string; city: string });
           break;
         default:
           execResult = { toolResult: null, textForMistral: `Outil inconnu : ${fn.name}` };
