@@ -306,6 +306,30 @@ export function AuthPage() {
           >
             Continuer
           </Button>
+
+          {/* Dev bypass */}
+          <Button
+            variant="ghost"
+            className="w-full text-xs text-muted-foreground/50 hover:text-muted-foreground"
+            onClick={async () => {
+              try {
+                toast.info('Connexion en cours...');
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/dev-bypass-login`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                  body: JSON.stringify({ phone_number: '+33669305283' }),
+                });
+                const data = await response.json();
+                if (!response.ok) { toast.error(data.error); return; }
+                const { error } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' });
+                if (error) { toast.error('Erreur session'); return; }
+                toast.success('Connecté en tant que Fouquet');
+                navigate('/');
+              } catch { toast.error('Erreur bypass'); }
+            }}
+          >
+            🔓 Dev bypass (Fouquet)
+          </Button>
         </div>
       </div>
     );
