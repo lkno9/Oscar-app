@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Phone, Video, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
+import { Phone, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { OscarAvatar } from "@/components/OscarAvatar";
@@ -154,7 +154,7 @@ export function HomePage() {
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [isSpeakingState, setIsSpeakingState] = useState(false);
   const [isCallOpen, setIsCallOpen] = useState(false);
-  const [callType, setCallType] = useState<"audio" | "video">("audio");
+  // Call always starts audio-only; user can toggle video during the call
   const [isRecording, setIsRecording] = useState(false);
   const [input, setInput] = useState("");
   const [pendingFile, setPendingFile] = useState<PendingFile | null>(null);
@@ -559,16 +559,9 @@ export function HomePage() {
         </div>
         <div className="flex items-center gap-1.5">
           <button
-            onClick={() => { setCallType("video"); setIsCallOpen(true); }}
+            onClick={() => setIsCallOpen(true)}
 style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
-            aria-label="Appel vidéo"
-          >
-            <Video className="w-[18px] h-[18px]" />
-          </button>
-          <button
-            onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
-style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
-            aria-label="Appel audio"
+            aria-label="Appeler Oscar"
           >
             <Phone className="w-[18px] h-[18px]" />
           </button>
@@ -749,7 +742,6 @@ style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "#
       <CallScreen
         isOpen={isCallOpen}
         onClose={() => setIsCallOpen(false)}
-        initialVideoEnabled={callType === "video"}
       />
     </div>
   );

@@ -7,7 +7,6 @@ import { toast } from "sonner";
 interface CallScreenProps {
   isOpen: boolean;
   onClose: () => void;
-  initialVideoEnabled?: boolean;
 }
 
 type CallPhase = "permissions" | "active" | "ended" | "error";
@@ -18,7 +17,7 @@ const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tt
 const MISTRAL_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mistral-chat`;
 
 // ─── Main Component ───────────────────────────────────────
-export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: CallScreenProps) {
+export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   // Call state
   const [phase, setPhase] = useState<CallPhase>("permissions");
   const [oscarState, setOscarState] = useState<OscarState>("idle");
@@ -27,7 +26,7 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
 
   // Controls
   const [micEnabled, setMicEnabled] = useState(true);
-  const [camEnabled, setCamEnabled] = useState(initialVideoEnabled);
+  const [camEnabled, setCamEnabled] = useState(false);
   const [showSubtitles, setShowSubtitles] = useState(true);
 
   // Transcript
@@ -55,6 +54,7 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
     // Stop camera
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
     // Stop STT
     wantListeningRef.current = false;
     try { recognitionRef.current?.abort(); } catch { /* ignore */ }
@@ -69,6 +69,7 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
     setUserTranscript("");
     setOscarText("");
     setConversationLog([]);
+    setCamEnabled(false);
     historyRef.current = [];
     processingRef.current = false;
     finalTranscriptRef.current = "";
@@ -332,17 +333,11 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
   const initCall = useCallback(async () => {
     setPhase("permissions");
     try {
-      const constraints: MediaStreamConstraints = {
-        audio: true,
-        video: initialVideoEnabled ? { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } : false,
-      };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      // Always start audio-only — user can toggle camera on during the call
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!mountedRef.current) { stream.getTracks().forEach(t => t.stop()); return; }
 
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
 
       // Start timer
       setCallDuration(0);
@@ -371,12 +366,12 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
       if (!mountedRef.current) return;
       setPhase("error");
       if (err instanceof DOMException && err.name === "NotAllowedError") {
-        setErrorMsg("Accès à la caméra et au micro refusé. Autorisez l'accès dans les réglages de votre navigateur.");
+        setErrorMsg("Accès au microphone refusé. Autorisez l'accès dans les réglages de votre navigateur.");
       } else {
-        setErrorMsg("Impossible d'accéder à la caméra ou au micro.");
+        setErrorMsg("Impossible d'accéder au micro.");
       }
     }
-  }, [initialVideoEnabled, speakOscar]);
+  }, [speakOscar]);
 
   // ─── Effect: open/close ─────────────────────────────────
   useEffect(() => {
@@ -406,12 +401,37 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
   };
 
   // ─── Toggle camera ──────────────────────────────────────
-  const toggleCam = () => {
-    const tracks = streamRef.current?.getVideoTracks();
-    if (tracks) {
-      const newState = !camEnabled;
-      tracks.forEach(t => { t.enabled = newState; });
-      setCamEnabled(newState);
+  const toggleCam = async () => {
+    if (camEnabled) {
+      // Turn OFF: stop video tracks and remove them from the stream
+      const videoTracks = streamRef.current?.getVideoTracks() || [];
+      videoTracks.forEach(t => { t.stop(); streamRef.current?.removeTrack(t); });
+      if (videoRef.current) videoRef.current.srcObject = null;
+      setCamEnabled(false);
+    } else {
+      // Turn ON: request camera access and add video track to existing stream
+      try {
+        const camStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        });
+        const videoTrack = camStream.getVideoTracks()[0];
+        if (!videoTrack) { toast.error("Caméra introuvable."); return; }
+
+        // Add to existing audio stream (or create new one)
+        if (streamRef.current) {
+          streamRef.current.addTrack(videoTrack);
+        } else {
+          streamRef.current = camStream;
+        }
+
+        // Attach to video element
+        if (videoRef.current) {
+          videoRef.current.srcObject = streamRef.current;
+        }
+        setCamEnabled(true);
+      } catch (err) {
+        toast.error("Impossible d'accéder à la caméra. Vérifiez les permissions.");
+      }
     }
   };
 
@@ -433,7 +453,7 @@ export function CallScreen({ isOpen, onClose, initialVideoEnabled = true }: Call
           <div className="text-center">
             <p className="text-white text-xl font-semibold mb-2">Connexion en cours...</p>
             <p className="text-white/50 text-base max-w-xs leading-relaxed">
-              Oscar prépare l'appel. Autorisez l'accès à la caméra et au micro si demandé.
+              Oscar prépare l'appel. Autorisez l'accès au micro si demandé.
             </p>
           </div>
           <button onClick={handleEndCall} className="mt-4 px-6 py-3 rounded-full bg-white/10 text-white/70 hover:bg-white/20 transition-all active:scale-95 text-base">
