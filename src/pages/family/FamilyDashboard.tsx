@@ -193,7 +193,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
       <header className="px-4 pt-10 pb-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium text-muted-foreground">{getGreeting()}</p>
+            <p className="text-sm font-medium text-muted-foreground">{getGreeting()}</p>
             <h1 className="text-2xl font-bold text-foreground mt-0.5">
               {userName ? `${userName} 👋` : 'Espace Famille 👋'}
             </h1>
@@ -229,7 +229,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
 
         {/* Section Mes proches */}
         <div>
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Mes proches</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">Mes proches</h2>
 
           {seniors.length === 0 ? (
             <div className="bg-card rounded-2xl p-8 text-center border border-border">
@@ -260,7 +260,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-sm text-foreground truncate">{senior.name}</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-sm text-muted-foreground mt-0.5">
                           {senior.lastMoodTime
                             ? `Actif ${format(new Date(senior.lastMoodTime), "EEEE d MMM", { locale: fr })}`
                             : 'Pas encore de données'}
@@ -308,7 +308,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-sm text-white">Demander à Oscar</h3>
-                <p className="text-xs text-white/80 mt-0.5">Résumé, conseils, suivi de vos proches</p>
+                <p className="text-sm text-white/80 mt-0.5">Résumé, conseils, suivi de vos proches</p>
               </div>
               <ChevronRight className="w-4 h-4 text-white/60 flex-shrink-0" />
             </div>
@@ -322,7 +322,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-primary mb-1">Conseil du jour</p>
+              <p className="text-sm font-semibold text-primary mb-1">Conseil du jour</p>
               <p className="text-sm text-muted-foreground leading-relaxed">{dailyTip}</p>
             </div>
           </div>
@@ -450,7 +450,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-sm text-foreground">{guide.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{guide.description}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{guide.description}</p>
                   </div>
                   <ChevronRight
                     className={`w-4 h-4 text-muted-foreground/40 flex-shrink-0 transition-transform duration-200 ${
@@ -465,7 +465,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
                     <div className="pt-3" />
                     {guide.tips.map((tip, i) => (
                       <div key={i} className="flex gap-2.5 items-start">
-                        <span className="text-primary text-xs mt-0.5 font-bold flex-shrink-0">{i + 1}.</span>
+                        <span className="text-primary text-sm mt-0.5 font-bold flex-shrink-0">{i + 1}.</span>
                         <p className="text-sm text-muted-foreground leading-relaxed">{tip}</p>
                       </div>
                     ))}

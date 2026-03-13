@@ -230,7 +230,7 @@ export default function SeniorDetailPage() {
                 <Settings2 className="w-5 h-5 text-primary" />
                 Paramétrage à distance
               </CardTitle>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Configurez les préférences de {data.profile.full_name?.split(' ')[0] || 'votre proche'}
               </p>
             </CardHeader>
@@ -242,7 +242,7 @@ export default function SeniorDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Mode vocal</p>
-                  <p className="text-xs text-muted-foreground">Oscar lit les réponses à voix haute</p>
+                  <p className="text-sm text-muted-foreground">Oscar lit les réponses à voix haute</p>
                 </div>
                 <Switch
                   checked={prefs.voice_enabled}
@@ -257,7 +257,7 @@ export default function SeniorDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Notifications</p>
-                  <p className="text-xs text-muted-foreground">Rappels et alertes</p>
+                  <p className="text-sm text-muted-foreground">Rappels et alertes</p>
                 </div>
                 <Switch
                   checked={prefs.notifications_enabled}
@@ -272,7 +272,7 @@ export default function SeniorDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Mode sombre</p>
-                  <p className="text-xs text-muted-foreground">Adapter l'affichage</p>
+                  <p className="text-sm text-muted-foreground">Adapter l'affichage</p>
                 </div>
                 <Switch
                   checked={prefs.dark_mode_enabled}
@@ -287,11 +287,11 @@ export default function SeniorDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Taille du texte</p>
-                  <p className="text-xs text-muted-foreground">Confort de lecture</p>
+                  <p className="text-sm text-muted-foreground">Confort de lecture</p>
                 </div>
                 <button
                   onClick={cycleFontSize}
-                  className="px-3 py-1.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-card border border-border text-sm font-semibold text-foreground hover:bg-secondary transition-colors"
                 >
                   {FONT_SIZE_LABELS[prefs.font_size]}
                 </button>
@@ -309,7 +309,7 @@ export default function SeniorDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Médicaments</p>
-                  <p className="text-xs text-muted-foreground">Rappels de prise</p>
+                  <p className="text-sm text-muted-foreground">Rappels de prise</p>
                 </div>
                 <Switch
                   checked={prefs.medication_reminders}
@@ -324,7 +324,7 @@ export default function SeniorDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Activités</p>
-                  <p className="text-xs text-muted-foreground">Suggestions quotidiennes</p>
+                  <p className="text-sm text-muted-foreground">Suggestions quotidiennes</p>
                 </div>
                 <Switch
                   checked={prefs.activity_reminders}
@@ -339,7 +339,7 @@ export default function SeniorDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Humeur</p>
-                  <p className="text-xs text-muted-foreground">Rappel quotidien</p>
+                  <p className="text-sm text-muted-foreground">Rappel quotidien</p>
                 </div>
                 <Switch
                   checked={prefs.mood_reminders}
@@ -408,7 +408,7 @@ export default function SeniorDetailPage() {
                   <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                     <div>
                       <p className="font-medium capitalize">{activity.activity_type}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {format(new Date(activity.activity_date), 'EEEE d MMMM', { locale: fr })}
                       </p>
                     </div>
@@ -440,7 +440,7 @@ export default function SeniorDetailPage() {
                     <div>
                       <p className="font-medium">{med.name}</p>
                       {med.dosage && (
-                        <p className="text-xs text-muted-foreground">{med.dosage}</p>
+                        <p className="text-sm text-muted-foreground">{med.dosage}</p>
                       )}
                     </div>
                     {med.frequency && (
@@ -470,7 +470,7 @@ export default function SeniorDetailPage() {
                   <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                     <div>
                       <p className="font-medium">{event.title}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {format(new Date(event.event_date), 'EEEE d MMMM', { locale: fr })}
                         {event.event_time && ` à ${event.event_time.slice(0, 5)}`}
                       </p>

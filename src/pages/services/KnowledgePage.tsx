@@ -1,13 +1,19 @@
-import { ArrowLeft, Newspaper } from "lucide-react";
+import { ArrowLeft, Newspaper, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { useRssArticles, ACTU_CATEGORIES, timeAgo } from "@/hooks/useRssArticles";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { useState } from "react";
 
 export function KnowledgePage() {
   const goBack = useBackNavigation();
   const { filteredArticles, loading, actuCat, setActuCat } = useRssArticles({
     perSource: 6,
-    descMaxLength: 200,
+    descMaxLength: 600,
   });
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+
+  const toggleExpand = (index: number) => {
+    setExpandedIndex(prev => prev === index ? null : index);
+  };
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -36,7 +42,7 @@ export function KnowledgePage() {
             {ACTU_CATEGORIES.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setActuCat(cat)}
+                onClick={() => { setActuCat(cat); setExpandedIndex(null); }}
                 style={{
                   padding: "8px 16px",
                   borderRadius: 99,
@@ -70,79 +76,115 @@ export function KnowledgePage() {
             </div>
           ) : filteredArticles.length > 0 ? (
             <div className="space-y-3">
-              {filteredArticles.map((a, i) => (
-                <a
-                  key={i}
-                  href={a.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block bg-card border border-border rounded-2xl no-underline active:scale-[0.99] transition-transform"
-                  style={{
-                    padding: "16px 18px",
-                    textDecoration: "none",
-                  }}
-                >
-                  {/* Badge catégorie */}
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <span style={{ fontSize: 20 }}>{a.emoji}</span>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "#48A29E",
-                        background: "rgba(72,162,158,0.08)",
-                        borderRadius: 99,
-                        padding: "3px 10px",
-                      }}
-                    >
-                      {a.category}
-                    </span>
-                  </div>
-
-                  {/* Titre */}
-                  <p
-                    className="text-foreground"
+              {filteredArticles.map((a, i) => {
+                const isExpanded = expandedIndex === i;
+                return (
+                  <div
+                    key={i}
+                    className="bg-card border border-border rounded-2xl active:scale-[0.99] transition-all"
                     style={{
-                      fontSize: 16,
-                      fontWeight: 600,
-                      lineHeight: 1.4,
-                      marginBottom: 6,
+                      padding: "16px 18px",
+                      borderColor: isExpanded ? "#48A29E" : undefined,
                     }}
                   >
-                    {a.title}
-                  </p>
-
-                  {/* Description (plus longue ici) */}
-                  {a.description && (
-                    <p
-                      className="text-muted-foreground"
-                      style={{
-                        fontSize: 14,
-                        lineHeight: 1.45,
-                        marginBottom: 10,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical" as const,
-                        overflow: "hidden",
-                      }}
+                    {/* Zone cliquable pour expand */}
+                    <button
+                      onClick={() => toggleExpand(i)}
+                      className="w-full text-left"
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >
-                      {a.description}
-                    </p>
-                  )}
+                      {/* Badge catégorie */}
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <span style={{ fontSize: 20 }}>{a.emoji}</span>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#48A29E",
+                            background: "rgba(72,162,158,0.08)",
+                            borderRadius: 99,
+                            padding: "3px 10px",
+                          }}
+                        >
+                          {a.category}
+                        </span>
+                        <div className="flex-1" />
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        )}
+                      </div>
 
-                  {/* Source + date */}
-                  <div className="flex items-center justify-between">
-                    <span
-                      style={{ fontSize: 13, color: "#94a3b8", fontWeight: 500 }}
-                    >
-                      {a.source}
-                    </span>
-                    <span style={{ fontSize: 13, color: "#b0b8c4" }}>
-                      {timeAgo(a.pubDate)}
-                    </span>
+                      {/* Titre */}
+                      <p
+                        className="text-foreground"
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 600,
+                          lineHeight: 1.4,
+                          marginBottom: 6,
+                        }}
+                      >
+                        {a.title}
+                      </p>
+
+                      {/* Description — tronquée ou complète */}
+                      {a.description && (
+                        <p
+                          className="text-muted-foreground"
+                          style={{
+                            fontSize: 14,
+                            lineHeight: 1.55,
+                            marginBottom: 10,
+                            ...(isExpanded
+                              ? {}
+                              : {
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical" as const,
+                                  overflow: "hidden",
+                                }),
+                          }}
+                        >
+                          {a.description}
+                        </p>
+                      )}
+
+                      {/* Source + date */}
+                      <div className="flex items-center justify-between">
+                        <span
+                          style={{ fontSize: 13, color: "#94a3b8", fontWeight: 500 }}
+                        >
+                          {a.source}
+                        </span>
+                        <span style={{ fontSize: 13, color: "#b0b8c4" }}>
+                          {timeAgo(a.pubDate)}
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Lien vers l'article complet — visible uniquement quand expandé */}
+                    {isExpanded && (
+                      <a
+                        href={a.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 mt-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+                        style={{
+                          background: "rgba(72,162,158,0.08)",
+                          color: "#48A29E",
+                          textDecoration: "none",
+                          border: "1px solid rgba(72,162,158,0.15)",
+                        }}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Lire l'article complet
+                      </a>
+                    )}
                   </div>
-                </a>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center bg-card border border-border rounded-2xl p-10 text-center">

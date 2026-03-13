@@ -104,7 +104,7 @@ export function ChatInput({
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">{pendingFile.file.name}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {pendingFile.type === "image" ? "Image" : "Document"} · Vous pouvez ajouter un message
             </p>
           </div>
@@ -180,7 +180,7 @@ export function ChatInput({
         </button>
       </div>
       {isRecording && (
-        <p className="text-xs text-center text-muted-foreground mt-2 animate-pulse">
+        <p className="text-sm text-center text-muted-foreground mt-2 animate-pulse">
           🔴 Parlez... Appuyez à nouveau pour envoyer
         </p>
       )}

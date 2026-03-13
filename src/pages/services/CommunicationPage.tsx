@@ -104,7 +104,7 @@ export function CommunicationPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
+        <button onClick={goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
@@ -157,7 +157,7 @@ export function CommunicationPage() {
                       <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
                         <span className="text-primary-foreground font-bold text-sm">{getInitials(c.name)}</span>
                       </div>
-                      <span className="text-xs font-medium text-foreground text-center leading-tight max-w-[64px] truncate">{c.name.split(' ')[0]}</span>
+                      <span className="text-sm font-medium text-foreground text-center leading-tight max-w-[64px] truncate">{c.name.split(' ')[0]}</span>
                     </button>
                   ))}
                 </div>
@@ -200,7 +200,7 @@ export function CommunicationPage() {
                   {messages.map(msg => (
                     <div key={msg.id} className={`rounded-xl p-4 border ${msg.sender_id === user?.id ? 'bg-primary/10 border-primary/20 ml-4' : 'bg-card border-border mr-4'}`}>
                       <p className="text-base text-foreground">{msg.content}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{formatDate(msg.created_at)}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{formatDate(msg.created_at)}</p>
                     </div>
                   ))}
                 </div>

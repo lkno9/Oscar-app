@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Phone, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
+import { Phone, Video, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { OscarAvatar } from "@/components/OscarAvatar";
@@ -559,6 +559,13 @@ export function HomePage() {
         </div>
         <div className="flex items-center gap-1.5">
           <button
+            onClick={() => { setCallType("video"); setIsCallOpen(true); }}
+style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+            aria-label="Appel vidéo"
+          >
+            <Video className="w-[18px] h-[18px]" />
+          </button>
+          <button
             onClick={() => { setCallType("audio"); setIsCallOpen(true); }}
 style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
             aria-label="Appel audio"
@@ -655,7 +662,7 @@ style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "#
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-slate-800 dark:text-foreground truncate">{pendingFile.file.name}</p>
-              <p className="text-xs text-slate-400">Vous pouvez ajouter un message</p>
+              <p className="text-sm text-slate-400">Vous pouvez ajouter un message</p>
             </div>
             <button onClick={removePendingFile} className="p-1 rounded-full text-slate-400 hover:text-slate-600 transition-all flex-shrink-0">
               <X className="w-4 h-4" />
@@ -732,7 +739,7 @@ style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "#
           </div>
         </div>
         {isRecording && (
-          <p className="text-xs text-center text-slate-400 mt-2 animate-pulse">
+          <p className="text-sm text-center text-slate-400 mt-2 animate-pulse">
             Parlez... Appuyez à nouveau pour envoyer
           </p>
         )}

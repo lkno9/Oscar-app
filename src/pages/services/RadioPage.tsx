@@ -107,7 +107,7 @@ export function RadioPage() {
       {/* Header */}
       <header className="bg-card border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => { audio.pause(); goBack(); }} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
+          <button onClick={() => { audio.pause(); goBack(); }} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <div className="flex items-center gap-3">
@@ -161,7 +161,7 @@ export function RadioPage() {
                   />
                 ))}
               </div>
-              <span className="text-white/60 text-xs ml-2">En direct</span>
+              <span className="text-white/60 text-sm ml-2">En direct</span>
             </div>
           )}
         </div>
@@ -188,7 +188,7 @@ export function RadioPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-foreground text-base">{station.name}</p>
                 <p className="text-sm text-muted-foreground">{station.description}</p>
-                <span className="text-xs text-primary font-medium mt-1 inline-block bg-primary/5 px-2 py-0.5 rounded-full">
+                <span className="text-sm text-primary font-medium mt-1 inline-block bg-primary/5 px-2 py-0.5 rounded-full">
                   {station.genre}
                 </span>
               </div>

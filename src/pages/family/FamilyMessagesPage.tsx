@@ -79,7 +79,7 @@ export default function FamilyMessagesPage() {
             </Avatar>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-bold text-foreground truncate">{getContactName(selectedContact)}</h1>
-              <p className="text-xs text-primary font-medium">En ligne</p>
+              <p className="text-sm text-primary font-medium">En ligne</p>
             </div>
           </>
         ) : (
@@ -179,7 +179,7 @@ export default function FamilyMessagesPage() {
             <div className="px-3 pt-2 overflow-x-auto scrollbar-hide">
               <div className="flex gap-2 pb-2">
                 {quickReplies.map((r) => (
-                  <button key={r} onClick={() => setNewMessage(r)} className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground bg-secondary hover:bg-secondary/80 transition-colors">{r}</button>
+                  <button key={r} onClick={() => setNewMessage(r)} className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium text-muted-foreground bg-secondary hover:bg-secondary/80 transition-colors">{r}</button>
                 ))}
               </div>
             </div>

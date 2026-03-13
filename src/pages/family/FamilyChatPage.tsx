@@ -146,7 +146,7 @@ export default function FamilyChatPage() {
           <OscarAvatar size="sm" className="w-9 h-9 shadow-[0_2px_8px_rgba(72,162,158,0.3)]" />
           <div className="flex flex-col gap-px">
             <span className="font-bold text-slate-800 dark:text-foreground" style={{ fontSize: "15.5px", letterSpacing: "-0.2px", lineHeight: 1.2 }}>Oscar</span>
-            <span className="text-xs font-medium text-[#48A29E]">En ligne</span>
+            <span className="text-sm font-medium text-[#48A29E]">En ligne</span>
           </div>
         </div>
         {started && (
@@ -246,7 +246,7 @@ export default function FamilyChatPage() {
                 <button
                   type="button"
                   onClick={cancelRequest}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+                  className="px-3 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
                 >
                   Annuler
                 </button>

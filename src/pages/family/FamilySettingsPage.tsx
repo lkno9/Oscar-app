@@ -52,7 +52,7 @@ export default function FamilySettingsPage() {
       {/* Header */}
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3 sticky top-0 z-10">
         <Link to="/family">
-          <button className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+          <button className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
         </Link>
@@ -74,7 +74,7 @@ export default function FamilySettingsPage() {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="invitation-code" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Code d'invitation</Label>
+              <Label htmlFor="invitation-code" className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Code d'invitation</Label>
               <Input
                 id="invitation-code"
                 value={invitationCode}

@@ -50,7 +50,7 @@ export const DocumentCard = ({ document, onDelete, onAskOscar }: DocumentCardPro
               )}
             </div>
             
-            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
               <Calendar className="h-3 w-3" />
               <span>Ajouté le {formatDate(document.created_at)}</span>
               {document.file_size && (
@@ -67,7 +67,7 @@ export const DocumentCard = ({ document, onDelete, onAskOscar }: DocumentCardPro
                   variant="outline"
                   size="sm"
                   onClick={() => window.open(document.file_url!, '_blank')}
-                  className="text-xs"
+                  className="text-sm"
                 >
                   <Download className="h-3 w-3 mr-1" />
                   Télécharger
@@ -79,7 +79,7 @@ export const DocumentCard = ({ document, onDelete, onAskOscar }: DocumentCardPro
                   variant="ghost"
                   size="sm"
                   onClick={() => onAskOscar(document.name)}
-                  className="text-xs text-primary"
+                  className="text-sm text-primary"
                 >
                   <MessageCircle className="h-3 w-3 mr-1" />
                   Demander à Oscar
@@ -90,7 +90,7 @@ export const DocumentCard = ({ document, onDelete, onAskOscar }: DocumentCardPro
                 variant="ghost"
                 size="sm"
                 onClick={() => onDelete(document.id)}
-                className="text-xs text-destructive hover:text-destructive ml-auto"
+                className="text-sm text-destructive hover:text-destructive ml-auto"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>

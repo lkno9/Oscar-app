@@ -29,7 +29,7 @@ export function ScamAlertCard({
             <span className="text-2xl">{getCategoryIcon(category)}</span>
             <h3 className="font-semibold text-foreground leading-tight">{title}</h3>
           </div>
-          <Badge className={`${getDangerColor(dangerLevel)} shrink-0 text-xs`}>
+          <Badge className={`${getDangerColor(dangerLevel)} shrink-0 text-sm`}>
             {getDangerLabel(dangerLevel)}
           </Badge>
         </div>
@@ -38,9 +38,9 @@ export function ScamAlertCard({
           {description}
         </p>
         
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-sm">
               {getCategoryLabel(category)}
             </Badge>
             {source && (

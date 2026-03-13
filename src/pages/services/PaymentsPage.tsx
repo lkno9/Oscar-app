@@ -116,7 +116,7 @@ export function PaymentsPage() {
         <button
           onClick={goBack}
           aria-label="Retour"
-          className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
+          className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>

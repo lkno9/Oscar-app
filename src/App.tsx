@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -13,12 +13,10 @@ import { DocumentsPage } from "./pages/services/DocumentsPage";
 import { PaymentsPage } from "./pages/services/PaymentsPage";
 import { StoragePage } from "./pages/services/StoragePage";
 import { FamilyPage } from "./pages/services/FamilyPage";
-import { CallsPage } from "./pages/services/CallsPage";
 import { PhotosPage } from "./pages/services/PhotosPage";
 import { HealthPage } from "./pages/services/HealthPage";
 import { PrescriptionsPage } from "./pages/services/PrescriptionsPage";
 import { WellnessPage } from "./pages/services/WellnessPage";
-import { MusicPage } from "./pages/services/MusicPage";
 import { LibraryPage } from "./pages/services/LibraryPage";
 import { GamesPage } from "./pages/services/GamesPage";
 import { VaultPage } from "./pages/services/VaultPage";
@@ -68,12 +66,11 @@ const App = () => (
             <Route path="/services/payments" element={<ProtectedRoute><SubPageLayout><PaymentsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/storage" element={<ProtectedRoute><SubPageLayout><StoragePage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/family" element={<ProtectedRoute><SubPageLayout><FamilyPage /></SubPageLayout></ProtectedRoute>} />
-            <Route path="/services/calls" element={<ProtectedRoute><SubPageLayout><CallsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/photos" element={<ProtectedRoute><SubPageLayout><PhotosPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/health" element={<ProtectedRoute><SubPageLayout><HealthPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/prescriptions" element={<ProtectedRoute><SubPageLayout><PrescriptionsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/wellness" element={<ProtectedRoute><SubPageLayout><WellnessPage /></SubPageLayout></ProtectedRoute>} />
-            <Route path="/services/music" element={<ProtectedRoute><SubPageLayout><MusicPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/music" element={<Navigate to="/services/radio" replace />} />
             <Route path="/services/library" element={<ProtectedRoute><SubPageLayout><LibraryPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/games" element={<ProtectedRoute><SubPageLayout><GamesPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/games/memory" element={<ProtectedRoute><SubPageLayout><MemoryGame /></SubPageLayout></ProtectedRoute>} />

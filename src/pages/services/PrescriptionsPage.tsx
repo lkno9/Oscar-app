@@ -222,7 +222,7 @@ export function PrescriptionsPage() {
         <button
           onClick={goBack}
           aria-label="Retour"
-          className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
+          className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -347,13 +347,13 @@ export function PrescriptionsPage() {
                       href={rx.unit}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-primary underline-offset-2 hover:underline mt-1 inline-block"
+                      className="text-sm text-primary underline-offset-2 hover:underline mt-1 inline-block"
                     >
                       📎 Voir le document
                     </a>
                   )}
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full ${
+                <span className={`text-sm px-2 py-1 rounded-full ${
                   isExpired(rx.record_date) 
                     ? 'bg-muted text-muted-foreground' 
                     : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
@@ -463,7 +463,7 @@ export function PrescriptionsPage() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-foreground">{r.value} €</p>
-                  <span className={`text-xs ${r.notes === 'done' ? 'text-green-600' : 'text-orange-500'}`}>
+                  <span className={`text-sm ${r.notes === 'done' ? 'text-green-600' : 'text-orange-500'}`}>
                     {r.notes === 'done' ? 'Remboursé' : 'En cours'}
                   </span>
                 </div>

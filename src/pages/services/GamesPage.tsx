@@ -126,7 +126,7 @@ export function GamesPage() {
         <button
           onClick={goBack}
           aria-label="Retour"
-          className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
+          className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -153,15 +153,15 @@ export function GamesPage() {
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold">{stats.streak}</p>
-              <p className="text-xs opacity-80">Jours d'affilée</p>
+              <p className="text-sm opacity-80">Jours d'affilée</p>
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.totalGames}</p>
-              <p className="text-xs opacity-80">Parties jouées</p>
+              <p className="text-sm opacity-80">Parties jouées</p>
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.successRate}%</p>
-              <p className="text-xs opacity-80">Réussite</p>
+              <p className="text-sm opacity-80">Réussite</p>
             </div>
           </div>
         </div>
@@ -190,8 +190,8 @@ export function GamesPage() {
               >
                 <span className="text-4xl">{game.emoji}</span>
                 <h3 className="font-semibold text-foreground">{game.name}</h3>
-                <p className="text-xs text-muted-foreground">{game.description}</p>
-                <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                <p className="text-sm text-muted-foreground">{game.description}</p>
+                <span className="text-sm bg-primary/20 text-primary px-2 py-0.5 rounded-full">
                   {game.difficulty}
                 </span>
               </button>
@@ -212,7 +212,7 @@ export function GamesPage() {
                 className="bg-card rounded-xl p-2 shadow-sm border border-border flex flex-col items-center gap-1"
               >
                 <span className="text-xl">{cat.emoji}</span>
-                <span className="text-xs text-muted-foreground text-center font-medium">{cat.name}</span>
+                <span className="text-sm text-muted-foreground text-center font-medium">{cat.name}</span>
               </div>
             ))}
           </div>
@@ -237,7 +237,7 @@ export function GamesPage() {
                     <span className="text-2xl">{game.emoji}</span>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground text-sm truncate">{game.name}</h3>
-                      <p className="text-xs text-muted-foreground truncate">{game.description}</p>
+                      <p className="text-sm text-muted-foreground truncate">{game.description}</p>
                     </div>
                     <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   </button>

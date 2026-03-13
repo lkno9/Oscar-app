@@ -310,7 +310,7 @@ export function AuthPage() {
           {/* Dev bypass */}
           <Button
             variant="ghost"
-            className="w-full text-xs text-muted-foreground/50 hover:text-muted-foreground"
+            className="w-full text-sm text-muted-foreground/50 hover:text-muted-foreground"
             onClick={async () => {
               try {
                 toast.info('Connexion en cours...');

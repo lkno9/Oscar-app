@@ -130,7 +130,7 @@ export function RecipesPage() {
       {/* Header */}
       <header className="bg-card border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
-          <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
+          <button onClick={goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <div className="flex items-center gap-3">
@@ -191,16 +191,16 @@ export function RecipesPage() {
                     <h3 className="font-bold text-foreground text-base mb-1">{recipe.title}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{recipe.description}</p>
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-xs font-medium text-primary bg-primary/5 px-2 py-0.5 rounded-full">
+                      <span className="text-sm font-medium text-primary bg-primary/5 px-2 py-0.5 rounded-full">
                         {recipe.region}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Clock className="w-3.5 h-3.5" /> {recipe.time}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Users className="w-3.5 h-3.5" /> {recipe.servings} pers.
                       </span>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
                         recipe.difficulty === "Facile" ? "bg-green-50 text-green-600" : "bg-amber-50 text-amber-600"
                       }`}>
                         {recipe.difficulty}
@@ -241,7 +241,7 @@ export function RecipesPage() {
                     <ol className="space-y-3">
                       {recipe.steps.map((step, i) => (
                         <li key={i} className="flex gap-3 text-sm text-foreground/80">
-                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex-shrink-0">
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-bold flex-shrink-0">
                             {i + 1}
                           </span>
                           <span className="leading-relaxed pt-0.5">{step}</span>

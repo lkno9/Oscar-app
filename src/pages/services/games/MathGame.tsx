@@ -155,7 +155,7 @@ export function MathGame() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
+        <button onClick={goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
@@ -177,7 +177,7 @@ export function MathGame() {
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progressPercent}%` }} />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Question {currentQ + 1}/{TOTAL_QUESTIONS}</p>
+                <p className="text-sm text-muted-foreground mt-1">Question {currentQ + 1}/{TOTAL_QUESTIONS}</p>
               </div>
               <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-sm ${timeLeft <= 15 ? 'bg-destructive/20 text-destructive' : 'bg-secondary text-foreground'}`}>
                 <Clock className="w-4 h-4" />

@@ -60,14 +60,14 @@ export default function FamilyAccessPage() {
       {/* Header */}
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3 sticky top-0 z-10">
         <Link to="/settings">
-          <button className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+          <button className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
         </Link>
         <div className="flex-1">
           <h1 className="text-lg font-bold text-foreground">Accès Famille</h1>
           {linkedFamily.length > 0 && (
-            <p className="text-xs text-muted-foreground">{linkedFamily.length} membre{linkedFamily.length > 1 ? 's' : ''} connecté{linkedFamily.length > 1 ? 's' : ''}</p>
+            <p className="text-sm text-muted-foreground">{linkedFamily.length} membre{linkedFamily.length > 1 ? 's' : ''} connecté{linkedFamily.length > 1 ? 's' : ''}</p>
           )}
         </div>
         <Users className="w-6 h-6 text-primary" />
@@ -83,7 +83,7 @@ export default function FamilyAccessPage() {
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-foreground text-sm">Messages famille</p>
-                <p className="text-xs text-muted-foreground">Discuter avec vos proches</p>
+                <p className="text-sm text-muted-foreground">Discuter avec vos proches</p>
               </div>
               <div className="flex -space-x-2">
                 {linkedFamily.slice(0, 3).map(link => (
@@ -111,7 +111,7 @@ export default function FamilyAccessPage() {
 
           <div className="space-y-4">
             <div>
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Relation</Label>
+              <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Relation</Label>
               <Select value={relationship} onValueChange={setRelationship}>
                 <SelectTrigger className="h-12 rounded-xl mt-2"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -139,13 +139,13 @@ export default function FamilyAccessPage() {
             </Button>
 
             {!canCreateInvitation && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 text-center bg-amber-50 dark:bg-amber-950/20 rounded-lg p-2 border border-amber-200 dark:border-amber-800">
+              <p className="text-sm text-amber-600 dark:text-amber-400 text-center bg-amber-50 dark:bg-amber-950/20 rounded-lg p-2 border border-amber-200 dark:border-amber-800">
                 Limite de {MAX_FAMILY_PER_SENIOR} membres famille atteinte
               </p>
             )}
 
             {canCreateInvitation && (linkedFamily.length + pendingInvitations.length) > 0 && (
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-sm text-muted-foreground text-center">
                 {linkedFamily.length + pendingInvitations.length}/{MAX_FAMILY_PER_SENIOR} places utilisées
               </p>
             )}
@@ -165,7 +165,7 @@ export default function FamilyAccessPage() {
                     <Share2 className="w-4 h-4 mr-2" />Partager
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Valable jusqu'à son utilisation</p>
+                <p className="text-sm text-muted-foreground">Valable jusqu'à son utilisation</p>
               </div>
             )}
           </div>
@@ -176,7 +176,7 @@ export default function FamilyAccessPage() {
           <div className="bg-card rounded-xl p-5 border border-border">
             <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               En attente
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-secondary text-muted-foreground">{pendingInvitations.length}</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm bg-secondary text-muted-foreground">{pendingInvitations.length}</span>
             </h2>
             <div className="space-y-3">
               {pendingInvitations.map((inv) => (
@@ -188,7 +188,7 @@ export default function FamilyAccessPage() {
                     <div>
                       <Badge variant="secondary" className="text-[10px]">{inv.relationship}</Badge>
                       <div className="flex items-center gap-1 mt-0.5">
-                        <span className="font-mono text-xs font-bold tracking-wider text-foreground">{inv.invitation_code}</span>
+                        <span className="font-mono text-sm font-bold tracking-wider text-foreground">{inv.invitation_code}</span>
                         <button onClick={() => copyCode(inv.invitation_code!)} className="text-muted-foreground hover:text-foreground p-0.5">
                           <Copy className="w-3 h-3" />
                         </button>
@@ -220,7 +220,7 @@ export default function FamilyAccessPage() {
             <div className="text-center py-6">
               <div className="text-4xl mb-3">👨‍👩‍👧</div>
               <p className="text-sm font-medium text-foreground mb-1">Aucun membre connecté</p>
-              <p className="text-xs text-muted-foreground">Créez un code d'invitation ci-dessus</p>
+              <p className="text-sm text-muted-foreground">Créez un code d'invitation ci-dessus</p>
             </div>
           ) : (
             <div className="space-y-3">

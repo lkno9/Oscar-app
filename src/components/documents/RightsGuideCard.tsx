@@ -34,7 +34,7 @@ export const RightsGuideCard = ({ guide, onAskOscar }: RightsGuideCardProps) => 
                 </CollapsibleTrigger>
               </div>
 
-              <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3 mt-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {guide.estimatedDelay}
@@ -100,7 +100,7 @@ export const RightsGuideCard = ({ guide, onAskOscar }: RightsGuideCardProps) => 
                 <Button
                   size="sm"
                   onClick={() => onAskOscar(`Comment demander ${guide.title} ?`)}
-                  className="text-xs"
+                  className="text-sm"
                 >
                   <MessageCircle className="w-3 h-3 mr-1" />
                   Aide personnalisée avec Oscar
@@ -110,7 +110,7 @@ export const RightsGuideCard = ({ guide, onAskOscar }: RightsGuideCardProps) => 
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(`https://${guide.website}`, '_blank')}
-                className="text-xs"
+                className="text-sm"
               >
                 <Globe className="w-3 h-3 mr-1" />
                 Site officiel

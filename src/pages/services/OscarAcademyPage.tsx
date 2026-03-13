@@ -339,7 +339,7 @@ export function OscarAcademyPage() {
     return (
       <div className="flex flex-col h-full bg-background">
         <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-          <button onClick={() => setPlayingVideo(null)} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+          <button onClick={() => setPlayingVideo(null)} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <div className="flex-1">
@@ -365,7 +365,7 @@ export function OscarAcademyPage() {
             <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl aspect-video flex flex-col items-center justify-center border border-primary/20">
               <div className="text-5xl mb-3">{playingVideo.emoji}</div>
               <p className="text-base font-semibold text-foreground mb-1">{playingVideo.title}</p>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full text-xs font-medium text-primary mt-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full text-sm font-medium text-primary mt-2">
                 <Clock className="w-3 h-3" />
                 Vidéo en préparation
               </span>
@@ -389,7 +389,7 @@ export function OscarAcademyPage() {
                 {playingVideo.tips.map((tip, i) => (
                   <div key={i} className="flex gap-3 items-start">
                     <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-primary">{i + 1}</span>
+                      <span className="text-sm font-bold text-primary">{i + 1}</span>
                     </div>
                     <p className="text-sm text-foreground leading-relaxed flex-1">{tip}</p>
                   </div>
@@ -417,7 +417,7 @@ export function OscarAcademyPage() {
     return (
       <div className="flex flex-col h-full bg-background">
         <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-          <button onClick={() => setActiveModule(null)} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+          <button onClick={() => setActiveModule(null)} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <div className="flex-1">
@@ -475,7 +475,7 @@ export function OscarAcademyPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
+        <button onClick={goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
@@ -501,7 +501,7 @@ export function OscarAcademyPage() {
               <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                 <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(completedCount / MODULES.length) * 100}%` }} />
               </div>
-              <span className="text-xs text-muted-foreground">{completedCount}/{MODULES.length}</span>
+              <span className="text-sm text-muted-foreground">{completedCount}/{MODULES.length}</span>
             </div>
           </div>
         </div>
@@ -552,18 +552,18 @@ export function OscarAcademyPage() {
                       <div className="flex items-center gap-2 mb-0.5">
                         <p className="font-bold text-foreground text-base">{mod.title}</p>
                         {mod.isNew && !isDone && (
-                          <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-semibold">Nouveau</span>
+                          <span className="text-sm bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-semibold">Nouveau</span>
                         )}
                         {isDone && (
-                          <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-semibold">Terminé</span>
+                          <span className="text-sm bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-semibold">Terminé</span>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground leading-tight">{mod.description}</p>
                       <div className="flex items-center gap-3 mt-2">
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="w-3 h-3" />{mod.duration}
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Play className="w-3 h-3" />{mod.steps.length} étapes
                         </span>
                       </div>
@@ -580,14 +580,14 @@ export function OscarAcademyPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Guides Oscar</h2>
-                <span className="text-xs text-muted-foreground">{watchedVideos.length}/{VIDEO_TUTORIALS.length} consultés</span>
+                <span className="text-sm text-muted-foreground">{watchedVideos.length}/{VIDEO_TUTORIALS.length} consultés</span>
               </div>
 
               {(() => {
                 const videoCategories = [...new Set(VIDEO_TUTORIALS.map(v => v.category))];
                 return videoCategories.map(cat => (
                   <div key={cat} className="space-y-2">
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wide">{cat}</p>
+                    <p className="text-sm font-semibold text-primary uppercase tracking-wide">{cat}</p>
                     {VIDEO_TUTORIALS.filter(v => v.category === cat).map(vid => {
                       const isWatched = watchedVideos.includes(vid.id);
                       const hasVideo = !!vid.youtubeId;
@@ -617,15 +617,15 @@ export function OscarAcademyPage() {
                             <div className="flex items-center gap-2 mb-0.5">
                               <p className="font-bold text-foreground text-base">{vid.title}</p>
                               {isWatched && (
-                                <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-semibold">Vu</span>
+                                <span className="text-sm bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-semibold">Vu</span>
                               )}
                             </div>
                             <p className="text-sm text-muted-foreground leading-tight">{vid.description}</p>
                             <div className="flex items-center gap-3 mt-2">
-                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1 text-sm text-muted-foreground">
                                 <Clock className="w-3 h-3" />{vid.duration}
                               </span>
-                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1 text-sm text-muted-foreground">
                                 {hasVideo ? <Video className="w-3 h-3" /> : <BookOpen className="w-3 h-3" />}
                                 {hasVideo ? "Vidéo" : "Guide"}
                               </span>
@@ -646,7 +646,7 @@ export function OscarAcademyPage() {
                 <Globe className="w-3.5 h-3.5" />
                 Ressources recommandées
               </h2>
-              <p className="text-xs text-muted-foreground -mt-1">
+              <p className="text-sm text-muted-foreground -mt-1">
                 Sites gratuits pour apprendre le numérique en toute confiance.
               </p>
               {EXTERNAL_RESOURCES.map((res) => (
@@ -662,7 +662,7 @@ export function OscarAcademyPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-foreground text-sm">{res.title}</p>
-                    <p className="text-xs text-muted-foreground leading-tight mt-0.5">{res.description}</p>
+                    <p className="text-sm text-muted-foreground leading-tight mt-0.5">{res.description}</p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 </a>

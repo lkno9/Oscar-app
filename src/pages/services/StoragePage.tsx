@@ -133,7 +133,7 @@ export function StoragePage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={selectedFolder ? () => setSelectedFolder(null) : goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+        <button onClick={selectedFolder ? () => setSelectedFolder(null) : goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
@@ -231,15 +231,15 @@ export function StoragePage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-foreground truncate">{doc.name}</p>
-                        <p className="text-xs text-muted-foreground">{doc.file_size || "Taille inconnue"}</p>
+                        <p className="text-sm text-muted-foreground">{doc.file_size || "Taille inconnue"}</p>
                       </div>
                       <div className="flex gap-1">
                         {doc.file_url && (
-                          <button onClick={() => setPreviewDoc(doc)} className="p-2 rounded-full hover:bg-secondary transition-colors">
+                          <button onClick={() => setPreviewDoc(doc)} className="p-2.5 rounded-full hover:bg-secondary transition-colors">
                             <Eye className="w-5 h-5 text-muted-foreground" />
                           </button>
                         )}
-                        <button onClick={() => handleDelete(doc.id)} className="p-2 rounded-full hover:bg-destructive/10 transition-colors">
+                        <button onClick={() => handleDelete(doc.id)} className="p-2.5 rounded-full hover:bg-destructive/10 transition-colors">
                           <Trash2 className="w-5 h-5 text-destructive" />
                         </button>
                       </div>

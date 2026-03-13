@@ -120,17 +120,17 @@ export default function FamilyNotificationsPage() {
       <header className="px-4 py-4 bg-card border-b border-border flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <Link to="/family">
-            <button className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors">
+            <button className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors">
               <ArrowLeft className="w-5 h-5 text-foreground" />
             </button>
           </Link>
           <div>
             <h1 className="text-lg font-bold text-foreground">Notifications</h1>
-            {unreadCount > 0 && <p className="text-xs text-primary font-semibold">{unreadCount} non lue{unreadCount > 1 ? 's' : ''}</p>}
+            {unreadCount > 0 && <p className="text-sm text-primary font-semibold">{unreadCount} non lue{unreadCount > 1 ? 's' : ''}</p>}
           </div>
         </div>
         {unreadCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-primary hover:bg-primary/5 text-xs rounded-full h-8 px-3">
+          <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-primary hover:bg-primary/5 text-sm rounded-full h-8 px-3">
             <Check className="w-3.5 h-3.5 mr-1" />Tout lire
           </Button>
         )}
@@ -142,7 +142,7 @@ export default function FamilyNotificationsPage() {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
               filter === f.key
                 ? 'bg-foreground text-background'
                 : 'bg-card text-muted-foreground border border-border'
@@ -167,7 +167,7 @@ export default function FamilyNotificationsPage() {
             {groupByDate(filtered).map((group) => (
               <div key={group.date}>
                 <div className="px-4 py-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.label}</p>
+                  <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{group.label}</p>
                 </div>
                 <div className="px-4 space-y-2">
                   {group.items.map((n) => (
@@ -185,7 +185,7 @@ export default function FamilyNotificationsPage() {
                             <h3 className={`text-sm ${!n.is_read ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>{n.title}</h3>
                             {!n.is_read && <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />}
                           </div>
-                          {n.message && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>}
+                          {n.message && <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>}
                           <p className="text-[10px] text-muted-foreground mt-1.5">{format(new Date(n.created_at), 'HH:mm', { locale: fr })}</p>
                         </div>
                       </div>

@@ -127,7 +127,7 @@ export function HelpPage() {
         <button
           onClick={goBack}
           aria-label="Retour"
-          className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
+          className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -178,7 +178,7 @@ export function HelpPage() {
             <div className="bg-card rounded-xl p-6 text-center border border-border">
               <HelpCircle className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">Aucun résultat pour « {search} »</p>
-              <p className="text-xs text-muted-foreground mt-1">Essayez avec d'autres mots ou demandez à Oscar</p>
+              <p className="text-sm text-muted-foreground mt-1">Essayez avec d'autres mots ou demandez à Oscar</p>
             </div>
           ) : (
             filteredCategories.map(cat => {
@@ -192,7 +192,7 @@ export function HelpPage() {
                     <span className="text-2xl">{cat.emoji}</span>
                     <div className="flex-1">
                       <p className="font-semibold text-foreground">{cat.name}</p>
-                      <p className="text-xs text-muted-foreground">{cat.items.length} question{cat.items.length > 1 ? 's' : ''}</p>
+                      <p className="text-sm text-muted-foreground">{cat.items.length} question{cat.items.length > 1 ? 's' : ''}</p>
                     </div>
                     <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                   </button>
@@ -220,7 +220,7 @@ export function HelpPage() {
               <p className="text-sm text-foreground font-medium mb-1">
                 Vous ne trouvez pas la réponse ?
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Notre équipe est disponible du lundi au vendredi, de 9h à 18h.
               </p>
             </div>
@@ -233,7 +233,7 @@ export function HelpPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">Envoyer un e-mail</p>
-                <p className="text-xs text-muted-foreground">support@oscar-app.fr</p>
+                <p className="text-sm text-muted-foreground">support@oscar-app.fr</p>
               </div>
               <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </a>
@@ -246,7 +246,7 @@ export function HelpPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">Appeler le support</p>
-                <p className="text-xs text-muted-foreground">01 80 00 00 00 (appel non surtaxé)</p>
+                <p className="text-sm text-muted-foreground">01 80 00 00 00 (appel non surtaxé)</p>
               </div>
               <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </a>

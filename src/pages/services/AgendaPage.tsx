@@ -59,19 +59,19 @@ function MiniCalendar({ currentMonth, events, selectedDate, onSelectDate, onMont
   return (
     <div className="bg-card rounded-2xl border border-border p-4">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => onMonthChange(subMonths(currentMonth, 1))} className="p-2 rounded-full hover:bg-secondary transition-colors">
+        <button onClick={() => onMonthChange(subMonths(currentMonth, 1))} className="p-2.5 rounded-full hover:bg-secondary transition-colors">
           <ChevronLeft className="w-5 h-5 text-foreground" />
         </button>
         <h2 className="font-bold text-foreground capitalize">
           {format(currentMonth, "MMMM yyyy", { locale: fr })}
         </h2>
-        <button onClick={() => onMonthChange(addMonths(currentMonth, 1))} className="p-2 rounded-full hover:bg-secondary transition-colors">
+        <button onClick={() => onMonthChange(addMonths(currentMonth, 1))} className="p-2.5 rounded-full hover:bg-secondary transition-colors">
           <ChevronRight className="w-5 h-5 text-foreground" />
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayNames.map((d, i) => (
-          <div key={i} className="text-center text-xs font-semibold text-muted-foreground py-1">{d}</div>
+          <div key={i} className="text-center text-sm font-semibold text-muted-foreground py-1">{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
@@ -185,7 +185,7 @@ export function AgendaPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
+        <button onClick={goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
@@ -326,14 +326,14 @@ export function AgendaPage() {
                         {event.event_time && ` à ${event.event_time.slice(0, 5)}`}
                       </p>
                       {event.description && (
-                        <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1">
+                        <p className="text-sm text-muted-foreground mt-1 flex items-start gap-1">
                           <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
                           {event.description}
                         </p>
                       )}
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">{typeInfo.label}</span>
-                        {event.reminder && <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full flex items-center gap-1"><Bell className="w-3 h-3" />Rappel</span>}
+                        <span className="text-sm bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">{typeInfo.label}</span>
+                        {event.reminder && <span className="text-sm bg-accent text-accent-foreground px-2 py-0.5 rounded-full flex items-center gap-1"><Bell className="w-3 h-3" />Rappel</span>}
                       </div>
                     </div>
                     <button onClick={() => handleDelete(event.id)} className="p-2 hover:bg-destructive/10 rounded-full transition-colors flex-shrink-0">

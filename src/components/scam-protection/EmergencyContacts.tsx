@@ -23,7 +23,7 @@ export function EmergencyContacts() {
                 <p className="text-sm text-muted-foreground mb-2">
                   {contact.description}
                 </p>
-                <p className="text-xs text-muted-foreground/70">
+                <p className="text-sm text-muted-foreground/70">
                   {contact.hours}
                 </p>
               </div>

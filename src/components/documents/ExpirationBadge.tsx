@@ -48,7 +48,7 @@ export const ExpirationBadge = ({
   return (
     <Badge 
       variant="outline" 
-      className={`${bgClass} ${size === "sm" ? "text-xs px-1.5 py-0.5" : "text-sm px-2 py-1"} flex items-center gap-1`}
+      className={`${bgClass} ${size === "sm" ? "text-sm px-1.5 py-0.5" : "text-sm px-2 py-1"} flex items-center gap-1`}
     >
       {icon}
       {showText && <span>{text}</span>}

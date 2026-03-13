@@ -7,12 +7,12 @@ import {
   MessageCircle,
   Gamepad2,
   Sparkles,
-  X,
   Check,
   Heart,
   Flame,
   Zap,
   ShieldAlert,
+  Bell,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -105,7 +105,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [weather, setWeather] = useState<Weather | null>(null);
   const [selectedActions, setSelectedActions] = useState<string[]>(["Mon agenda", "Ma santé & bien-être", "Mes communications", "Mon coffre-fort"]);
   const [showPersonnaliser, setShowPersonnaliser] = useState(false);
-  const [notifs, setNotifs] = useState<{id: string; icon: string; title: string; sub: string; info: string; color: string}[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<{id: string; title: string; event_date: string; event_time: string | null; category: string | null}[]>([]);
+  const [unreadMessages, setUnreadMessages] = useState<{id: string; content: string; sender_id: string; sender_name: string | null; created_at: string}[]>([]);
   const { filteredArticles, loading: articlesLoading, actuCat, setActuCat } = useRssArticles();
 
   // Rediriger vers l'onboarding si pas encore fait
@@ -164,13 +165,56 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
     fetchProfile();
   }, [user]);
 
+  // Fetch upcoming events for "Mes rappels"
+  useEffect(() => {
+    if (!user) return;
+    const fetchEvents = async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("agenda_events")
+        .select("id, title, event_date, event_time, category")
+        .gte("event_date", today)
+        .order("event_date", { ascending: true })
+        .limit(5);
+      if (data) setUpcomingEvents(data);
+    };
+    fetchEvents();
+  }, [user]);
+
+  // Fetch unread messages from family
+  useEffect(() => {
+    if (!user) return;
+    const fetchUnreadMessages = async () => {
+      // Get messages received by this user that are unread
+      const { data: msgs } = await supabase
+        .from("family_messages")
+        .select("id, content, sender_id, created_at")
+        .eq("receiver_id", user.id)
+        .or("is_read.is.null,is_read.eq.false")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (msgs && msgs.length > 0) {
+        // Resolve sender names from family_contacts
+        const senderIds = [...new Set(msgs.map(m => m.sender_id))];
+        const { data: contacts } = await supabase
+          .from("family_contacts")
+          .select("id, name")
+          .in("id", senderIds);
+        const nameMap = new Map((contacts || []).map(c => [c.id, c.name]));
+        setUnreadMessages(msgs.map(m => ({
+          ...m,
+          sender_name: nameMap.get(m.sender_id) || null,
+        })));
+      }
+    };
+    fetchUnreadMessages();
+  }, [user]);
+
   const getFirstName = () => profile.full_name ? profile.full_name.split(" ")[0] : "";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
   const dateStr = format(new Date(), "EEEE d MMMM yyyy", { locale: fr });
 
-
-  const dismissNotif = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id));
 
   const toggleAction = (label: string) => {
     setSelectedActions(prev => {
@@ -197,7 +241,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         <div className="flex items-start justify-between gap-3">
           {/* Left: date + greeting */}
           <div className="flex flex-col flex-1 min-w-0" style={{ gap: 8 }}>
-            <p className="capitalize text-muted-foreground" style={{ fontSize: 13, fontWeight: 500 }}>{dateStr}</p>
+            <p className="capitalize text-muted-foreground" style={{ fontSize: 14, fontWeight: 500 }}>{dateStr}</p>
             <h1 className="text-foreground" style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.4px", lineHeight: 1.2 }}>
               {greeting}{getFirstName() ? `, ${getFirstName()}` : ""} 👋
             </h1>
@@ -229,7 +273,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   {weather.temp}°
                 </span>
               </div>
-              <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500, marginTop: 4, textAlign: "center", maxWidth: 80 }}>
+              <span style={{ fontSize: 12, color: "#64748b", fontWeight: 500, marginTop: 4, textAlign: "center", maxWidth: 80 }}>
                 {weather.label}
               </span>
             </div>
@@ -259,7 +303,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <span style={{ fontSize: 15, fontWeight: 500, color: "#fff" }}>Oscar</span>
-              <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.75)", background: "rgba(255,255,255,0.18)", borderRadius: 99, padding: "2px 8px", fontWeight: 500 }}>En ligne</span>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", background: "rgba(255,255,255,0.18)", borderRadius: 99, padding: "2px 8px", fontWeight: 500 }}>En ligne</span>
             </div>
             <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Posez-moi vos questions, je suis là pour vous aider !</p>
           </div>
@@ -305,7 +349,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             <p style={{ fontSize: 28, fontWeight: 600, color: "#fff", lineHeight: 1 }}>
               {streak.current_streak}
             </p>
-            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.8)", marginTop: 2, textAlign: "center" }}>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", marginTop: 2, textAlign: "center" }}>
               {streak.current_streak <= 1 ? "jour" : "jours"}
             </p>
           </div>
@@ -384,10 +428,10 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
             >
               <span style={{ fontSize: 28, flexShrink: 0, lineHeight: 1 }}>{tip.emoji}</span>
               <div>
-                <p style={{ fontSize: 11, fontWeight: 500, color: "#e67e22", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: "#e67e22", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
                   Conseil du jour
                 </p>
-                <p className="text-foreground/80" style={{ fontSize: 13.5, lineHeight: 1.45 }}>
+                <p className="text-foreground/80" style={{ fontSize: 14, lineHeight: 1.45 }}>
                   {tip.text}
                 </p>
               </div>
@@ -448,7 +492,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                   <span style={{ fontSize: 18 }}>{a.emoji}</span>
                   <span
                     style={{
-                      fontSize: 9.5,
+                      fontSize: 12,
                       fontWeight: 500,
                       color: "#2DD4BF",
                       background: "rgba(45,212,191,0.08)",
@@ -459,13 +503,13 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     {a.category}
                   </span>
                 </div>
-                <p className="text-foreground" style={{ fontSize: 12.5, fontWeight: 500, lineHeight: 1.35, marginBottom: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
+                <p className="text-foreground" style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.35, marginBottom: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.title}</p>
                 {a.description && (
                   <p className="text-muted-foreground" style={{ fontSize: 13, lineHeight: 1.35, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{a.description}</p>
                 )}
                 <div className="flex items-center justify-between">
-                  <span style={{ fontSize: 12, color: "#b0b8c4" }}>{a.source}</span>
-                  <span style={{ fontSize: 12, color: "#b0b8c4" }}>{timeAgo(a.pubDate)}</span>
+                  <span style={{ fontSize: 13, color: "#b0b8c4" }}>{a.source}</span>
+                  <span style={{ fontSize: 13, color: "#b0b8c4" }}>{timeAgo(a.pubDate)}</span>
                 </div>
               </a>
             ))}
@@ -487,26 +531,67 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           <button
             onClick={() => navigate("/services/knowledge")}
             className="text-primary"
-            style={{ fontSize: 13, fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}
+            style={{ fontSize: 14, fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}
           >
             Voir tout →
           </button>
         </div>
       </div>
 
-      {/* MES RAPPELS */}
+      {/* MES RAPPELS — connected to agenda_events */}
       <div style={{ padding: "24px 16px 0" }}>
-        <SectionHeader title="Mes rappels" />
-        <div
-          className="flex flex-col items-center justify-center bg-card border border-border"
-          style={{
-            borderRadius: 18,
-            padding: "28px 16px",
-          }}
-        >
-          <span style={{ fontSize: 32, marginBottom: 8 }}>✅</span>
-          <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Aucun rappel pour le moment</p>
-        </div>
+        <SectionHeader title="Mes prochains rendez-vous" linkLabel="Voir l'agenda" linkPath="/services/agenda" />
+        {upcomingEvents.length > 0 ? (
+          <div className="flex flex-col gap-2.5">
+            {upcomingEvents.map(ev => {
+              const evDate = new Date(ev.event_date);
+              const isToday = evDate.toDateString() === new Date().toDateString();
+              const dayLabel = isToday ? "Aujourd'hui" : format(evDate, "EEEE d MMM", { locale: fr });
+              return (
+                <button
+                  key={ev.id}
+                  onClick={() => navigate("/services/agenda")}
+                  className="flex items-center gap-3 bg-card border border-border text-left w-full"
+                  style={{ borderRadius: 16, padding: "14px 16px", cursor: "pointer", border: "none" }}
+                >
+                  <div
+                    className="flex items-center justify-center flex-shrink-0"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "50%",
+                      background: isToday ? "rgba(45,212,191,0.12)" : "rgba(148,163,184,0.1)",
+                    }}
+                  >
+                    <CalendarDays className={`w-5 h-5 ${isToday ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-foreground" style={{ fontSize: 14, fontWeight: 600 }}>{ev.title}</p>
+                    <p className="text-muted-foreground" style={{ fontSize: 13, marginTop: 2 }}>
+                      {dayLabel}{ev.event_time ? ` à ${ev.event_time.slice(0, 5)}` : ""}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div
+            className="flex flex-col items-center justify-center bg-card border border-border"
+            style={{ borderRadius: 18, padding: "28px 16px" }}
+          >
+            <span style={{ fontSize: 32, marginBottom: 8 }}>✅</span>
+            <p className="text-muted-foreground" style={{ fontSize: 14 }}>Aucun rendez-vous à venir</p>
+            <button
+              onClick={() => navigate("/services/agenda")}
+              className="text-primary"
+              style={{ fontSize: 14, fontWeight: 600, background: "none", border: "none", cursor: "pointer", marginTop: 8 }}
+            >
+              Ouvrir l'agenda →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ACTIONS RAPIDES */}
@@ -516,13 +601,13 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           <button
             onClick={() => setShowPersonnaliser(true)}
             style={{
-              fontSize: 12,
+              fontSize: 13,
               color: "#2DD4BF",
               fontWeight: 600,
               background: "rgba(45,212,191,0.1)",
               border: "1.5px solid rgba(45,212,191,0.3)",
               borderRadius: 99,
-              padding: "5px 14px",
+              padding: "7px 16px",
               cursor: "pointer",
               backdropFilter: "blur(8px)",
               WebkitBackdropFilter: "blur(8px)",
@@ -573,105 +658,102 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 >
                   {action.icon}
                 </div>
-                <span className="text-foreground" style={{ fontSize: 12.5, fontWeight: 500 }}>{label}</span>
+                <span className="text-foreground" style={{ fontSize: 13, fontWeight: 500 }}>{label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* NOTIFICATIONS */}
+      {/* NOTIFICATIONS — real data: unread messages + today's events */}
       <div style={{ padding: "24px 16px 32px" }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
-          <SectionHeader title="Notifications" noMargin />
-          <button
-            onClick={() => setNotifs([])}
-            style={{
-              fontSize: 12,
-              color: "#ef4444",
-              fontWeight: 600,
-              background: "rgba(239,68,68,0.08)",
-              border: "1.5px solid rgba(239,68,68,0.25)",
-              borderRadius: 99,
-              padding: "5px 14px",
-              cursor: "pointer",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              letterSpacing: 0.1,
-            }}
-          >
-            Tout effacer
-          </button>
-        </div>
-        {notifs.length > 0 ? (
-          <div className="flex flex-col gap-2.5">
-            {notifs.map(n => (
+        <SectionHeader title="Notifications" linkLabel="Messages" linkPath="/services/communication" />
+        {(() => {
+          // Build unified notification list
+          const notifItems: { id: string; type: "message" | "event"; icon: React.ReactNode; title: string; body: string; time: string; path: string }[] = [];
+
+          // Unread messages
+          unreadMessages.forEach(msg => {
+            const msgDate = new Date(msg.created_at);
+            const isToday = msgDate.toDateString() === new Date().toDateString();
+            const timeLabel = isToday ? format(msgDate, "HH:mm") : format(msgDate, "d MMM, HH:mm", { locale: fr });
+            notifItems.push({
+              id: `msg-${msg.id}`,
+              type: "message",
+              icon: <MessageCircle className="w-5 h-5 text-blue-500" />,
+              title: msg.sender_name ? `Message de ${msg.sender_name}` : "Nouveau message",
+              body: msg.content.length > 80 ? msg.content.slice(0, 80) + "..." : msg.content,
+              time: timeLabel,
+              path: "/services/communication",
+            });
+          });
+
+          // Today's events as reminders
+          const todayStr = new Date().toDateString();
+          upcomingEvents.filter(ev => new Date(ev.event_date).toDateString() === todayStr).forEach(ev => {
+            notifItems.push({
+              id: `ev-${ev.id}`,
+              type: "event",
+              icon: <CalendarDays className="w-5 h-5 text-primary" />,
+              title: "Rappel",
+              body: `${ev.title}${ev.event_time ? ` à ${ev.event_time.slice(0, 5)}` : ""}`,
+              time: "Aujourd'hui",
+              path: "/services/agenda",
+            });
+          });
+
+          if (notifItems.length === 0) {
+            return (
               <div
-                key={n.id}
-                className="flex items-center gap-3 bg-card border border-border"
-                style={{
-                  borderRadius: 16,
-                  padding: "12px 14px",
-                }}
+                className="flex flex-col items-center justify-center bg-card border border-border"
+                style={{ borderRadius: 18, padding: "28px 16px" }}
               >
-                <div
-                  className="flex items-center justify-center flex-shrink-0"
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: "50%",
-                    background: `${n.color}12`,
-                    fontSize: 20,
-                  }}
-                >
-                  {n.icon}
+                <div className="flex items-center justify-center" style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(45,212,191,0.12)", marginBottom: 10 }}>
+                  <Bell className="w-6 h-6 text-primary" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-foreground" style={{ fontSize: 13.5, fontWeight: 500 }}>{n.title}</p>
-                  <p className="text-muted-foreground" style={{ fontSize: 12, marginTop: 1 }}>{n.sub}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span
-                    style={{
-                      fontSize: 10.5,
-                      fontWeight: 500,
-                      color: n.color,
-                      background: `${n.color}12`,
-                      borderRadius: 99,
-                      padding: "2px 8px",
-                    }}
-                  >
-                    {n.info}
-                  </span>
-                  <button
-                    onClick={() => dismissNotif(n.id)}
-                    className="flex items-center justify-center bg-secondary"
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <X className="w-3.5 h-3.5 text-slate-400" />
-                  </button>
-                </div>
+                <p className="text-foreground" style={{ fontSize: 14, fontWeight: 600 }}>Tout est en ordre</p>
+                <p className="text-muted-foreground" style={{ fontSize: 14, marginTop: 4, textAlign: "center" }}>
+                  Aucune notification pour le moment. Vos messages et rappels apparaîtront ici.
+                </p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div
-            className="flex flex-col items-center justify-center bg-card border border-border"
-            style={{
-              borderRadius: 18,
-              padding: "28px 16px",
-            }}
-          >
-            <span style={{ fontSize: 32, marginBottom: 8 }}>🔔</span>
-            <p className="text-muted-foreground" style={{ fontSize: 13.5 }}>Aucune notification</p>
-          </div>
-        )}
+            );
+          }
+
+          return (
+            <div className="flex flex-col gap-2.5">
+              {notifItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => navigate(item.path)}
+                  className="flex items-start gap-3 bg-card border border-border text-left w-full"
+                  style={{ borderRadius: 16, padding: "14px 16px", cursor: "pointer", border: "none" }}
+                >
+                  <div
+                    className="flex items-center justify-center flex-shrink-0"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "50%",
+                      background: item.type === "message" ? "rgba(59,130,246,0.1)" : "rgba(45,212,191,0.12)",
+                      marginTop: 2,
+                    }}
+                  >
+                    {item.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-foreground" style={{ fontSize: 14, fontWeight: 600 }}>{item.title}</p>
+                      <span className="text-muted-foreground flex-shrink-0" style={{ fontSize: 13 }}>{item.time}</span>
+                    </div>
+                    <p className="text-muted-foreground" style={{ fontSize: 14, marginTop: 2, lineHeight: 1.45 }}>
+                      {item.body}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {/* PERSONNALISER MODAL */}
@@ -776,8 +858,8 @@ function SectionHeader({ title, noMargin, linkLabel, linkPath }: { title: string
   return (
     <div className="flex items-center justify-between" style={{ marginBottom: noMargin ? 0 : 10, paddingLeft: 4 }}>
       <p style={{
-        fontSize: 12,
-        fontWeight: 400,
+        fontSize: 13,
+        fontWeight: 600,
         letterSpacing: "0.6px",
         textTransform: "uppercase",
         color: "#94A3B8",
@@ -788,7 +870,7 @@ function SectionHeader({ title, noMargin, linkLabel, linkPath }: { title: string
       {linkLabel && linkPath && (
         <button
           onClick={() => navigate(linkPath)}
-          style={{ fontSize: 12, fontWeight: 500, color: "#2DD4BF", background: "none", border: "none", cursor: "pointer" }}
+          style={{ fontSize: 14, fontWeight: 500, color: "#2DD4BF", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}
         >
           {linkLabel} →
         </button>

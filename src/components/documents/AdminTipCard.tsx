@@ -16,7 +16,7 @@ export const AdminTipCard = ({ tip, onAskOscar }: AdminTipCardProps) => {
           <div className="text-2xl flex-shrink-0">{tip.icon}</div>
           <div className="flex-1 min-w-0">
             <h3 className="font-medium text-foreground text-sm">{tip.title}</h3>
-            <p className="text-xs text-muted-foreground mt-1">{tip.description}</p>
+            <p className="text-sm text-muted-foreground mt-1">{tip.description}</p>
             
             <div className="flex items-center gap-2 mt-3">
               {tip.actionLabel && onAskOscar && (
@@ -24,7 +24,7 @@ export const AdminTipCard = ({ tip, onAskOscar }: AdminTipCardProps) => {
                   variant="outline"
                   size="sm"
                   onClick={() => onAskOscar(tip.title)}
-                  className="text-xs h-8"
+                  className="text-sm h-8"
                 >
                   <ExternalLink className="w-3 h-3 mr-1" />
                   {tip.actionLabel}
@@ -35,7 +35,7 @@ export const AdminTipCard = ({ tip, onAskOscar }: AdminTipCardProps) => {
                   variant="ghost"
                   size="sm"
                   onClick={() => onAskOscar(tip.title)}
-                  className="text-xs h-8"
+                  className="text-sm h-8"
                 >
                   <MessageCircle className="w-3 h-3 mr-1" />
                   Demander à Oscar

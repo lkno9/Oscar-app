@@ -442,7 +442,7 @@ export function ToolsPage() {
                     <p className="text-sm text-muted-foreground">
                       {weatherData.current_condition?.[0]?.lang_fr?.[0]?.value || weatherData.current_condition?.[0]?.weatherDesc?.[0]?.value}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Ressenti {weatherData.current_condition?.[0]?.FeelsLikeC}°C
                     </p>
                   </div>
@@ -455,11 +455,11 @@ export function ToolsPage() {
                     const dayName = i === 0 ? "Auj." : date.toLocaleDateString("fr-FR", { weekday: "short" });
                     return (
                       <div key={i} className="bg-secondary rounded-lg p-2.5 text-center">
-                        <p className="text-xs font-semibold text-foreground capitalize">{dayName}</p>
+                        <p className="text-sm font-semibold text-foreground capitalize">{dayName}</p>
                         <p className="text-lg my-1">
                           {getWeatherEmoji(day.hourly?.[4]?.weatherDesc?.[0]?.value || "")}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           <span className="font-semibold text-foreground">{day.maxtempC}°</span> / {day.mintempC}°
                         </p>
                       </div>
@@ -552,7 +552,7 @@ export function ToolsPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
+        <button onClick={goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">

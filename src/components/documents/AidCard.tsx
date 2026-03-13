@@ -27,16 +27,16 @@ export const AidCard = ({ aid, onAskOscar }: AidCardProps) => {
           <div className="flex items-start gap-2">
             <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs font-medium text-foreground">Qui peut en bénéficier ?</p>
-              <p className="text-xs text-muted-foreground">{aid.whoCanApply}</p>
+              <p className="text-sm font-medium text-foreground">Qui peut en bénéficier ?</p>
+              <p className="text-sm text-muted-foreground">{aid.whoCanApply}</p>
             </div>
           </div>
           
           <div className="flex items-start gap-2">
             <ExternalLink className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs font-medium text-foreground">Où faire la demande ?</p>
-              <p className="text-xs text-muted-foreground">{aid.whereToApply}</p>
+              <p className="text-sm font-medium text-foreground">Où faire la demande ?</p>
+              <p className="text-sm text-muted-foreground">{aid.whereToApply}</p>
             </div>
           </div>
         </div>

@@ -37,7 +37,7 @@ export function PartnerServiceCard({ service, onClickAffiliate }: PartnerService
                 {service.name}
               </h3>
               {service.is_partner && (
-                <Badge variant="outline" className="text-xs bg-primary/5 text-primary border-primary/20">
+                <Badge variant="outline" className="text-sm bg-primary/5 text-primary border-primary/20">
                   Partenaire
                 </Badge>
               )}
@@ -52,7 +52,7 @@ export function PartnerServiceCard({ service, onClickAffiliate }: PartnerService
                     <span className="text-muted-foreground font-normal"> — code : </span>
                   )}
                   {service.promo_code && (
-                    <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">
+                    <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-sm">
                       {service.promo_code}
                     </span>
                   )}
@@ -73,7 +73,7 @@ export function PartnerServiceCard({ service, onClickAffiliate }: PartnerService
             <Badge 
               key={tag} 
               variant="secondary" 
-              className="text-xs font-normal"
+              className="text-sm font-normal"
             >
               {tag}
             </Badge>
@@ -111,13 +111,13 @@ export function PartnerServiceCard({ service, onClickAffiliate }: PartnerService
                     {service.why_we_recommend}
                   </p>
                   {service.is_partner && (
-                    <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
                       💡 Oscar perçoit une petite commission si vous souscrivez via ce lien. 
                       Cela ne change pas le prix pour vous et nous aide à rester gratuit.
                     </p>
                   )}
                   {!service.is_partner && (
-                    <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
                       ✨ Ce service est recommandé sans aucune contrepartie commerciale. 
                       On le trouve simplement utile !
                     </p>

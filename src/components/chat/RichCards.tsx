@@ -46,9 +46,9 @@ function WeatherCard({ data }: { data: WeatherData }) {
         <div className="border-t border-blue-200 dark:border-blue-800 px-4 py-2.5 flex gap-1">
           {data.forecast.map((day, i) => (
             <div key={i} className="flex-1 text-center py-1.5">
-              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">{day.day}</p>
+              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{day.day}</p>
               <p className="text-lg my-0.5">{day.emoji}</p>
-              <p className="text-xs text-blue-800 dark:text-blue-200">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
                 <span className="font-semibold">{day.max}°</span>
                 <span className="text-blue-500 dark:text-blue-400 mx-0.5">/</span>
                 <span>{day.min}°</span>
@@ -75,7 +75,7 @@ function TranslationCard({ data }: { data: TranslationData }) {
   return (
     <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-2 border-b border-primary/10 flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="px-4 py-2 border-b border-primary/10 flex items-center gap-2 text-sm text-muted-foreground">
         <Globe className="w-3.5 h-3.5" />
         <span>{data.sourceLang}</span>
         <span className="text-primary">→</span>
@@ -240,7 +240,7 @@ function WebViewCard({ data }: { data: WebViewData }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{data.title}</p>
-            <p className="text-xs text-muted-foreground truncate mt-0.5">{domain}</p>
+            <p className="text-sm text-muted-foreground truncate mt-0.5">{domain}</p>
           </div>
           <button
             onClick={() => window.open(data.url, "_blank")}
@@ -266,7 +266,7 @@ function WebViewCard({ data }: { data: WebViewData }) {
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
           <span className="flex-1 text-sm font-medium text-foreground truncate">{data.title}</span>
-          <span className="text-xs text-muted-foreground hidden sm:inline">{domain}</span>
+          <span className="text-sm text-muted-foreground hidden sm:inline">{domain}</span>
           <button
             onClick={() => setIsExpanded(true)}
             className="p-1 rounded hover:bg-secondary transition-colors"
@@ -289,7 +289,7 @@ function WebViewCard({ data }: { data: WebViewData }) {
             <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                <span className="text-xs text-muted-foreground">Chargement de {domain}...</span>
+                <span className="text-sm text-muted-foreground">Chargement de {domain}...</span>
               </div>
             </div>
           )}
@@ -319,7 +319,7 @@ function WebViewCard({ data }: { data: WebViewData }) {
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
             <span className="flex-1 font-semibold text-foreground truncate">{data.title}</span>
-            <span className="text-xs text-muted-foreground mr-2">{domain}</span>
+            <span className="text-sm text-muted-foreground mr-2">{domain}</span>
             <button
               onClick={() => window.open(data.url, "_blank")}
               className="p-2 rounded-lg hover:bg-secondary transition-colors"
@@ -381,9 +381,9 @@ function LinkPreviewCard({ data }: { data: LinkPreviewData }) {
           {data.title}
         </p>
         {data.description && (
-          <p className="text-xs text-muted-foreground truncate mt-0.5">{data.description}</p>
+          <p className="text-sm text-muted-foreground truncate mt-0.5">{data.description}</p>
         )}
-        <p className="text-xs text-muted-foreground/70 truncate mt-0.5">{data.domain}</p>
+        <p className="text-sm text-muted-foreground/70 truncate mt-0.5">{data.domain}</p>
       </div>
 
       {/* Arrow */}

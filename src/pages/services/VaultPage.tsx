@@ -124,7 +124,7 @@ export function VaultPage() {
         <button
           onClick={goBack}
           aria-label="Retour"
-          className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
+          className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -217,7 +217,7 @@ export function VaultPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground">{note.title}</h3>
-                    <p className="text-xs text-muted-foreground">Ajouté le {formatDate(note.created_at)}</p>
+                    <p className="text-sm text-muted-foreground">Ajouté le {formatDate(note.created_at)}</p>
                   </div>
                   <div className="flex gap-2">
                     {note.content && (

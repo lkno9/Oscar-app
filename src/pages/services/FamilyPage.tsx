@@ -100,7 +100,7 @@ export function FamilyPage() {
         <button
           onClick={goBack}
           aria-label="Retour"
-          className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
+          className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -209,7 +209,7 @@ export function FamilyPage() {
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-foreground">{contact.name}</h3>
                       {contact.is_emergency_contact && (
-                        <span className="px-2 py-0.5 bg-destructive/10 text-destructive text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-destructive/10 text-destructive text-sm rounded-full">
                           Urgence
                         </span>
                       )}

@@ -276,7 +276,7 @@ export function Game2048() {
         <button
           onClick={goBack}
           aria-label="Retour"
-          className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
+          className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -293,11 +293,11 @@ export function Game2048() {
         {/* Scores */}
         <div className="flex gap-4 w-full max-w-xs">
           <div className="flex-1 bg-card rounded-xl p-3 text-center border border-border">
-            <p className="text-xs text-muted-foreground uppercase">Score</p>
+            <p className="text-sm text-muted-foreground uppercase">Score</p>
             <p className="text-2xl font-bold text-foreground">{score}</p>
           </div>
           <div className="flex-1 bg-gradient-to-r from-primary to-primary/80 rounded-xl p-3 text-center text-primary-foreground">
-            <p className="text-xs uppercase opacity-80">Meilleur</p>
+            <p className="text-sm uppercase opacity-80">Meilleur</p>
             <p className="text-2xl font-bold">{bestScore}</p>
           </div>
         </div>

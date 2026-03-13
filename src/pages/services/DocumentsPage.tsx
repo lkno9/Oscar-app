@@ -143,7 +143,7 @@ export function DocumentsPage() {
         <button
           onClick={goBack}
           aria-label="Retour"
-          className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors"
+          className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -162,7 +162,7 @@ export function DocumentsPage() {
             <p className="font-medium text-destructive text-sm">
               {urgentDocs.length} document{urgentDocs.length > 1 ? 's' : ''} à renouveler d'urgence
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {urgentDocs.map(d => d.name).join(', ')}
             </p>
           </div>
@@ -172,22 +172,22 @@ export function DocumentsPage() {
       {/* Tabs */}
       <Tabs defaultValue="accueil" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="mx-4 mt-4 grid grid-cols-6 h-auto p-1">
-          <TabsTrigger value="accueil" className="text-xs py-2 px-1">
+          <TabsTrigger value="accueil" className="text-sm py-2 px-1">
             <Lightbulb className="w-4 h-4" />
           </TabsTrigger>
-          <TabsTrigger value="documents" className="text-xs py-2 px-1">
+          <TabsTrigger value="documents" className="text-sm py-2 px-1">
             <FileText className="w-4 h-4" />
           </TabsTrigger>
-          <TabsTrigger value="echeances" className="text-xs py-2 px-1">
+          <TabsTrigger value="echeances" className="text-sm py-2 px-1">
             <Calendar className="w-4 h-4" />
           </TabsTrigger>
-          <TabsTrigger value="demarches" className="text-xs py-2 px-1">
+          <TabsTrigger value="demarches" className="text-sm py-2 px-1">
             <Clock className="w-4 h-4" />
           </TabsTrigger>
-          <TabsTrigger value="droits" className="text-xs py-2 px-1">
+          <TabsTrigger value="droits" className="text-sm py-2 px-1">
             <BookOpen className="w-4 h-4" />
           </TabsTrigger>
-          <TabsTrigger value="favoris" className="text-xs py-2 px-1">
+          <TabsTrigger value="favoris" className="text-sm py-2 px-1">
             <Star className="w-4 h-4" />
           </TabsTrigger>
         </TabsList>
@@ -217,19 +217,19 @@ export function DocumentsPage() {
             <Card className="bg-card">
               <CardContent className="p-3 text-center">
                 <p className="text-2xl font-bold text-foreground">{documents.length}</p>
-                <p className="text-xs text-muted-foreground">Documents</p>
+                <p className="text-sm text-muted-foreground">Documents</p>
               </CardContent>
             </Card>
             <Card className="bg-card">
               <CardContent className="p-3 text-center">
                 <p className="text-2xl font-bold text-primary">{inProgressTasks.length}</p>
-                <p className="text-xs text-muted-foreground">En cours</p>
+                <p className="text-sm text-muted-foreground">En cours</p>
               </CardContent>
             </Card>
             <Card className="bg-card">
               <CardContent className="p-3 text-center">
                 <p className="text-2xl font-bold text-destructive">{urgentDocs.length}</p>
-                <p className="text-xs text-muted-foreground">Urgents</p>
+                <p className="text-sm text-muted-foreground">Urgents</p>
               </CardContent>
             </Card>
           </div>
@@ -253,19 +253,19 @@ export function DocumentsPage() {
             <div className="grid grid-cols-2 gap-2">
               <Button variant="outline" className="h-auto py-3 flex-col" onClick={() => handleAskOscar("les aides auxquelles j'ai droit")}>
                 <HelpCircle className="w-5 h-5 mb-1" />
-                <span className="text-xs">Mes droits</span>
+                <span className="text-sm">Mes droits</span>
               </Button>
               <Button variant="outline" className="h-auto py-3 flex-col" onClick={() => handleAskOscar("m'aider à faire ma déclaration d'impôts")}>
                 <FileText className="w-5 h-5 mb-1" />
-                <span className="text-xs">Impôts</span>
+                <span className="text-sm">Impôts</span>
               </Button>
               <Button variant="outline" className="h-auto py-3 flex-col" onClick={() => handleAskOscar("comment renouveler ma carte d'identité")}>
                 <Clock className="w-5 h-5 mb-1" />
-                <span className="text-xs">Papiers</span>
+                <span className="text-sm">Papiers</span>
               </Button>
               <Button variant="outline" className="h-auto py-3 flex-col" onClick={() => handleAskOscar("les aides au logement pour les seniors")}>
                 <Star className="w-5 h-5 mb-1" />
-                <span className="text-xs">Logement</span>
+                <span className="text-sm">Logement</span>
               </Button>
             </div>
           </div>
@@ -487,7 +487,7 @@ export function DocumentsPage() {
                   if (catTemplates.length === 0) return null;
                   return (
                     <div key={cat.value}>
-                      <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1 sticky top-0 bg-card py-1">
+                      <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-1 sticky top-0 bg-card py-1">
                         <span>{cat.icon}</span> {cat.label}
                       </h4>
                       <div className="space-y-2 mb-4">
@@ -500,7 +500,7 @@ export function DocumentsPage() {
                           >
                             <div className="text-left">
                               <p className="font-medium text-sm">{template.title}</p>
-                              <p className="text-xs text-muted-foreground">{template.steps.length} étapes • ~{template.estimatedDays} jours</p>
+                              <p className="text-sm text-muted-foreground">{template.steps.length} étapes • ~{template.estimatedDays} jours</p>
                             </div>
                           </Button>
                         ))}

@@ -160,7 +160,7 @@ export function PhotosPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
+        <button onClick={goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
@@ -233,7 +233,7 @@ export function PhotosPage() {
                       </div>
                       {photo.title && (
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                          <p className="text-white text-xs truncate">{photo.title}</p>
+                          <p className="text-white text-sm truncate">{photo.title}</p>
                         </div>
                       )}
                     </button>
@@ -288,7 +288,7 @@ export function PhotosPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         {entry.title && <h3 className="font-semibold text-foreground mb-1">{entry.title}</h3>}
-                        <p className="text-xs text-muted-foreground mb-2">{formatDate(entry.created_at)}</p>
+                        <p className="text-sm text-muted-foreground mb-2">{formatDate(entry.created_at)}</p>
                         <p className={`text-sm text-foreground whitespace-pre-wrap ${expandedEntry !== entry.id && entry.content.length > 150 ? "line-clamp-3" : ""}`}>
                           {entry.content}
                         </p>

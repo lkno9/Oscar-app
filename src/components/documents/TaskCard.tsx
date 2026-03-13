@@ -80,7 +80,7 @@ export const TaskCard = ({ task, onUpdateStep, onDelete, onAskOscar }: TaskCardP
               </div>
               
               <div className="mt-3">
-                <div className="flex items-center justify-between text-xs mb-1">
+                <div className="flex items-center justify-between text-sm mb-1">
                   <span className={getStatusColor()}>
                     {completedSteps}/{task.steps.length} étapes
                   </span>
@@ -92,7 +92,7 @@ export const TaskCard = ({ task, onUpdateStep, onDelete, onAskOscar }: TaskCardP
               </div>
               
               {task.due_date && (
-                <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   <span>Échéance : {formatDate(task.due_date)}</span>
                 </div>
@@ -119,7 +119,7 @@ export const TaskCard = ({ task, onUpdateStep, onDelete, onAskOscar }: TaskCardP
                     <p className={`font-medium text-sm ${step.completed ? 'line-through text-muted-foreground' : ''}`}>
                       {step.title}
                     </p>
-                    <p className="text-xs text-muted-foreground">{step.description}</p>
+                    <p className="text-sm text-muted-foreground">{step.description}</p>
                   </div>
                 </div>
               ))}
@@ -131,7 +131,7 @@ export const TaskCard = ({ task, onUpdateStep, onDelete, onAskOscar }: TaskCardP
                   variant="outline"
                   size="sm"
                   onClick={() => onAskOscar(task.title)}
-                  className="text-xs"
+                  className="text-sm"
                 >
                   <MessageCircle className="h-3 w-3 mr-1" />
                   Aide d'Oscar
@@ -142,7 +142,7 @@ export const TaskCard = ({ task, onUpdateStep, onDelete, onAskOscar }: TaskCardP
                 variant="ghost"
                 size="sm"
                 onClick={() => onDelete(task.id)}
-                className="text-xs text-destructive hover:text-destructive ml-auto"
+                className="text-sm text-destructive hover:text-destructive ml-auto"
               >
                 <Trash2 className="h-3 w-3 mr-1" />
                 Supprimer

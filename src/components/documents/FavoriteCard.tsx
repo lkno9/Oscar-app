@@ -54,14 +54,14 @@ export const FavoriteCard = ({ favorite, onDelete, onTogglePin }: FavoriteCardPr
                   )}
                 </div>
                 {favorite.content && !isUrl && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{favorite.content}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{favorite.content}</p>
                 )}
                 {isUrl && (
                   <a 
                     href={favorite.content!} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+                    className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
                   >
                     <ExternalLink className="w-3 h-3" />
                     Ouvrir le lien
@@ -73,11 +73,11 @@ export const FavoriteCard = ({ favorite, onDelete, onTogglePin }: FavoriteCardPr
             <div className="flex items-center justify-between mt-3">
               <div className="flex items-center gap-2">
                 {favorite.category && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-sm">
                     {favorite.category}
                   </Badge>
                 )}
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   {format(new Date(favorite.created_at), "d MMM yyyy", { locale: fr })}
                 </span>
               </div>

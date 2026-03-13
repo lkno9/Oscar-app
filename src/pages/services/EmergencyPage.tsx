@@ -248,10 +248,10 @@ export function EmergencyPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground text-sm">{poi.name}</p>
-                    {poi.address && <p className="text-xs text-muted-foreground">{poi.address}</p>}
+                    {poi.address && <p className="text-sm text-muted-foreground">{poi.address}</p>}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-xs font-medium text-destructive">{formatDistance(poi.distance)}</span>
+                    <span className="text-sm font-medium text-destructive">{formatDistance(poi.distance)}</span>
                     <a
                       href={googleMapsDirectionsUrl({ lat: poi.lat, lon: poi.lon })}
                       target="_blank"
@@ -285,7 +285,7 @@ export function EmergencyPage() {
               >
                 <span className="text-3xl font-bold text-destructive">{contact.number}</span>
                 <span className="font-semibold text-foreground">{contact.name}</span>
-                <span className="text-xs text-muted-foreground text-center">{contact.description}</span>
+                <span className="text-sm text-muted-foreground text-center">{contact.description}</span>
               </button>
             ))}
           </div>
@@ -295,7 +295,7 @@ export function EmergencyPage() {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Numéros essentiels</span>
+            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Numéros essentiels</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -309,7 +309,7 @@ export function EmergencyPage() {
                 >
                   <span className="text-xl">{cat.emoji}</span>
                   <span className="flex-1 font-semibold text-foreground">{cat.category}</span>
-                  <span className="text-xs text-muted-foreground mr-1">{cat.numbers.length}</span>
+                  <span className="text-sm text-muted-foreground mr-1">{cat.numbers.length}</span>
                   {isOpen ? (
                     <ChevronUp className="w-5 h-5 text-muted-foreground" />
                   ) : (
@@ -327,7 +327,7 @@ export function EmergencyPage() {
                       >
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-foreground text-sm">{num.name}</p>
-                          <p className="text-xs text-muted-foreground">{num.desc}</p>
+                          <p className="text-sm text-muted-foreground">{num.desc}</p>
                         </div>
                         <button
                           onClick={() => handleCall(num.number)}

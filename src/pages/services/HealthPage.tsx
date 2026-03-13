@@ -253,7 +253,7 @@ export function HealthPage() {
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
-        <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
+        <button onClick={goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
@@ -267,23 +267,23 @@ export function HealthPage() {
         <Tabs defaultValue="medications" className="flex-1 flex flex-col overflow-hidden">
           <div className="mx-4 mt-4 flex-shrink-0 overflow-x-auto scrollbar-hide">
             <TabsList className="inline-flex w-auto min-w-full">
-              <TabsTrigger value="medications" className="flex items-center gap-1 text-xs px-3">
+              <TabsTrigger value="medications" className="flex items-center gap-1 text-sm px-3">
                 <Pill className="w-3.5 h-3.5" />
                 Médic.
               </TabsTrigger>
-              <TabsTrigger value="mood" className="flex items-center gap-1 text-xs px-3">
+              <TabsTrigger value="mood" className="flex items-center gap-1 text-sm px-3">
                 <Smile className="w-3.5 h-3.5" />
                 Humeur
               </TabsTrigger>
-              <TabsTrigger value="platforms" className="flex items-center gap-1 text-xs px-3">
+              <TabsTrigger value="platforms" className="flex items-center gap-1 text-sm px-3">
                 <Link className="w-3.5 h-3.5" />
                 Services
               </TabsTrigger>
-              <TabsTrigger value="activity" className="flex items-center gap-1 text-xs px-3">
+              <TabsTrigger value="activity" className="flex items-center gap-1 text-sm px-3">
                 <Dumbbell className="w-3.5 h-3.5" />
                 Activité
               </TabsTrigger>
-              <TabsTrigger value="wellness" className="flex items-center gap-1 text-xs px-3">
+              <TabsTrigger value="wellness" className="flex items-center gap-1 text-sm px-3">
                 <Lightbulb className="w-3.5 h-3.5" />
                 Conseils
               </TabsTrigger>
@@ -363,7 +363,7 @@ export function HealthPage() {
                       <h3 className={`font-semibold ${med.is_active ? "text-foreground" : "text-muted-foreground line-through"}`}>{med.name}</h3>
                       {med.dosage && <p className="text-sm text-muted-foreground">{med.dosage}</p>}
                       {med.frequency && (
-                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-secondary rounded-full text-xs text-foreground">
+                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-secondary rounded-full text-sm text-foreground">
                           <Clock className="w-3 h-3" />{med.frequency}
                         </span>
                       )}
@@ -372,7 +372,7 @@ export function HealthPage() {
                       <Trash2 className="w-5 h-5 text-destructive" />
                     </button>
                   </div>
-                  {med.notes && <p className="mt-2 text-xs text-muted-foreground">{med.notes}</p>}
+                  {med.notes && <p className="mt-2 text-sm text-muted-foreground">{med.notes}</p>}
                 </div>
               ))}
             </div>
@@ -397,7 +397,7 @@ export function HealthPage() {
                     }`}
                   >
                     <span className="text-2xl">{m.emoji}</span>
-                    <span className="text-xs text-foreground font-medium leading-tight text-center">{m.label}</span>
+                    <span className="text-sm text-foreground font-medium leading-tight text-center">{m.label}</span>
                   </button>
                 ))}
               </div>
@@ -448,7 +448,7 @@ export function HealthPage() {
               </div>
 
               {/* Étape 1 : Choisir la spécialité */}
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">1. Type de spécialiste</p>
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">1. Type de spécialiste</p>
               <div className="grid grid-cols-2 gap-2">
                 {DOCTOLIB_SPECIALTIES.map(spec => (
                   <button
@@ -468,7 +468,7 @@ export function HealthPage() {
               </div>
 
               {/* Étape 2 : Localisation */}
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">2. Où ? (optionnel)</p>
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">2. Où ? (optionnel)</p>
               <div className="flex gap-2">
                 <Input
                   placeholder="Ville ou adresse (ex: Paris, Lyon...)"
@@ -523,7 +523,7 @@ export function HealthPage() {
             {/* Plateformes de santé */}
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Services en ligne</span>
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Services en ligne</span>
               <div className="flex-1 h-px bg-border" />
             </div>
             <div className="space-y-3">
@@ -548,7 +548,7 @@ export function HealthPage() {
             {/* Trouver autour de moi — recherche intégrée */}
             <div className="flex items-center gap-3 pt-2">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Trouver autour de moi</span>
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Trouver autour de moi</span>
               <div className="flex-1 h-px bg-border" />
             </div>
 
@@ -608,7 +608,7 @@ export function HealthPage() {
                           <span className="text-sm font-medium text-primary flex-shrink-0">{formatDistance(poi.distance)}</span>
                         </div>
                         {poi.address && <p className="text-sm text-muted-foreground mt-0.5">{poi.address}</p>}
-                        {poi.openingHours && <p className="text-xs text-muted-foreground mt-1">🕐 {poi.openingHours}</p>}
+                        {poi.openingHours && <p className="text-sm text-muted-foreground mt-1">🕐 {poi.openingHours}</p>}
                         <div className="flex items-center gap-2 mt-2">
                           {poi.phone && (
                             <a
@@ -642,7 +642,7 @@ export function HealthPage() {
             {/* Liens en ligne (fallback) */}
             {(!nearbySearched || nearbyPOIs.length === 0) && (
               <div className="space-y-3">
-                <p className="text-xs text-muted-foreground text-center uppercase tracking-wide">Ou recherchez en ligne</p>
+                <p className="text-sm text-muted-foreground text-center uppercase tracking-wide">Ou recherchez en ligne</p>
                 {NEARBY_HEALTH.map((p, i) => (
                   <button
                     key={i}
@@ -681,7 +681,7 @@ export function HealthPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-foreground">{ex.name}</h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${ex.level === "Facile" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}>
+                      <span className={`text-sm px-2 py-0.5 rounded-full ${ex.level === "Facile" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}>
                         {ex.level}
                       </span>
                     </div>
@@ -694,7 +694,7 @@ export function HealthPage() {
             {/* Recherche lieux sport/parcs proches */}
             <div className="flex items-center gap-3 pt-2">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Près de chez moi</span>
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Près de chez moi</span>
               <div className="flex-1 h-px bg-border" />
             </div>
 
@@ -756,7 +756,7 @@ export function HealthPage() {
                         href={googleMapsDirectionsUrl({ lat: poi.lat, lon: poi.lon })}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-blue-600 font-medium"
+                        className="text-sm text-blue-600 font-medium"
                       >
                         Y aller →
                       </a>
@@ -774,7 +774,7 @@ export function HealthPage() {
             {/* Sport links — en ligne */}
             <div className="flex items-center gap-3 pt-2">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-2">Ressources en ligne</span>
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Ressources en ligne</span>
               <div className="flex-1 h-px bg-border" />
             </div>
             <div className="space-y-3">
