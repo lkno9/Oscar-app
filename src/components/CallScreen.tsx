@@ -11,9 +11,12 @@ type OscarState = "listening" | "thinking" | "speaking" | "idle";
 // ─── API URLs ────────────────────────────────────────────
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 const MISTRAL_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mistral-chat`;
-
-// Frame capture interval (ms) — how often we snapshot the camera
 const FRAME_INTERVAL = 4000;
+
+// ─── Mobile detection ────────────────────────────────────
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const hasSpeechRecognition = !!(window as any).SpeechRecognition || !!(window as any).webkitSpeechRecognition;
 
 // ─── Capture a frame from video as base64 JPEG ───────────
 function captureFrame(video: HTMLVideoElement): string | null {
@@ -41,6 +44,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   const [camEnabled, setCamEnabled] = useState(false);
   const [showSubtitles, setShowSubtitles] = useState(true);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [sttUnavailable, setSttUnavailable] = useState(false);
 
   const [userTranscript, setUserTranscript] = useState("");
   const [oscarText, setOscarText] = useState("");
@@ -58,31 +62,44 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   const mountedRef = useRef(false);
   const processingRef = useRef(false);
   const camEnabledRef = useRef(false);
-
-  // Real-time vision: continuously captured frame
   const latestFrameRef = useRef<string | null>(null);
   const frameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // AudioContext for iOS audio unlock
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
   useEffect(() => { camEnabledRef.current = camEnabled; }, [camEnabled]);
 
-  // ─── Continuous frame capture (real-time vision) ───────
+  // ─── iOS audio unlock: create AudioContext on user gesture ───
+  const unlockAudio = useCallback(() => {
+    if (audioCtxRef.current) return;
+    try {
+      const AC = window.AudioContext || (window as any).webkitAudioContext;
+      if (AC) {
+        const ctx = new AC();
+        // Play a silent buffer to unlock
+        const buf = ctx.createBuffer(1, 1, 22050);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        audioCtxRef.current = ctx;
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // ─── Continuous frame capture ──────────────────────────
   useEffect(() => {
     if (camEnabled && phase === "active") {
-      // Capture immediately
       if (videoRef.current) latestFrameRef.current = captureFrame(videoRef.current);
-      // Then every FRAME_INTERVAL ms
       frameIntervalRef.current = setInterval(() => {
-        if (videoRef.current && camEnabledRef.current) {
-          latestFrameRef.current = captureFrame(videoRef.current);
-        }
+        if (videoRef.current && camEnabledRef.current) latestFrameRef.current = captureFrame(videoRef.current);
       }, FRAME_INTERVAL);
     } else {
       latestFrameRef.current = null;
       if (frameIntervalRef.current) { clearInterval(frameIntervalRef.current); frameIntervalRef.current = null; }
     }
-    return () => {
-      if (frameIntervalRef.current) { clearInterval(frameIntervalRef.current); frameIntervalRef.current = null; }
-    };
+    return () => { if (frameIntervalRef.current) { clearInterval(frameIntervalRef.current); frameIntervalRef.current = null; } };
   }, [camEnabled, phase]);
 
   // ─── Cleanup ────────────────────────────────────────────
@@ -93,20 +110,21 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
     wantListeningRef.current = false;
-    try { recognitionRef.current?.abort(); } catch { /* ignore */ }
+    try { recognitionRef.current?.stop(); } catch { /* ignore */ }
     recognitionRef.current = null;
     abortTtsRef.current?.abort();
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    window.speechSynthesis?.cancel();
     latestFrameRef.current = null;
     setPhase("permissions"); setOscarState("idle"); setCallDuration(0);
-    setUserTranscript(""); setOscarText("");
+    setUserTranscript(""); setOscarText(""); setSttUnavailable(false);
     setCamEnabled(false); setFacingMode("user");
     historyRef.current = []; processingRef.current = false; finalTranscriptRef.current = "";
   }, []);
 
   const handleEndCall = useCallback(() => { cleanup(); onClose(); }, [cleanup, onClose]);
 
-  // ─── TTS ───────────────────────────────────────────────
+  // ─── TTS (mobile-safe) ─────────────────────────────────
   const speakOscar = useCallback(async (text: string) => {
     if (!mountedRef.current) return;
     setOscarState("speaking");
@@ -125,16 +143,43 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
       if (!res.ok) throw new Error("TTS failed");
       const blob = await res.blob();
       if (blob.size === 0) throw new Error("Empty audio");
+
+      // iOS: decode via AudioContext for reliable playback
+      if (isIOS && audioCtxRef.current) {
+        const arrayBuffer = await blob.arrayBuffer();
+        const audioBuffer = await audioCtxRef.current.decodeAudioData(arrayBuffer);
+        return new Promise<void>((resolve) => {
+          const source = audioCtxRef.current!.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(audioCtxRef.current!.destination);
+          source.onended = () => {
+            if (mountedRef.current) { setOscarState("listening"); resumeListening(); }
+            resolve();
+          };
+          source.start(0);
+        });
+      }
+
+      // Non-iOS: standard Audio element
       const url = URL.createObjectURL(blob);
       return new Promise<void>((resolve) => {
         const audio = new Audio(url);
         audioRef.current = audio;
         const done = () => { audioRef.current = null; URL.revokeObjectURL(url); if (mountedRef.current) { setOscarState("listening"); resumeListening(); } resolve(); };
-        audio.onended = done; audio.onerror = done; audio.play().catch(done);
+        audio.onended = done;
+        audio.onerror = done;
+        audio.play().catch(() => {
+          // Autoplay failed — fall back to browser TTS
+          URL.revokeObjectURL(url);
+          browserTTS(truncated).then(done).catch(done);
+        });
       });
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
-      if (mountedRef.current) { try { await browserTTS(truncated); } catch { /* */ } setOscarState("listening"); resumeListening(); }
+      if (mountedRef.current) {
+        try { await browserTTS(truncated); } catch { /* */ }
+        setOscarState("listening"); resumeListening();
+      }
     }
   }, []);
 
@@ -142,36 +187,28 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
     if (!("speechSynthesis" in window)) { resolve(); return; }
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text); u.lang = "fr-FR"; u.rate = 0.95;
-    u.onend = () => resolve(); u.onerror = () => resolve(); window.speechSynthesis.speak(u);
+    u.onend = () => resolve(); u.onerror = () => resolve();
+    window.speechSynthesis.speak(u);
+    // iOS Safari bug: speechSynthesis can hang — force resolve after reasonable time
+    if (isIOS) setTimeout(resolve, Math.max(5000, text.length * 80));
   });
 
-  // ─── Send to Mistral (always includes latest frame if camera on) ──
+  // ─── Send to Mistral ──────────────────────────────────
   const sendToOscar = useCallback(async (text: string) => {
     if (!mountedRef.current || !text.trim()) return;
     processingRef.current = true;
     setOscarState("thinking"); setOscarText("");
 
-    // Always use the latest continuously-captured frame
     const frame = latestFrameRef.current;
-
-    // Build message content
     let userContent: string | Array<{ type: string; text?: string; image_url?: string }>;
     if (frame) {
-      userContent = [
-        { type: "text", text },
-        { type: "image_url", image_url: frame },
-      ];
+      userContent = [{ type: "text", text }, { type: "image_url", image_url: frame }];
     } else {
       userContent = text;
     }
 
-    // History: text-only to avoid bloat
     const textForHistory = frame ? `${text} [camera en direct]` : text;
-    const messagesToSend = [
-      ...historyRef.current.slice(-18),
-      { role: "user", content: userContent },
-    ];
-
+    const messagesToSend = [...historyRef.current.slice(-18), { role: "user", content: userContent }];
     historyRef.current.push({ role: "user", content: textForHistory });
 
     try {
@@ -214,13 +251,27 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
     } finally { processingRef.current = false; }
   }, [speakOscar]);
 
-  // ─── STT ───────────────────────────────────────────────
+  // ─── STT (mobile-safe) ─────────────────────────────────
   const startListening = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
-    wantListeningRef.current = true; finalTranscriptRef.current = ""; setUserTranscript("");
+    if (!SR) { setSttUnavailable(true); return; }
+
+    // Stop any existing recognition cleanly
+    try { recognitionRef.current?.stop(); } catch { /* */ }
+    recognitionRef.current = null;
+
+    wantListeningRef.current = true;
+    finalTranscriptRef.current = "";
+    setUserTranscript("");
+
     const recognition = new SR();
-    recognition.lang = "fr-FR"; recognition.continuous = true; recognition.interimResults = true; recognition.maxAlternatives = 1;
+    recognition.lang = "fr-FR";
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    // iOS Safari: continuous mode is unreliable, use single-shot + manual restart
+    recognition.continuous = !isIOS;
+
     let silenceTimer: ReturnType<typeof setTimeout> | null = null;
 
     recognition.onresult = (event: any) => {
@@ -230,6 +281,7 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
         else interim += event.results[i][0].transcript;
       }
       setUserTranscript(finalTranscriptRef.current + interim);
+
       if (silenceTimer) clearTimeout(silenceTimer);
       if (finalTranscriptRef.current.trim()) {
         silenceTimer = setTimeout(() => {
@@ -243,28 +295,73 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
         }, 2000);
       }
     };
+
     recognition.onend = () => {
       if (silenceTimer) clearTimeout(silenceTimer);
-      if (wantListeningRef.current && mountedRef.current && !processingRef.current) { try { recognition.start(); return; } catch { /* */ } }
+
+      // If we still want to listen (no final text sent yet), restart
+      if (wantListeningRef.current && mountedRef.current && !processingRef.current) {
+        // Small delay before restart on mobile to avoid rapid start/stop
+        const delay = isMobile ? 300 : 50;
+        setTimeout(() => {
+          if (wantListeningRef.current && mountedRef.current && !processingRef.current) {
+            try {
+              const newRecognition = new SR();
+              newRecognition.lang = "fr-FR";
+              newRecognition.interimResults = true;
+              newRecognition.maxAlternatives = 1;
+              newRecognition.continuous = !isIOS;
+              newRecognition.onresult = recognition.onresult;
+              newRecognition.onend = recognition.onend;
+              newRecognition.onerror = recognition.onerror;
+              newRecognition.start();
+              recognitionRef.current = newRecognition;
+            } catch { /* can't restart */ }
+          }
+        }, delay);
+        return;
+      }
+
+      // Send any remaining text
       const remaining = finalTranscriptRef.current.trim();
-      if (remaining && !processingRef.current) { finalTranscriptRef.current = ""; setUserTranscript(""); sendToOscar(remaining); }
+      if (remaining && !processingRef.current) {
+        finalTranscriptRef.current = ""; setUserTranscript("");
+        sendToOscar(remaining);
+      }
     };
+
     recognition.onerror = (event: any) => {
       if (event.error === "no-speech" || event.error === "aborted") return;
-      if (event.error === "not-allowed") { setPhase("error"); setErrorMsg("Acces au microphone refuse. Autorisez l'acces dans les reglages."); }
+      if (event.error === "not-allowed") {
+        setPhase("error");
+        setErrorMsg("Acces au microphone refuse. Autorisez l'acces dans les reglages.");
+      }
+      if (event.error === "network") {
+        // Network error — common on mobile, try to keep going
+        setSttUnavailable(true);
+      }
     };
+
     try { recognition.start(); } catch { /* already running */ }
     recognitionRef.current = recognition;
   }, [sendToOscar]);
 
   const resumeListening = useCallback(() => {
     if (!mountedRef.current || !micEnabled) return;
-    finalTranscriptRef.current = ""; setUserTranscript(""); startListening();
+    finalTranscriptRef.current = ""; setUserTranscript("");
+    // Small delay to let TTS audio finish releasing the audio session on mobile
+    const delay = isMobile ? 500 : 100;
+    setTimeout(() => {
+      if (mountedRef.current && !processingRef.current) startListening();
+    }, delay);
   }, [startListening, micEnabled]);
 
-  // ─── Init call (audio-only) ────────────────────────────
+  // ─── Init call ─────────────────────────────────────────
   const initCall = useCallback(async () => {
     setPhase("permissions");
+    // Unlock audio on iOS (must be in user gesture context)
+    unlockAudio();
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!mountedRef.current) { stream.getTracks().forEach(t => t.stop()); return; }
@@ -272,21 +369,28 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
       setCallDuration(0);
       timerRef.current = setInterval(() => setCallDuration(d => d + 1), 1000);
       setPhase("active"); setOscarState("listening");
+
       setTimeout(() => {
         if (mountedRef.current) {
-          const greetings = ["Bonjour ! Je vous ecoute, que puis-je faire pour vous ?", "Bonjour ! Comment puis-je vous aider ?", "Me voila ! Dites-moi ce dont vous avez besoin."];
+          const greetings = [
+            "Bonjour ! Je vous ecoute, que puis-je faire pour vous ?",
+            "Bonjour ! Comment puis-je vous aider ?",
+            "Me voila ! Dites-moi ce dont vous avez besoin.",
+          ];
           const greeting = greetings[Math.floor(Math.random() * greetings.length)];
           setOscarText(greeting);
           historyRef.current.push({ role: "assistant", content: greeting });
           speakOscar(greeting);
         }
-      }, 500);
+      }, 600);
     } catch (err) {
       if (!mountedRef.current) return;
       setPhase("error");
-      setErrorMsg(err instanceof DOMException && err.name === "NotAllowedError" ? "Acces au microphone refuse. Autorisez l'acces dans les reglages de votre navigateur." : "Impossible d'acceder au micro.");
+      setErrorMsg(err instanceof DOMException && err.name === "NotAllowedError"
+        ? "Acces au microphone refuse. Autorisez l'acces dans les reglages de votre navigateur."
+        : "Impossible d'acceder au micro. Verifiez que votre navigateur a les permissions.");
     }
-  }, [speakOscar]);
+  }, [speakOscar, unlockAudio]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -297,8 +401,10 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
   // ─── Toggle mic ─────────────────────────────────────────
   const toggleMic = () => {
     if (micEnabled) {
-      wantListeningRef.current = false; try { recognitionRef.current?.abort(); } catch { /* */ }
-      setMicEnabled(false); if (oscarState === "listening") setOscarState("idle");
+      wantListeningRef.current = false;
+      try { recognitionRef.current?.stop(); } catch { /* */ }
+      setMicEnabled(false);
+      if (oscarState === "listening") setOscarState("idle");
     } else {
       setMicEnabled(true);
       if (phase === "active" && !processingRef.current) { setOscarState("listening"); startListening(); }
@@ -310,13 +416,15 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
     const existing = streamRef.current?.getVideoTracks() || [];
     existing.forEach(t => { t.stop(); streamRef.current?.removeTrack(t); });
     try {
-      const camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+      const camStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
       const videoTrack = camStream.getVideoTracks()[0];
       if (!videoTrack) { toast.error("Camera introuvable."); return false; }
       if (streamRef.current) streamRef.current.addTrack(videoTrack); else streamRef.current = camStream;
       if (videoRef.current) videoRef.current.srcObject = new MediaStream([videoTrack]);
       return true;
-    } catch { toast.error("Impossible d'acceder a la camera. Verifiez les permissions."); return false; }
+    } catch { toast.error("Impossible d'acceder a la camera."); return false; }
   }, []);
 
   const toggleCam = async () => {
@@ -338,7 +446,6 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
 
   if (!isOpen) return null;
 
-  // ─── Status bar color/label ────────────────────────────
   const stateColor = oscarState === "speaking" ? "#34D399" : oscarState === "thinking" ? "#FBBF24" : oscarState === "listening" ? "#2DD4BF" : "#6B7280";
   const stateLabel = oscarState === "listening" ? "Oscar ecoute..." : oscarState === "thinking" ? "Oscar reflechit..." : oscarState === "speaking" ? "Oscar parle..." : "En appel avec Oscar";
 
@@ -347,7 +454,6 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
       {/* ── Permissions ── */}
       {phase === "permissions" && (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
-          {/* Simple spinner */}
           <div className="w-16 h-16 rounded-full border-4 border-teal-500/30 border-t-teal-400" style={{ animation: "spin 1s linear infinite" }} />
           <div className="text-center">
             <p className="text-white text-xl font-semibold mb-2">Connexion en cours...</p>
@@ -373,7 +479,6 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
           {/* Top bar */}
           <div className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),16px)] pb-3">
             <div className="flex items-center gap-3">
-              {/* Animated state dot */}
               <div className="relative">
                 <div className="w-3 h-3 rounded-full" style={{ background: stateColor }} />
                 {(oscarState === "listening" || oscarState === "speaking") && (
@@ -383,15 +488,24 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
               <span className="text-white/80 text-sm font-medium">{stateLabel}</span>
             </div>
             <div className="flex items-center gap-2">
-              {camEnabled && (
-                <span className="text-xs text-teal-300/90 bg-teal-500/20 px-2.5 py-1 rounded-full font-medium">Vision active</span>
-              )}
+              {camEnabled && <span className="text-xs text-teal-300/90 bg-teal-500/20 px-2.5 py-1 rounded-full font-medium">Vision active</span>}
               <span className="text-white/40 text-sm font-mono tabular-nums">{formatDuration(callDuration)}</span>
             </div>
           </div>
 
-          {/* Center area — no orb, just spacer + subtitles */}
+          {/* Center area */}
           <div className="flex-1 relative z-10 flex flex-col justify-end">
+            {/* STT unavailable warning */}
+            {sttUnavailable && (
+              <div className="px-5 mb-3">
+                <div className="bg-yellow-500/20 backdrop-blur-lg rounded-2xl px-5 py-3 border border-yellow-500/20">
+                  <p className="text-yellow-200 text-sm text-center">
+                    Reconnaissance vocale non disponible sur ce navigateur. Utilisez le chat texte pour parler a Oscar.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Oscar's response text */}
             {showSubtitles && oscarText && (
               <div className="px-5 mb-3">
@@ -412,8 +526,8 @@ export function CallScreen({ isOpen, onClose }: CallScreenProps) {
               </div>
             )}
 
-            {/* Listening wave animation (when no text) — subtle replacement for the orb */}
-            {!oscarText && !userTranscript && oscarState === "listening" && (
+            {/* Listening wave */}
+            {!oscarText && !userTranscript && oscarState === "listening" && !sttUnavailable && (
               <div className="flex items-center justify-center gap-1.5 mb-6">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="w-1 rounded-full bg-teal-400/60" style={{ height: 16, animation: `wave 1.2s ease-in-out ${i * 0.15}s infinite` }} />
