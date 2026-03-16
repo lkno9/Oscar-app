@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, Smile, CalendarDays, Lightbulb, ExternalLink, Dumbbell, Link, MapPin, Loader2, Phone, Navigation } from "lucide-react";
+import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, CalendarDays, Lightbulb, ExternalLink, Dumbbell, MapPin, Loader2, Phone, Navigation } from "lucide-react";
 import { getCurrentPosition, reverseGeocode, formatDistance, googleMapsDirectionsUrl, type Coordinates } from "@/lib/geo";
 import { searchNearbyPOIs, getPOIEmoji, type OverpassPOI, type POIType } from "@/lib/overpass";
 import { Button } from "@/components/ui/button";
@@ -265,26 +265,21 @@ export function HealthPage() {
 
       <div className="flex-1 overflow-hidden flex flex-col">
         <Tabs defaultValue="medications" className="flex-1 flex flex-col overflow-hidden">
-          <div className="mx-4 mt-4 flex-shrink-0 overflow-x-auto scrollbar-hide">
-            <TabsList className="inline-flex w-auto min-w-full">
-              <TabsTrigger value="medications" className="flex items-center gap-1 text-sm px-3">
-                <Pill className="w-3.5 h-3.5" />
+          <div className="mx-2 mt-4 flex-shrink-0">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="medications" className="text-xs px-1.5 py-2">
                 Médic.
               </TabsTrigger>
-              <TabsTrigger value="mood" className="flex items-center gap-1 text-sm px-3">
-                <Smile className="w-3.5 h-3.5" />
+              <TabsTrigger value="mood" className="text-xs px-1.5 py-2">
                 Humeur
               </TabsTrigger>
-              <TabsTrigger value="platforms" className="flex items-center gap-1 text-sm px-3">
-                <Link className="w-3.5 h-3.5" />
+              <TabsTrigger value="platforms" className="text-xs px-1.5 py-2">
                 Services
               </TabsTrigger>
-              <TabsTrigger value="activity" className="flex items-center gap-1 text-sm px-3">
-                <Dumbbell className="w-3.5 h-3.5" />
+              <TabsTrigger value="activity" className="text-xs px-1.5 py-2">
                 Activité
               </TabsTrigger>
-              <TabsTrigger value="wellness" className="flex items-center gap-1 text-sm px-3">
-                <Lightbulb className="w-3.5 h-3.5" />
+              <TabsTrigger value="wellness" className="text-xs px-1.5 py-2">
                 Conseils
               </TabsTrigger>
             </TabsList>
