@@ -244,7 +244,7 @@ export function HomePage() {
     checkMedReminders();
     const interval = setInterval(checkMedReminders, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

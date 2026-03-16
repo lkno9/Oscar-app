@@ -110,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verifyMFA = async (factorId: string, code: string) => {
     const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
     if (challengeError) return { error: challengeError };
+    if (!challenge) return { error: new Error("Challenge creation failed") as any };
 
     const { error } = await supabase.auth.mfa.verify({
       factorId,
@@ -122,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verifyMFAChallenge = async (factorId: string, code: string) => {
     const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
     if (challengeError) return { error: challengeError };
+    if (!challenge) return { error: new Error("Challenge creation failed") as any };
 
     const { error } = await supabase.auth.mfa.verify({
       factorId,

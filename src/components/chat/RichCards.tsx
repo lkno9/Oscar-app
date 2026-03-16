@@ -1,4 +1,4 @@
-import { Phone, Copy, ExternalLink, Check, MapPin, Globe, X, AlertTriangle, Maximize2, Loader2 } from "lucide-react";
+import { Phone, Copy, ExternalLink, Check, MapPin, Globe, X, Maximize2, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { RichCard, WeatherData, TranslationData, MapData, EmergencyData, WebViewData, LinkPreviewData } from "@/types/chat";
 
