@@ -104,21 +104,6 @@ export function ScamProtectionPage() {
 
       {/* Main Content */}
       <div className="flex-1 p-4 space-y-6 pb-24">
-        {/* Ask Oscar Banner */}
-        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => navigate("/chat")}>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <MessageCircle className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground text-base">Un message vous semble suspect ?</h3>
-              <p className="text-sm text-muted-foreground">Envoyez-le à Oscar par chat — il l'analysera et vous dira quoi faire.</p>
-            </div>
-            <ArrowLeft className="w-5 h-5 text-primary rotate-180 shrink-0" />
-          </CardContent>
-        </Card>
-
         {/* Scam Checker - Main Feature */}
         <section>
           <ScamChecker />

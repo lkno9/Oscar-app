@@ -1,6 +1,6 @@
 import {
-  ArrowLeft, Languages, Cloud, MapPin, Flashlight, Calculator, Search,
-  ExternalLink, Wrench, Shield, Tag, Timer, PhoneIncoming, Copy, Check,
+  ArrowLeft, Languages, Cloud, MapPin, Flashlight, Calculator,
+  Wrench, Timer, Copy, Check,
   Play, Pause, RotateCcw, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -48,7 +48,6 @@ const TOOLS = [
     category: "Communication",
     items: [
       { name: "Traducteur", desc: "Traduire du texte dans une autre langue", emoji: "🌍", icon: Languages, url: null as string | null, builtin: "translator" as const },
-      { name: "Annuaire inversé", desc: "Identifier un numéro de téléphone inconnu", emoji: "📞", icon: PhoneIncoming, url: "https://www.pagesjaunes.fr/annuaireinverse" },
     ],
   },
   {
@@ -57,16 +56,6 @@ const TOOLS = [
       { name: "Météo", desc: "Prévisions météo de votre ville", emoji: "☀️", icon: Cloud, url: null as string | null, builtin: "weather" as const },
       { name: "Calculatrice", desc: "Calculs simples", emoji: "🔢", icon: Calculator, url: null as string | null, builtin: "calculator" as const },
       { name: "Minuteur", desc: "Chronomètre et compte à rebours", emoji: "⏱️", icon: Timer, url: null as string | null, builtin: "timer" as const },
-      { name: "Pages Jaunes", desc: "Trouver un professionnel ou commerce", emoji: "📒", icon: Search, url: "https://www.pagesjaunes.fr" },
-      { name: "Idealo", desc: "Comparer les prix avant d'acheter", emoji: "💰", icon: Tag, url: "https://www.idealo.fr" },
-    ],
-  },
-  {
-    category: "Assurances & finances",
-    items: [
-      { name: "LeLynx", desc: "Comparer les assurances", emoji: "🛡️", icon: Shield, url: "https://www.lelynx.fr" },
-      { name: "Assurance Maladie", desc: "Remboursements et droits (Ameli)", emoji: "💳", icon: Tag, url: "https://www.ameli.fr" },
-      { name: "Info Assurance", desc: "Comprendre vos contrats", emoji: "📋", icon: Shield, url: "https://www.ffa-assurance.fr/infos-et-pratique" },
     ],
   },
   {

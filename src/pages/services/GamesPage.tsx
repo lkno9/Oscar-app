@@ -1,4 +1,4 @@
-import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Play, ExternalLink, Grid3X3, Calculator, PenTool, Target, Sparkles, Zap } from "lucide-react";
+import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Sparkles, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -32,47 +32,10 @@ export function GamesPage() {
     { id: "hangman", name: "Le Pendu", description: "Devinez le mot caché", emoji: "🔤", difficulty: "Facile", path: "/services/games/hangman" },
     { id: "math", name: "Calcul Mental", description: "15 calculs en 90s", emoji: "🧠", difficulty: "Moyen", path: "/services/games/math" },
     { id: "intruder", name: "L'Intrus", description: "Trouvez le mot en trop", emoji: "🔍", difficulty: "Facile", path: "/services/games/intruder" },
-  ];
-
-  // Liens directs vers des jeux jouables immédiatement
-  const externalGames = [
-    // Mots & Lettres - Liens directs vers les jeux
-    { id: "sutom", name: "SUTOM", description: "Wordle français quotidien", emoji: "🔤", url: "https://sutom.nocle.fr/", category: "lettres" },
-    { id: "tusmo", name: "TUSMO", description: "Motus en ligne", emoji: "🎯", url: "https://www.tusmo.xyz/", category: "lettres" },
-    { id: "cemantix", name: "Cémantix", description: "Trouvez le mot secret", emoji: "🧠", url: "https://cemantix.certitudes.org/", category: "lettres" },
-    { id: "pedantix", name: "Pédantix", description: "Devinez l'article Wikipédia", emoji: "📚", url: "https://pedantix.certitudes.org/", category: "lettres" },
-    
-    // Logique - Liens directs vers interfaces de jeu
-    { id: "sudoku-web", name: "Sudoku Web", description: "Grilles illimitées", emoji: "9️⃣", url: "https://sudoku.com/fr", category: "logique" },
-    { id: "chess-play", name: "Échecs", description: "Jouer contre l'IA", emoji: "♟️", url: "https://www.chess.com/fr/play/computer", category: "logique" },
-    { id: "checkers-web", name: "Dames", description: "Jouez maintenant", emoji: "🔴", url: "https://cardgames.io/checkers/", category: "logique" },
-    { id: "nonogram", name: "Nonogram", description: "Picross / Hanjie", emoji: "🎨", url: "https://www.puzzle-nonograms.com/", category: "logique" },
-    
-    // Quiz & Culture - Liens vers quiz jouables
-    { id: "geo-quiz", name: "Quiz Géo", description: "Pays du monde", emoji: "🌍", url: "https://www.jetpunk.com/user-quizzes/12389/pays-du-monde", category: "culture" },
-    { id: "flags-quiz", name: "Drapeaux", description: "Reconnaître les drapeaux", emoji: "🏁", url: "https://www.jetpunk.com/quizzes/drapeaux-du-monde-quiz", category: "culture" },
-    { id: "quizz-culture", name: "Culture G", description: "Quiz variés", emoji: "📖", url: "https://www.quizz.biz/annuaire/quiz-Culture-generale.html", category: "culture" },
-    { id: "blind-test", name: "Blind Test", description: "Devinez la musique", emoji: "🎵", url: "https://www.blindtestmaker.com/", category: "culture" },
-    
-    // Arcade & Classiques - Liens directs vers jeux
-    { id: "tetris-play", name: "Tetris", description: "Le classique", emoji: "🧱", url: "https://tetris.com/play-tetris", category: "arcade" },
-    { id: "pacman-google", name: "Pac-Man", description: "Version Google", emoji: "👻", url: "https://www.google.com/logos/2010/pacman10-i.html", category: "arcade" },
-    { id: "snake-google", name: "Snake", description: "Serpent classique", emoji: "🐍", url: "https://www.google.com/fbx?fbx=snake_arcade", category: "arcade" },
-    { id: "bubble-shooter", name: "Bubble Shooter", description: "Éclater des bulles", emoji: "🫧", url: "https://bubble-shooter.co/", category: "arcade" },
-    
-    // Réflexion - Jeux de réflexion
-    { id: "mahjong-play", name: "Mahjong", description: "Tuiles chinoises", emoji: "🀄", url: "https://www.mahjong.com/", category: "reflexion" },
-    { id: "solitaire-play", name: "Solitaire", description: "Cartes classique", emoji: "🂡", url: "https://www.solitr.com/", category: "reflexion" },
-    { id: "freecell-play", name: "FreeCell", description: "Solitaire stratégique", emoji: "🃏", url: "https://www.free-freecell-solitaire.com/", category: "reflexion" },
-    { id: "minesweeper", name: "Démineur", description: "Évitez les mines", emoji: "💣", url: "https://minesweeper.online/", category: "reflexion" },
-  ];
-
-  const categories = [
-    { id: "lettres", name: "Mots & Lettres", emoji: "📝", icon: PenTool },
-    { id: "logique", name: "Logique & Chiffres", emoji: "🧮", icon: Calculator },
-    { id: "culture", name: "Culture & Quiz", emoji: "🎓", icon: Brain },
-    { id: "reflexion", name: "Réflexion", emoji: "♟️", icon: Target },
-    { id: "arcade", name: "Arcade & Détente", emoji: "🕹️", icon: Gamepad2 },
+    { id: "tictactoe", name: "Morpion", description: "Jouez contre Oscar", emoji: "❌", difficulty: "Facile", path: "/services/games/tictactoe" },
+    { id: "colors", name: "Couleurs", description: "Test de rapidité visuelle", emoji: "🎨", difficulty: "Moyen", path: "/services/games/colors" },
+    { id: "sequence", name: "La Suite", description: "Trouvez le nombre suivant", emoji: "🔢", difficulty: "Moyen", path: "/services/games/sequence" },
+    { id: "wordsearch", name: "Mots Mêlés", description: "Trouvez les mots cachés", emoji: "📝", difficulty: "Facile", path: "/services/games/wordsearch" },
   ];
 
   useEffect(() => {
@@ -114,10 +77,6 @@ export function GamesPage() {
       setStats({ totalGames, successRate, streak, totalPoints });
     }
     setLoading(false);
-  };
-
-  const handleExternalGame = (url: string) => {
-    window.open(url, '_blank');
   };
 
   return (
@@ -175,11 +134,11 @@ export function GamesPage() {
           </div>
         )}
 
-        {/* Oscar Games - Internal */}
+        {/* Jeux Oscar */}
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            Jeux Oscar (avec statistiques)
+            Jeux Oscar
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {internalGames.map((game) => (
@@ -199,54 +158,6 @@ export function GamesPage() {
           </div>
         </div>
 
-        {/* Quick Categories */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-            <Grid3X3 className="w-4 h-4" />
-            Catégories
-          </h2>
-          <div className="grid grid-cols-5 gap-2">
-            {categories.map((cat) => (
-              <div
-                key={cat.id}
-                className="bg-card rounded-xl p-2 shadow-sm border border-border flex flex-col items-center gap-1"
-              >
-                <span className="text-xl">{cat.emoji}</span>
-                <span className="text-sm text-muted-foreground text-center font-medium">{cat.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Games by Category */}
-        {categories.map((category) => {
-          const categoryGames = externalGames.filter(g => g.category === category.id);
-          return (
-            <div key={category.id} className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <category.icon className="w-4 h-4" />
-                {category.name}
-              </h2>
-              <div className="grid grid-cols-2 gap-2">
-                {categoryGames.map((game) => (
-                  <button
-                    key={game.id}
-                    onClick={() => handleExternalGame(game.url)}
-                    className="bg-card rounded-xl p-3 shadow-sm border border-border flex items-center gap-3 hover:border-primary transition-colors text-left"
-                  >
-                    <span className="text-2xl">{game.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground text-sm truncate">{game.name}</h3>
-                      <p className="text-sm text-muted-foreground truncate">{game.description}</p>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-
         {/* Tips */}
         <div className="bg-card rounded-xl p-4 border border-border">
           <p className="text-foreground font-medium mb-2 flex items-center gap-2">
@@ -254,7 +165,7 @@ export function GamesPage() {
             Conseil du jour
           </p>
           <p className="text-sm text-muted-foreground">
-            Les jeux Oscar enregistrent vos scores et progressions. Les jeux externes s'ouvrent directement pour jouer !
+            Jouez régulièrement pour stimuler votre mémoire et suivre vos progrès !
           </p>
         </div>
       </div>
