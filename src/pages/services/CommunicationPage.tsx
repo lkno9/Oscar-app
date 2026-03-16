@@ -68,12 +68,17 @@ export function CommunicationPage() {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedContact || !user) return;
-    await supabase.from('family_messages').insert({
+    const msg = newMessage.trim();
+    setNewMessage("");
+    const { error } = await supabase.from('family_messages').insert({
       sender_id: user.id,
       receiver_id: selectedContact.id,
-      content: newMessage.trim(),
+      content: msg,
     });
-    setNewMessage("");
+    if (error) {
+      setNewMessage(msg);
+      toast.error("Erreur lors de l'envoi du message");
+    }
     fetchAll();
   };
 

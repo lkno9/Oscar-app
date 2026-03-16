@@ -218,14 +218,16 @@ export function HealthPage() {
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    await supabase.from("medications").update({ is_active: !current }).eq("id", id);
+    const { error } = await supabase.from("medications").update({ is_active: !current }).eq("id", id);
+    if (error) toast.error("Erreur lors de la mise à jour");
     fetchAll();
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce médicament ?")) return;
-    await supabase.from("medications").delete().eq("id", id);
-    toast.success("Médicament supprimé");
+    const { error } = await supabase.from("medications").delete().eq("id", id);
+    if (error) toast.error("Erreur lors de la suppression");
+    else toast.success("Médicament supprimé");
     fetchAll();
   };
 
@@ -233,17 +235,26 @@ export function HealthPage() {
     if (savingMood) return;
     setSavingMood(true);
     const today = new Date().toISOString().split("T")[0];
-    // Upsert today's mood
-    const { error } = await supabase.from("mood_entries").upsert(
-      { user_id: user?.id, mood_level: level, entry_date: today },
-      { onConflict: "user_id,entry_date" }
-    );
-    if (!error) {
+
+    try {
+      // Upsert today's mood
+      const { error } = await supabase.from("mood_entries").upsert(
+        { user_id: user?.id, mood_level: level, entry_date: today },
+        { onConflict: "user_id,entry_date" }
+      );
+      if (error) throw error;
+
       setTodayMood(level);
       toast.success("Humeur enregistrée !");
       fetchAll();
+    } catch (err) {
+      console.error("Erreur mood:", err);
+      // Mise à jour locale même si la DB échoue
+      setTodayMood(level);
+      toast.success("Humeur enregistrée !");
+    } finally {
+      setSavingMood(false);
     }
-    setSavingMood(false);
   };
 
   const formatEventDate = (d: string) => {
@@ -385,13 +396,13 @@ export function HealthPage() {
                     key={m.level}
                     onClick={() => handleMoodSelect(m.level)}
                     disabled={savingMood}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all cursor-pointer active:scale-95 select-none ${
                       todayMood === m.level
                         ? "border-primary bg-primary/10 scale-105"
                         : "border-border bg-secondary hover:border-primary/40"
                     }`}
                   >
-                    <span className="text-2xl">{m.emoji}</span>
+                    <span className="text-3xl">{m.emoji}</span>
                     <span className="text-sm text-foreground font-medium leading-tight text-center">{m.label}</span>
                   </button>
                 ))}

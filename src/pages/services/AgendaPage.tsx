@@ -160,8 +160,9 @@ export function AgendaPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) return;
-    await supabase.from("events").delete().eq("id", id);
-    toast.success("Événement supprimé");
+    const { error } = await supabase.from("events").delete().eq("id", id);
+    if (error) toast.error("Erreur lors de la suppression");
+    else toast.success("Événement supprimé");
     fetchEvents();
   };
 

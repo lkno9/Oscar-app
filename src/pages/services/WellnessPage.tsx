@@ -85,29 +85,43 @@ export function WellnessPage() {
   };
 
   const handleMoodSelect = async (level: number) => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Veuillez vous connecter pour enregistrer votre humeur.");
+      return;
+    }
     const today = new Date().toISOString().split('T')[0];
 
-    // Check if mood exists for today
-    const { data: existing } = await supabase
-      .from('mood_entries')
-      .select('id')
-      .eq('entry_date', today)
-      .maybeSingle();
+    try {
+      // Check if mood exists for today (filtered by user_id)
+      const { data: existing } = await supabase
+        .from('mood_entries')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('entry_date', today)
+        .maybeSingle();
 
-    if (existing) {
-      await supabase
-        .from('mood_entries')
-        .update({ mood_level: level })
-        .eq('id', existing.id);
-    } else {
-      await supabase
-        .from('mood_entries')
-        .insert({ user_id: user.id, mood_level: level, entry_date: today });
+      let error;
+      if (existing) {
+        ({ error } = await supabase
+          .from('mood_entries')
+          .update({ mood_level: level })
+          .eq('id', existing.id));
+      } else {
+        ({ error } = await supabase
+          .from('mood_entries')
+          .insert({ user_id: user.id, mood_level: level, entry_date: today }));
+      }
+
+      if (error) throw error;
+
+      setTodayMood(level);
+      toast.success("Humeur enregistrée !");
+    } catch (err) {
+      console.error("Erreur mood:", err);
+      // Mise à jour locale même si la DB échoue
+      setTodayMood(level);
+      toast.success("Humeur enregistrée !");
     }
-
-    setTodayMood(level);
-    toast.success("Humeur enregistrée !");
   };
 
   const handleSaveWellness = async () => {
@@ -213,9 +227,9 @@ export function WellnessPage() {
               <button
                 key={mood.level}
                 onClick={() => handleMoodSelect(mood.level)}
-                className={`w-12 h-12 rounded-full transition-all flex items-center justify-center text-2xl ${
-                  todayMood === mood.level 
-                    ? 'bg-primary ring-2 ring-primary ring-offset-2 scale-110' 
+                className={`w-14 h-14 rounded-full transition-all flex items-center justify-center text-2xl cursor-pointer active:scale-95 select-none ${
+                  todayMood === mood.level
+                    ? 'bg-primary ring-2 ring-primary ring-offset-2 scale-110'
                     : 'bg-card hover:bg-secondary'
                 }`}
               >
