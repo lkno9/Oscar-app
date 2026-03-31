@@ -1,4 +1,4 @@
-import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Sparkles, Zap } from "lucide-react";
+import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Sparkles, Zap, Users, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -36,6 +36,14 @@ export function GamesPage() {
     { id: "colors", name: "Couleurs", description: "Test de rapidité visuelle", emoji: "🎨", difficulty: "Moyen", path: "/services/games/colors" },
     { id: "sequence", name: "La Suite", description: "Trouvez le nombre suivant", emoji: "🔢", difficulty: "Moyen", path: "/services/games/sequence" },
     { id: "wordsearch", name: "Mots Mêlés", description: "Trouvez les mots cachés", emoji: "📝", difficulty: "Facile", path: "/services/games/wordsearch" },
+    { id: "candy", name: "Candy Crush", description: "Alignez les bonbons", emoji: "🍬", difficulty: "Facile", path: "/services/games/candy", isNew: true },
+  ];
+
+  const multiplayerGames = [
+    { id: "tictactoe-duo", name: "Morpion Duo", description: "Jouez à 2 joueurs", emoji: "🤝", difficulty: "Facile", path: "/services/games/tictactoe-duo" },
+    { id: "quiz-duo", name: "Quiz Duo", description: "Défi culture générale", emoji: "🧠", difficulty: "Facile", path: "/services/games/quiz-duo" },
+    { id: "memory-duo", name: "Memory Duo", description: "Trouvez les paires à 2", emoji: "🃏", difficulty: "Facile", path: "/services/games/memory-duo" },
+    { id: "word-duel", name: "Bataille de Mots", description: "Duel de vocabulaire", emoji: "📝", difficulty: "Moyen", path: "/services/games/word-duel" },
   ];
 
   useEffect(() => {
@@ -62,8 +70,8 @@ export function GamesPage() {
         const checkDate = new Date(today);
         checkDate.setDate(checkDate.getDate() - i);
         const dateStr = checkDate.toISOString().split('T')[0];
-        
-        const hasGameOnDate = sessions.some(s => 
+
+        const hasGameOnDate = sessions.some(s =>
           s.played_at.split('T')[0] === dateStr
         );
 
@@ -134,19 +142,64 @@ export function GamesPage() {
           </div>
         )}
 
-        {/* Jeux Oscar */}
+        {/* Jeux à plusieurs - Section mise en avant */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Jouer ensemble
+            </h2>
+            <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-bold">
+              NOUVEAU
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground -mt-1">
+            Jouez avec vos proches sur le même appareil !
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {multiplayerGames.map((game) => (
+              <button
+                key={game.id}
+                onClick={() => navigate(game.path)}
+                className="bg-gradient-to-br from-orange-500/15 to-rose-500/10 rounded-xl p-4 shadow-sm border border-orange-300/30 dark:border-orange-700/30 flex flex-col items-center gap-2 text-center transition-all hover:shadow-md hover:border-orange-400 dark:hover:border-orange-600 relative"
+              >
+                <div className="absolute top-2 right-2">
+                  <Heart className="w-4 h-4 text-orange-400 fill-orange-400" />
+                </div>
+                <span className="text-4xl">{game.emoji}</span>
+                <h3 className="font-semibold text-foreground">{game.name}</h3>
+                <p className="text-sm text-muted-foreground">{game.description}</p>
+                <div className="flex gap-1.5">
+                  <span className="text-xs bg-orange-200/60 dark:bg-orange-800/40 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full">
+                    2 joueurs
+                  </span>
+                  <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                    {game.difficulty}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Jeux Oscar solo */}
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            Jeux Oscar
+            Jeux Solo
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {internalGames.map((game) => (
               <button
                 key={game.id}
                 onClick={() => navigate(game.path)}
-                className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 shadow-sm border border-primary/20 flex flex-col items-center gap-2 text-center transition-all hover:shadow-md hover:border-primary"
+                className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 shadow-sm border border-primary/20 flex flex-col items-center gap-2 text-center transition-all hover:shadow-md hover:border-primary relative"
               >
+                {"isNew" in game && game.isNew && (
+                  <span className="absolute top-2 right-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded-full font-bold">
+                    NEW
+                  </span>
+                )}
                 <span className="text-4xl">{game.emoji}</span>
                 <h3 className="font-semibold text-foreground">{game.name}</h3>
                 <p className="text-sm text-muted-foreground">{game.description}</p>
@@ -165,7 +218,7 @@ export function GamesPage() {
             Conseil du jour
           </p>
           <p className="text-sm text-muted-foreground">
-            Jouez régulièrement pour stimuler votre mémoire et suivre vos progrès !
+            Invitez vos proches à jouer avec vous ! Les jeux à plusieurs sont parfaits pour partager un moment ensemble.
           </p>
         </div>
       </div>
