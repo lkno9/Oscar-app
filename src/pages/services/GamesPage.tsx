@@ -36,7 +36,7 @@ export function GamesPage() {
     { id: "colors", name: "Couleurs", description: "Test de rapidité visuelle", emoji: "🎨", difficulty: "Moyen", path: "/services/games/colors" },
     { id: "sequence", name: "La Suite", description: "Trouvez le nombre suivant", emoji: "🔢", difficulty: "Moyen", path: "/services/games/sequence" },
     { id: "wordsearch", name: "Mots Mêlés", description: "Trouvez les mots cachés", emoji: "📝", difficulty: "Facile", path: "/services/games/wordsearch" },
-    { id: "candy", name: "Candy Crush", description: "Alignez les bonbons", emoji: "🍬", difficulty: "Facile", path: "/services/games/candy", isNew: true },
+    { id: "candy", name: "Candy Crush", description: "Alignez les bonbons", emoji: "🍬", difficulty: "Facile", path: "/services/games/candy" },
   ];
 
   const multiplayerGames = [
@@ -151,15 +151,10 @@ export function GamesPage() {
 
         {/* Jeux à plusieurs - Section mise en avant */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Jouer ensemble
-            </h2>
-            <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-bold">
-              NOUVEAU
-            </span>
-          </div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Jouer ensemble
+          </h2>
           <p className="text-sm text-muted-foreground -mt-1">
             Jouez avec vos proches sur le même appareil !
           </p>
@@ -191,15 +186,10 @@ export function GamesPage() {
 
         {/* Jeux en ligne - à distance */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-              <Wifi className="w-4 h-4" />
-              Jouer à distance
-            </h2>
-            <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">
-              NOUVEAU
-            </span>
-          </div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+            <Wifi className="w-4 h-4" />
+            Jouer à distance
+          </h2>
           <p className="text-sm text-muted-foreground -mt-1">
             Jouez en ligne avec vos proches, chacun sur son appareil !
           </p>
@@ -242,11 +232,6 @@ export function GamesPage() {
                 onClick={() => navigate(game.path)}
                 className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 shadow-sm border border-primary/20 flex flex-col items-center gap-2 text-center transition-all hover:shadow-md hover:border-primary relative"
               >
-                {"isNew" in game && game.isNew && (
-                  <span className="absolute top-2 right-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded-full font-bold">
-                    NEW
-                  </span>
-                )}
                 <span className="text-4xl">{game.emoji}</span>
                 <h3 className="font-semibold text-foreground">{game.name}</h3>
                 <p className="text-sm text-muted-foreground">{game.description}</p>
