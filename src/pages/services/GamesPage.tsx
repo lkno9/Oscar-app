@@ -1,4 +1,4 @@
-import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Sparkles, Zap, Users, Heart, Wifi } from "lucide-react";
+import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Sparkles, Zap, Users, Wifi } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -40,14 +40,10 @@ export function GamesPage() {
   ];
 
   const togetherGames = [
-    { id: "tictactoe-duo", name: "Morpion Duo", description: "Jouez à 2 joueurs", emoji: "🤝", difficulty: "Facile", path: "/services/games/tictactoe-duo", mode: "local" as const },
-    { id: "quiz-duo", name: "Quiz Duo", description: "Défi culture générale", emoji: "🧠", difficulty: "Facile", path: "/services/games/quiz-duo", mode: "local" as const },
-    { id: "memory-duo", name: "Memory Duo", description: "Trouvez les paires à 2", emoji: "🃏", difficulty: "Facile", path: "/services/games/memory-duo", mode: "local" as const },
-    { id: "word-duel", name: "Bataille de Mots", description: "Duel de vocabulaire", emoji: "📝", difficulty: "Moyen", path: "/services/games/word-duel", mode: "local" as const },
-    { id: "tictactoe-online", name: "Morpion", description: "Jouez à distance", emoji: "❌", difficulty: "Facile", path: "/services/games/tictactoe-online", mode: "online" as const },
-    { id: "quiz-online", name: "Quiz", description: "Défi culture à distance", emoji: "🧠", difficulty: "Facile", path: "/services/games/quiz-online", mode: "online" as const },
-    { id: "memory-online", name: "Memory", description: "Trouvez les paires à distance", emoji: "🃏", difficulty: "Facile", path: "/services/games/memory-online", mode: "online" as const },
-    { id: "word-duel-online", name: "Bataille de Mots", description: "Duel de vocabulaire à distance", emoji: "📝", difficulty: "Moyen", path: "/services/games/word-duel-online", mode: "online" as const },
+    { id: "tictactoe-online", name: "Morpion", description: "Jouez à distance", emoji: "❌", difficulty: "Facile", path: "/services/games/tictactoe-online" },
+    { id: "quiz-online", name: "Quiz", description: "Défi culture à distance", emoji: "🧠", difficulty: "Facile", path: "/services/games/quiz-online" },
+    { id: "memory-online", name: "Memory", description: "Trouvez les paires à distance", emoji: "🃏", difficulty: "Facile", path: "/services/games/memory-online" },
+    { id: "word-duel-online", name: "Bataille de Mots", description: "Duel de vocabulaire à distance", emoji: "📝", difficulty: "Moyen", path: "/services/games/word-duel-online" },
   ];
 
   useEffect(() => {
@@ -153,36 +149,24 @@ export function GamesPage() {
             Jouer avec vos proches
           </h2>
           <p className="text-sm text-muted-foreground -mt-1">
-            Sur le même appareil ou à distance, partagez un moment ensemble !
+            Jouez en ligne avec vos proches, chacun sur son appareil !
           </p>
           <div className="grid grid-cols-2 gap-3">
             {togetherGames.map((game) => (
               <button
                 key={game.id}
                 onClick={() => navigate(game.path)}
-                className={`rounded-xl p-4 shadow-sm flex flex-col items-center gap-2 text-center transition-all hover:shadow-md relative ${
-                  game.mode === "online"
-                    ? "bg-gradient-to-br from-green-500/15 to-emerald-500/10 border border-green-300/30 dark:border-green-700/30 hover:border-green-400 dark:hover:border-green-600"
-                    : "bg-gradient-to-br from-orange-500/15 to-rose-500/10 border border-orange-300/30 dark:border-orange-700/30 hover:border-orange-400 dark:hover:border-orange-600"
-                }`}
+                className="bg-gradient-to-br from-orange-500/15 to-rose-500/10 rounded-xl p-4 shadow-sm border border-orange-300/30 dark:border-orange-700/30 flex flex-col items-center gap-2 text-center transition-all hover:shadow-md hover:border-orange-400 dark:hover:border-orange-600 relative"
               >
                 <div className="absolute top-2 right-2">
-                  {game.mode === "online" ? (
-                    <Wifi className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <Heart className="w-4 h-4 text-orange-400 fill-orange-400" />
-                  )}
+                  <Wifi className="w-4 h-4 text-orange-400" />
                 </div>
                 <span className="text-4xl">{game.emoji}</span>
                 <h3 className="font-semibold text-foreground">{game.name}</h3>
                 <p className="text-sm text-muted-foreground">{game.description}</p>
                 <div className="flex gap-1.5">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    game.mode === "online"
-                      ? "bg-green-200/60 dark:bg-green-800/40 text-green-700 dark:text-green-300"
-                      : "bg-orange-200/60 dark:bg-orange-800/40 text-orange-700 dark:text-orange-300"
-                  }`}>
-                    {game.mode === "online" ? "En ligne" : "Même appareil"}
+                  <span className="text-xs bg-orange-200/60 dark:bg-orange-800/40 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full">
+                    En ligne
                   </span>
                   <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
                     {game.difficulty}
