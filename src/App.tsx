@@ -41,6 +41,10 @@ import { TicTacToeDuoGame } from "./pages/services/games/TicTacToeDuoGame";
 import { QuizDuoGame } from "./pages/services/games/QuizDuoGame";
 import { MemoryDuoGame } from "./pages/services/games/MemoryDuoGame";
 import { WordDuelGame } from "./pages/services/games/WordDuelGame";
+import { TicTacToeOnlineGame } from "./pages/services/games/TicTacToeOnlineGame";
+import { QuizOnlineGame } from "./pages/services/games/QuizOnlineGame";
+import { MemoryOnlineGame } from "./pages/services/games/MemoryOnlineGame";
+import { WordDuelOnlineGame } from "./pages/services/games/WordDuelOnlineGame";
 import { SettingsPage } from "./pages/SettingsPage";
 import FamilyIndex from "./pages/family/FamilyIndex";
 import SeniorDetailPage from "./pages/family/SeniorDetailPage";
@@ -98,6 +102,10 @@ const App = () => (
             <Route path="/services/games/quiz-duo" element={<ProtectedRoute><SubPageLayout><QuizDuoGame /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/games/memory-duo" element={<ProtectedRoute><SubPageLayout><MemoryDuoGame /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/games/word-duel" element={<ProtectedRoute><SubPageLayout><WordDuelGame /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/tictactoe-online" element={<ProtectedRoute><SubPageLayout><TicTacToeOnlineGame /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/quiz-online" element={<ProtectedRoute><SubPageLayout><QuizOnlineGame /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/memory-online" element={<ProtectedRoute><SubPageLayout><MemoryOnlineGame /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/games/word-duel-online" element={<ProtectedRoute><SubPageLayout><WordDuelOnlineGame /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/vault" element={<ProtectedRoute><SubPageLayout><VaultPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/emergency" element={<ProtectedRoute><SubPageLayout><EmergencyPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/help" element={<ProtectedRoute><SubPageLayout><HelpPage /></SubPageLayout></ProtectedRoute>} />
