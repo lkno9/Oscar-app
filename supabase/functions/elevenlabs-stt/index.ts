@@ -5,15 +5,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Mistral Voxtral STT — remplace ElevenLabs Scribe
+// Modèle : voxtral-mini-latest
+// Docs : https://docs.mistral.ai/capabilities/audio/speech_to_text
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY_1") || Deno.env.get("ELEVENLABS_API_KEY");
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error("ELEVENLABS_API_KEY is not configured");
+    const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");
+    if (!MISTRAL_API_KEY) {
+      throw new Error("MISTRAL_API_KEY is not configured");
     }
 
     const formData = await req.formData();
@@ -26,31 +30,28 @@ serve(async (req) => {
       });
     }
 
+    // Mistral STT utilise le même format multipart/form-data
     const apiFormData = new FormData();
-    apiFormData.append("file", audioFile);
-    apiFormData.append("model_id", "scribe_v2");
-    apiFormData.append("language_code", "fra");
-    apiFormData.append("tag_audio_events", "false");
-    apiFormData.append("diarize", "false");
+    apiFormData.append("file", audioFile, audioFile.name || "audio.webm");
+    apiFormData.append("model", "voxtral-mini-latest");
 
-    const response = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+    const response = await fetch("https://api.mistral.ai/v1/audio/transcriptions", {
       method: "POST",
       headers: {
-        "xi-api-key": ELEVENLABS_API_KEY,
+        "Authorization": `Bearer ${MISTRAL_API_KEY}`,
       },
       body: apiFormData,
     });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("ElevenLabs STT error:", response.status, err);
-      // Surface the actual error to the client for debugging
+      console.error("Mistral STT error:", response.status, err);
       if (response.status === 401) {
-        throw new Error("Clé ElevenLabs invalide ou expirée");
+        throw new Error("Clé Mistral invalide ou expirée");
       } else if (response.status === 429) {
-        throw new Error("Quota ElevenLabs dépassé, réessayez plus tard");
+        throw new Error("Quota Mistral dépassé, réessayez plus tard");
       } else {
-        throw new Error(`Erreur ElevenLabs STT (${response.status}): ${err.substring(0, 200)}`);
+        throw new Error(`Erreur Mistral STT (${response.status}): ${err.substring(0, 200)}`);
       }
     }
 

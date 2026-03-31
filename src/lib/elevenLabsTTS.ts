@@ -1,4 +1,4 @@
-// Free browser-native TTS using Web Speech API
+// Free browser-native TTS using Web Speech API (fallback)
 
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 
@@ -11,8 +11,8 @@ function getFrenchVoice(): SpeechSynthesisVoice | null {
     || null;
 }
 
-export async function speakWithElevenLabs(text: string): Promise<void> {
-  stopElevenLabsSpeech();
+export async function speakWithBrowserTTS(text: string): Promise<void> {
+  stopBrowserSpeech();
   if (!("speechSynthesis" in window)) throw new Error("TTS non supporté");
 
   return new Promise((resolve) => {
@@ -40,13 +40,20 @@ export async function speakWithElevenLabs(text: string): Promise<void> {
   });
 }
 
-export function stopElevenLabsSpeech(): void {
+// Keep old exports for backward compatibility
+export const speakWithElevenLabs = speakWithBrowserTTS;
+
+export function stopBrowserSpeech(): void {
   if ("speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }
   currentUtterance = null;
 }
 
-export function isElevenLabsSpeaking(): boolean {
+export const stopElevenLabsSpeech = stopBrowserSpeech;
+
+export function isBrowserSpeaking(): boolean {
   return "speechSynthesis" in window && window.speechSynthesis.speaking;
 }
+
+export const isElevenLabsSpeaking = isBrowserSpeaking;

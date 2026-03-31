@@ -5,9 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Oscar voice: George — warm, raspy pre-made voice (works for French)
-// To change voice: browse https://elevenlabs.io/voice-library and update the ID
-const VOICE_ID = "JBFqnCBsd6RMkjVDRZzb";
+// Mistral Voxtral TTS — remplace ElevenLabs
+// Pour configurer la voix d'Oscar :
+//   1. Créer une voix via l'API Mistral (POST /v1/audio/voices) avec un échantillon audio
+//   2. Stocker le voice_id retourné dans la variable d'env MISTRAL_VOICE_ID
+// Docs : https://docs.mistral.ai/capabilities/audio/text_to_speech
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -24,42 +26,46 @@ serve(async (req) => {
       });
     }
 
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error("ELEVENLABS_API_KEY is not configured");
+    const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");
+    if (!MISTRAL_API_KEY) {
+      throw new Error("MISTRAL_API_KEY is not configured");
     }
 
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_44100_128`,
-      {
-        method: "POST",
-        headers: {
-          "xi-api-key": ELEVENLABS_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text,
-          model_id: "eleven_multilingual_v2",
-          voice_settings: {
-            stability: 0.45,
-            similarity_boost: 0.75,
-            style: 0.4,
-            use_speaker_boost: true,
-            speed: 0.9,
-          },
-        }),
-      }
-    );
+    const MISTRAL_VOICE_ID = Deno.env.get("MISTRAL_VOICE_ID");
+    if (!MISTRAL_VOICE_ID) {
+      throw new Error("MISTRAL_VOICE_ID is not configured — créez une voix via l'API Mistral Voices");
+    }
+
+    const response = await fetch("https://api.mistral.ai/v1/audio/speech", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${MISTRAL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "voxtral-mini-tts-2603",
+        input: text,
+        voice_id: MISTRAL_VOICE_ID,
+        response_format: "mp3",
+      }),
+    });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("ElevenLabs TTS error:", response.status, err);
-      throw new Error("Erreur TTS ElevenLabs");
+      console.error("Mistral TTS error:", response.status, err);
+      if (response.status === 401) {
+        throw new Error("Clé Mistral invalide ou expirée");
+      } else if (response.status === 429) {
+        throw new Error("Quota Mistral dépassé, réessayez plus tard");
+      }
+      throw new Error(`Erreur Mistral TTS (${response.status})`);
     }
 
-    const audioBuffer = await response.arrayBuffer();
+    // Mistral retourne du JSON avec l'audio en base64
+    const result = await response.json();
+    const audioBytes = Uint8Array.from(atob(result.audio_data), (c) => c.charCodeAt(0));
 
-    return new Response(audioBuffer, {
+    return new Response(audioBytes, {
       headers: {
         ...corsHeaders,
         "Content-Type": "audio/mpeg",

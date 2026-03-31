@@ -8,7 +8,7 @@
  *
  * TODO (prod) : Proxifier le token server via Xano
  * TODO : Remplacement du LLM par Claude si besoin
- * TODO : Ajout ElevenLabs comme TTS pour la voix unifiée Oscar
+ * TODO : Ajout Mistral Voxtral comme TTS pour la voix unifiée Oscar
  */
 
 import { useState, useCallback, useEffect } from "react";

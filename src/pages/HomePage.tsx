@@ -76,11 +76,11 @@ function getGreeting() {
 }
 
 
-// ElevenLabs TTS — with abort, play() error handling, and truncation
+// Mistral Voxtral TTS — with abort, play() error handling, and truncation
 let currentAudio: HTMLAudioElement | null = null;
 let currentTtsAbort: AbortController | null = null;
 
-async function speakWithElevenLabs(text: string): Promise<void> {
+async function speakWithMistral(text: string): Promise<void> {
   stopSpeech();
 
   currentTtsAbort?.abort();
@@ -256,9 +256,9 @@ export function HomePage() {
     if (messageId) setSpeakingMessageId(messageId);
     setIsSpeakingState(true);
     try {
-      await speakWithElevenLabs(text);
+      await speakWithMistral(text);
     } catch {
-      toast.info("Voix ElevenLabs indisponible, utilisation de la voix du navigateur.");
+      toast.info("Voix Mistral indisponible, utilisation de la voix du navigateur.");
       try {
         await fallbackSpeak(text);
       } catch {
