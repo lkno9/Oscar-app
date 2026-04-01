@@ -825,6 +825,13 @@ export function ToolsPage() {
             </div>
           </section>
         ))}
+
+        {/* Tip Oscar */}
+        <div className="bg-accent rounded-xl p-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            💡 Vous pouvez aussi demander directement à <span className="font-semibold text-foreground">Oscar</span> depuis la conversation : "Quel temps fait-il ?", "Traduis-moi ça en anglais", "Mets un minuteur de 2 heures"...
+          </p>
+        </div>
       </div>
     </div>
   );
