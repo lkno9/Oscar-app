@@ -1,15 +1,15 @@
 import {
-  ArrowLeft, Languages, Cloud, MapPin, Flashlight, Calculator,
-  Wrench, Timer, Copy, Check,
-  Play, Pause, RotateCcw, ChevronDown, ChevronUp,
+  ArrowLeft, Languages, Cloud, MapPin, Calculator,
+  Wrench, Timer, Copy, Check, ArrowLeftRight,
+  Play, Pause, RotateCcw, ChevronDown, ChevronUp, LocateFixed, Bell,
 } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 // ─── STATIC DATA ────────────────────────────────────────────────────
+
 const TRANSLATE_LANGS = [
   { code: "en", label: "Anglais" },
   { code: "es", label: "Espagnol" },
@@ -17,14 +17,37 @@ const TRANSLATE_LANGS = [
   { code: "it", label: "Italien" },
   { code: "pt", label: "Portugais" },
   { code: "ar", label: "Arabe" },
+  { code: "zh", label: "Chinois" },
+  { code: "ja", label: "Japonais" },
+  { code: "ko", label: "Coréen" },
+  { code: "ru", label: "Russe" },
+  { code: "pl", label: "Polonais" },
+  { code: "nl", label: "Néerlandais" },
+  { code: "sv", label: "Suédois" },
+  { code: "da", label: "Danois" },
+  { code: "no", label: "Norvégien" },
+  { code: "fi", label: "Finnois" },
+  { code: "el", label: "Grec" },
+  { code: "tr", label: "Turc" },
+  { code: "hi", label: "Hindi" },
+  { code: "th", label: "Thaï" },
+  { code: "vi", label: "Vietnamien" },
+  { code: "ro", label: "Roumain" },
+  { code: "cs", label: "Tchèque" },
+  { code: "hu", label: "Hongrois" },
+  { code: "uk", label: "Ukrainien" },
+  { code: "he", label: "Hébreu" },
+  { code: "id", label: "Indonésien" },
 ];
 
 const TIMER_PRESETS = [
-  { label: "1 min", seconds: 60 },
   { label: "5 min", seconds: 300 },
   { label: "10 min", seconds: 600 },
   { label: "15 min", seconds: 900 },
   { label: "30 min", seconds: 1800 },
+  { label: "1 h", seconds: 3600 },
+  { label: "2 h", seconds: 7200 },
+  { label: "4 h", seconds: 14400 },
 ];
 
 const WEATHER_EMOJIS: Record<string, string> = {
@@ -47,7 +70,7 @@ const TOOLS = [
   {
     category: "Communication",
     items: [
-      { name: "Traducteur", desc: "Traduire du texte dans une autre langue", emoji: "🌍", icon: Languages, url: null as string | null, builtin: "translator" as const },
+      { name: "Traducteur", desc: "Traduire dans plus de 25 langues", emoji: "🌍", icon: Languages, url: null as string | null, builtin: "translator" as const },
     ],
   },
   {
@@ -55,14 +78,14 @@ const TOOLS = [
     items: [
       { name: "Météo", desc: "Prévisions météo de votre ville", emoji: "☀️", icon: Cloud, url: null as string | null, builtin: "weather" as const },
       { name: "Calculatrice", desc: "Calculs simples", emoji: "🔢", icon: Calculator, url: null as string | null, builtin: "calculator" as const },
-      { name: "Minuteur", desc: "Chronomètre et compte à rebours", emoji: "⏱️", icon: Timer, url: null as string | null, builtin: "timer" as const },
+      { name: "Minuteur & Alarme", desc: "Compte à rebours jusqu'à 4h", emoji: "⏱️", icon: Timer, url: null as string | null, builtin: "timer" as const },
+      { name: "Convertisseur", desc: "Température, poids, distance", emoji: "📐", icon: ArrowLeftRight, url: null as string | null, builtin: "converter" as const },
     ],
   },
   {
     category: "Sécurité & Localisation",
     items: [
       { name: "Ma position", desc: "Voir et partager votre position", emoji: "📍", icon: MapPin, url: null as string | null, builtin: "location" as const },
-      { name: "Lampe torche", desc: "Utiliser le flash de votre téléphone", emoji: "🔦", icon: Flashlight, url: null as string | null, builtin: "flashlight" as const },
     ],
   },
 ];
@@ -94,6 +117,8 @@ export function ToolsPage() {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRemaining, setTimerRemaining] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [customHours, setCustomHours] = useState("");
+  const [customMinutes, setCustomMinutes] = useState("");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Location state
@@ -101,6 +126,33 @@ export function ToolsPage() {
   const [locationCoords, setLocationCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [locationCopied, setLocationCopied] = useState(false);
+
+  // Converter state
+  const [convCategory, setConvCategory] = useState<"temperature" | "weight" | "distance">("temperature");
+  const [convInput, setConvInput] = useState("");
+  const [convResult, setConvResult] = useState<string | null>(null);
+  const [convDirection, setConvDirection] = useState(0); // index of conversion pair
+
+  const conversionPairs = {
+    temperature: [
+      { label: "°C → °F", from: "°C", to: "°F", fn: (v: number) => v * 9 / 5 + 32 },
+      { label: "°F → °C", from: "°F", to: "°C", fn: (v: number) => (v - 32) * 5 / 9 },
+    ],
+    weight: [
+      { label: "kg → lbs", from: "kg", to: "lbs", fn: (v: number) => v * 2.20462 },
+      { label: "lbs → kg", from: "lbs", to: "kg", fn: (v: number) => v / 2.20462 },
+      { label: "g → oz", from: "g", to: "oz", fn: (v: number) => v * 0.035274 },
+      { label: "oz → g", from: "oz", to: "g", fn: (v: number) => v / 0.035274 },
+    ],
+    distance: [
+      { label: "km → miles", from: "km", to: "miles", fn: (v: number) => v * 0.621371 },
+      { label: "miles → km", from: "miles", to: "km", fn: (v: number) => v / 0.621371 },
+      { label: "m → pieds", from: "m", to: "pieds", fn: (v: number) => v * 3.28084 },
+      { label: "pieds → m", from: "pieds", to: "m", fn: (v: number) => v / 3.28084 },
+      { label: "cm → pouces", from: "cm", to: "pouces", fn: (v: number) => v * 0.393701 },
+      { label: "pouces → cm", from: "pouces", to: "cm", fn: (v: number) => v / 0.393701 },
+    ],
+  };
 
   // ── Handlers ──
 
@@ -141,7 +193,6 @@ export function ToolsPage() {
     return result;
   };
 
-  // Calculator — safe evaluation without eval/new Function
   const handleCalc = () => {
     try {
       const sanitized = calcInput.replace(/[^0-9+\-*/.() ]/g, "").trim();
@@ -188,23 +239,55 @@ export function ToolsPage() {
     toast.success("Traduction copiée !");
   };
 
-  // Weather
-  const fetchWeather = useCallback(async (city: string) => {
+  // Weather — with precise geocoding via Nominatim first
+  const fetchWeatherByCoords = useCallback(async (lat: number, lon: number, displayName: string) => {
     setWeatherLoading(true);
     setWeatherError(null);
     try {
-      const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1&lang=fr`);
-      if (!res.ok) throw new Error("Ville non trouvée");
+      const res = await fetch(`https://wttr.in/${lat},${lon}?format=j1&lang=fr`);
+      if (!res.ok) throw new Error("Météo non disponible");
       const data = await res.json();
       setWeatherData(data);
-      setWeatherCity(data.nearest_area?.[0]?.areaName?.[0]?.value || city);
+      setWeatherCity(displayName);
     } catch {
-      setWeatherError("Impossible de charger la météo. Vérifiez le nom de la ville.");
+      setWeatherError("Impossible de charger la météo.");
       setWeatherData(null);
     } finally {
       setWeatherLoading(false);
     }
   }, []);
+
+  const fetchWeather = useCallback(async (city: string) => {
+    if (!city.trim()) return;
+    setWeatherLoading(true);
+    setWeatherError(null);
+    try {
+      // Step 1: Geocode the city name to precise coordinates via Nominatim
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&accept-language=fr`
+      );
+      const geoData = await geoRes.json();
+
+      if (!geoData || geoData.length === 0) {
+        setWeatherError("Ville non trouvée. Vérifiez l'orthographe.");
+        setWeatherData(null);
+        setWeatherLoading(false);
+        return;
+      }
+
+      const { lat, lon, display_name } = geoData[0];
+      // Extract clean city name from display_name (first part before comma)
+      const cleanName = display_name.split(",")[0].trim();
+      setWeatherCity(cleanName);
+
+      // Step 2: Fetch weather using precise coordinates
+      await fetchWeatherByCoords(parseFloat(lat), parseFloat(lon), cleanName);
+    } catch {
+      setWeatherError("Impossible de charger la météo. Vérifiez le nom de la ville.");
+      setWeatherData(null);
+      setWeatherLoading(false);
+    }
+  }, [fetchWeatherByCoords]);
 
   const handleWeatherAutoDetect = () => {
     if (!navigator.geolocation) {
@@ -222,40 +305,63 @@ export function ToolsPage() {
           );
           const geoData = await geoRes.json();
           const city = geoData.address?.city || geoData.address?.town || geoData.address?.village || geoData.address?.municipality || "Paris";
-          setWeatherCity(city);
-          fetchWeather(city);
+          await fetchWeatherByCoords(latitude, longitude, city);
         } catch {
-          fetchWeather("Paris");
+          setWeatherLoading(false);
+          toast.error("Impossible de détecter votre position.");
         }
       },
       () => {
         setWeatherLoading(false);
         toast.error("Position non disponible. Entrez votre ville.");
       },
-      { timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
-  // Timer
+  // Timer with notification support
+  const playAlarmSound = () => {
+    try {
+      const ctx = new AudioContext();
+      // Play 3 beeps
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.value = 0.4;
+        osc.start(ctx.currentTime + i * 0.6);
+        osc.stop(ctx.currentTime + i * 0.6 + 0.4);
+      }
+      setTimeout(() => ctx.close(), 3000);
+    } catch { /* silent fallback */ }
+  };
+
+  const sendTimerNotification = () => {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Oscar — Minuteur terminé !", {
+        body: "Votre minuteur est arrivé à zéro.",
+        icon: "/favicon.ico",
+      });
+    }
+  };
+
+  const requestNotificationPermission = () => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  };
+
   useEffect(() => {
     if (timerRunning && timerRemaining > 0) {
       timerRef.current = setInterval(() => {
         setTimerRemaining(prev => {
           if (prev <= 1) {
             setTimerRunning(false);
-            // Beep sound
-            try {
-              const ctx = new AudioContext();
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.connect(gain);
-              gain.connect(ctx.destination);
-              osc.frequency.value = 800;
-              gain.gain.value = 0.3;
-              osc.start();
-              setTimeout(() => { osc.stop(); ctx.close(); }, 500);
-            } catch { /* silent fallback */ }
-            toast.success("Temps écoulé !", { duration: 10000 });
+            playAlarmSound();
+            sendTimerNotification();
+            toast.success("⏰ Temps écoulé !", { duration: 15000 });
             return 0;
           }
           return prev - 1;
@@ -267,13 +373,29 @@ export function ToolsPage() {
     };
   }, [timerRunning, timerRemaining]);
 
+  const startCustomTimer = () => {
+    const h = parseInt(customHours) || 0;
+    const m = parseInt(customMinutes) || 0;
+    const total = h * 3600 + m * 60;
+    if (total <= 0) { toast.error("Entrez une durée valide"); return; }
+    if (total > 24 * 3600) { toast.error("Maximum 24 heures"); return; }
+    requestNotificationPermission();
+    setTimerSeconds(total);
+    setTimerRemaining(total);
+    setTimerRunning(true);
+  };
+
   const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
+    if (h > 0) {
+      return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
+    }
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
 
-  // Location (enhanced with reverse geocoding)
+  // Location
   const handleLocation = () => {
     if (!navigator.geolocation) {
       setLocationText("Géolocalisation non disponible sur cet appareil.");
@@ -316,6 +438,16 @@ export function ToolsPage() {
     setLocationCopied(true);
     setTimeout(() => setLocationCopied(false), 2000);
     toast.success("Adresse copiée !");
+  };
+
+  // Converter
+  const handleConvert = () => {
+    const value = parseFloat(convInput);
+    if (isNaN(value)) { setConvResult(null); return; }
+    const pairs = conversionPairs[convCategory];
+    const pair = pairs[convDirection % pairs.length];
+    const result = pair.fn(value);
+    setConvResult(`${value} ${pair.from} = ${result.toFixed(2)} ${pair.to}`);
   };
 
   const handleToolClick = (tool: typeof TOOLS[0]["items"][0]) => {
@@ -406,12 +538,15 @@ export function ToolsPage() {
                 type="text"
                 value={weatherCity}
                 onChange={e => setWeatherCity(e.target.value)}
-                placeholder="Votre ville..."
+                placeholder="Votre ville (ex: Le Mans)..."
                 className="flex-1 p-2.5 rounded-lg border border-border bg-background text-foreground text-sm"
                 onKeyDown={e => e.key === "Enter" && fetchWeather(weatherCity)}
               />
               <Button size="sm" onClick={() => fetchWeather(weatherCity)} disabled={weatherLoading || !weatherCity.trim()}>
                 {weatherLoading ? "..." : "OK"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleWeatherAutoDetect} disabled={weatherLoading} title="Détecter ma position">
+                <LocateFixed className="w-4 h-4" />
               </Button>
             </div>
 
@@ -439,6 +574,7 @@ export function ToolsPage() {
 
                 {/* 3-day forecast */}
                 <div className="grid grid-cols-3 gap-2">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {weatherData.weather?.slice(0, 3).map((day: any, i: number) => {
                     const date = new Date(day.date);
                     const dayName = i === 0 ? "Auj." : date.toLocaleDateString("fr-FR", { weekday: "short" });
@@ -465,17 +601,60 @@ export function ToolsPage() {
           <div className="bg-card rounded-xl p-4 border border-border mt-2 space-y-4">
             {timerSeconds === 0 ? (
               <>
-                <p className="text-sm text-muted-foreground">Choisissez une durée :</p>
+                <p className="text-sm text-muted-foreground">Durées rapides :</p>
                 <div className="flex flex-wrap gap-2">
                   {TIMER_PRESETS.map(p => (
                     <button
                       key={p.seconds}
-                      onClick={() => { setTimerSeconds(p.seconds); setTimerRemaining(p.seconds); }}
+                      onClick={() => {
+                        requestNotificationPermission();
+                        setTimerSeconds(p.seconds);
+                        setTimerRemaining(p.seconds);
+                        setTimerRunning(true);
+                      }}
                       className="px-4 py-2.5 rounded-xl border border-border bg-secondary text-foreground font-medium text-sm hover:border-primary transition-colors"
                     >
                       {p.label}
                     </button>
                   ))}
+                </div>
+
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Bell className="w-4 h-4" />
+                    Durée personnalisée :
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        min="0"
+                        max="23"
+                        value={customHours}
+                        onChange={e => setCustomHours(e.target.value)}
+                        placeholder="0"
+                        className="w-full p-2.5 rounded-lg border border-border bg-background text-foreground text-center text-lg"
+                      />
+                      <p className="text-xs text-muted-foreground text-center mt-1">heures</p>
+                    </div>
+                    <span className="text-xl font-bold text-muted-foreground">:</span>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={customMinutes}
+                        onChange={e => setCustomMinutes(e.target.value)}
+                        placeholder="0"
+                        className="w-full p-2.5 rounded-lg border border-border bg-background text-foreground text-center text-lg"
+                      />
+                      <p className="text-xs text-muted-foreground text-center mt-1">minutes</p>
+                    </div>
+                    <Button onClick={startCustomTimer} className="self-start">
+                      <Play className="w-4 h-4 mr-1" />
+                      Go
+                    </Button>
+                  </div>
                 </div>
               </>
             ) : (
@@ -495,15 +674,73 @@ export function ToolsPage() {
                   <Button
                     variant="outline"
                     className="gap-2"
-                    onClick={() => { setTimerRunning(false); setTimerSeconds(0); setTimerRemaining(0); }}
+                    onClick={() => { setTimerRunning(false); setTimerSeconds(0); setTimerRemaining(0); setCustomHours(""); setCustomMinutes(""); }}
                   >
                     <RotateCcw className="w-4 h-4" />
                   </Button>
                 </div>
                 {timerRemaining === 0 && timerSeconds > 0 && (
-                  <p className="text-center text-lg font-bold text-green-600">Temps écoulé !</p>
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-green-600">⏰ Temps écoulé !</p>
+                  </div>
                 )}
               </>
+            )}
+          </div>
+        );
+
+      case "converter":
+        return (
+          <div className="bg-card rounded-xl p-4 border border-border mt-2 space-y-3">
+            {/* Category tabs */}
+            <div className="flex gap-2">
+              {(["temperature", "weight", "distance"] as const).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => { setConvCategory(cat); setConvDirection(0); setConvResult(null); setConvInput(""); }}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    convCategory === cat
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  {cat === "temperature" ? "🌡️ Temp." : cat === "weight" ? "⚖️ Poids" : "📏 Distance"}
+                </button>
+              ))}
+            </div>
+
+            {/* Conversion direction */}
+            <div className="flex flex-wrap gap-1.5">
+              {conversionPairs[convCategory].map((pair, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setConvDirection(i); setConvResult(null); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    convDirection === i
+                      ? "bg-primary/20 text-primary border border-primary/30"
+                      : "bg-secondary text-muted-foreground border border-transparent"
+                  }`}
+                >
+                  {pair.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={convInput}
+                onChange={e => setConvInput(e.target.value)}
+                placeholder={`Valeur en ${conversionPairs[convCategory][convDirection % conversionPairs[convCategory].length].from}`}
+                className="flex-1 p-3 rounded-lg border border-border bg-background text-foreground text-lg"
+                onKeyDown={e => e.key === "Enter" && handleConvert()}
+              />
+              <Button onClick={handleConvert}>Convertir</Button>
+            </div>
+
+            {convResult && (
+              <p className="text-center text-lg font-bold text-primary">{convResult}</p>
             )}
           </div>
         );
@@ -575,9 +812,7 @@ export function ToolsPage() {
                       <h3 className="font-semibold text-foreground">{tool.name}</h3>
                       <p className="text-sm text-muted-foreground">{tool.desc}</p>
                     </div>
-                    {tool.url ? (
-                      <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                    ) : "builtin" in tool && openTool === tool.builtin ? (
+                    {"builtin" in tool && openTool === tool.builtin ? (
                       <ChevronUp className="w-5 h-5 text-primary flex-shrink-0" />
                     ) : (
                       <ChevronDown className="w-5 h-5 text-primary flex-shrink-0" />
