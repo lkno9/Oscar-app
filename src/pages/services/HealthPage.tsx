@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, CalendarDays, Lightbulb, ExternalLink, Dumbbell, MapPin, Loader2, Phone, Navigation } from "lucide-react";
+import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, CalendarDays, Lightbulb, ExternalLink, Dumbbell, MapPin, Loader2, Phone, Navigation, Bell, BellOff } from "lucide-react";
 import { getCurrentPosition, reverseGeocode, formatDistance, googleMapsDirectionsUrl, type Coordinates } from "@/lib/geo";
 import { searchNearbyPOIs, getPOIEmoji, type OverpassPOI, type POIType } from "@/lib/overpass";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -103,6 +104,9 @@ export function HealthPage() {
   const [dosage, setDosage] = useState("");
   const [frequency, setFrequency] = useState("");
   const [notes, setNotes] = useState("");
+  const [reminderTime, setReminderTime] = useState("");
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [medReminders, setMedReminders] = useState<Record<string, { eventId: string; time: string | null }>>({});
   const [todayMood, setTodayMood] = useState<number | null>(null);
   const [savingMood, setSavingMood] = useState(false);
   const dailyTip = WELLNESS_TIPS[new Date().getDay() % WELLNESS_TIPS.length];
@@ -175,12 +179,13 @@ export function HealthPage() {
 
   const fetchAll = async () => {
     const today = new Date().toISOString().split("T")[0];
-    const [medsRes, moodRes, eventsRes] = await Promise.all([
+    const [medsRes, moodRes, eventsRes, medEventsRes] = await Promise.all([
       supabase.from("medications").select("*").eq("user_id", user!.id).order("name"),
       supabase.from("mood_entries").select("*").eq("user_id", user!.id).order("entry_date", { ascending: false }).limit(7),
       supabase.from("events").select("*").eq("user_id", user!.id).gte("event_date", today)
         .in("event_type", ["medical", "health"])
         .order("event_date").limit(5),
+      supabase.from("events").select("*").eq("user_id", user!.id).eq("event_type", "medication").eq("reminder", true),
     ]);
     if (medsRes.data) setMedications(medsRes.data);
     if (moodRes.data) {
@@ -189,27 +194,46 @@ export function HealthPage() {
       if (todayEntry) setTodayMood(todayEntry.mood_level);
     }
     if (eventsRes.data) setUpcomingEvents(eventsRes.data);
+    if (medEventsRes.data) {
+      const map: Record<string, { eventId: string; time: string | null }> = {};
+      for (const ev of medEventsRes.data) {
+        // description stores the medication ID
+        if (ev.description) map[ev.description] = { eventId: ev.id, time: ev.event_time };
+      }
+      setMedReminders(map);
+    }
     setLoading(false);
   };
 
   const handleAddMed = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) { toast.error("Veuillez entrer un nom de médicament"); return; }
-    const { error } = await supabase.from("medications").insert({
+    const { data: medData, error } = await supabase.from("medications").insert({
       user_id: user?.id,
       name,
       dosage: dosage || null,
       frequency: frequency || null,
       notes: notes || null,
       is_active: true,
-    });
-    if (error) { toast.error("Erreur lors de l'ajout"); } 
-    else {
-      toast.success("Médicament ajouté !");
-      setName(""); setDosage(""); setFrequency(""); setNotes("");
-      setShowForm(false);
-      fetchAll();
+    }).select().single();
+    if (error) { toast.error("Erreur lors de l'ajout"); return; }
+    // Create reminder event if enabled
+    if (reminderEnabled && medData) {
+      const today = new Date().toISOString().split("T")[0];
+      await supabase.from("events").insert({
+        user_id: user?.id,
+        title: `💊 ${name}${dosage ? " — " + dosage : ""}`,
+        description: medData.id,
+        event_date: today,
+        event_time: reminderTime || null,
+        event_type: "medication",
+        reminder: true,
+      });
     }
+    toast.success(reminderEnabled ? "Médicament ajouté avec rappel !" : "Médicament ajouté !");
+    setName(""); setDosage(""); setFrequency(""); setNotes(""); setReminderTime(""); setReminderEnabled(false);
+    setShowForm(false);
+    fetchAll();
   };
 
   const toggleActive = async (id: string, current: boolean) => {
@@ -220,9 +244,37 @@ export function HealthPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce médicament ?")) return;
+    // Also delete associated reminder event
+    const reminder = medReminders[id];
+    if (reminder) {
+      await supabase.from("events").delete().eq("id", reminder.eventId);
+    }
     const { error } = await supabase.from("medications").delete().eq("id", id);
     if (error) toast.error("Erreur lors de la suppression");
     else toast.success("Médicament supprimé");
+    fetchAll();
+  };
+
+  const toggleMedReminder = async (med: Medication) => {
+    const existing = medReminders[med.id];
+    if (existing) {
+      // Remove reminder
+      await supabase.from("events").delete().eq("id", existing.eventId);
+      toast.success(`Rappel supprimé pour "${med.name}"`);
+    } else {
+      // Create reminder — default to 08:00 if no time
+      const today = new Date().toISOString().split("T")[0];
+      await supabase.from("events").insert({
+        user_id: user?.id,
+        title: `💊 ${med.name}${med.dosage ? " — " + med.dosage : ""}`,
+        description: med.id,
+        event_date: today,
+        event_time: "08:00",
+        event_type: "medication",
+        reminder: true,
+      });
+      toast.success(`Rappel ajouté pour "${med.name}" à 08h00`);
+    }
     fetchAll();
   };
 
@@ -322,6 +374,29 @@ export function HealthPage() {
                   <Label htmlFor="notes">Notes</Label>
                   <Input id="notes" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Informations supplémentaires" />
                 </div>
+                {/* Rappel Oscar */}
+                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-primary" />
+                      <Label htmlFor="med-reminder" className="font-semibold text-foreground cursor-pointer">Rappel Oscar</Label>
+                    </div>
+                    <Switch id="med-reminder" checked={reminderEnabled} onCheckedChange={setReminderEnabled} />
+                  </div>
+                  {reminderEnabled && (
+                    <div className="space-y-2">
+                      <Label htmlFor="reminder-time" className="text-sm text-muted-foreground">Heure de prise</Label>
+                      <Input
+                        id="reminder-time"
+                        type="time"
+                        value={reminderTime}
+                        onChange={e => setReminderTime(e.target.value)}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">Oscar vous rappellera chaque jour à cette heure.</p>
+                    </div>
+                  )}
+                </div>
                 <Button type="submit" className="w-full min-h-[48px]">Ajouter</Button>
               </form>
             )}
@@ -351,31 +426,51 @@ export function HealthPage() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 {loading ? "Chargement..." : medications.length > 0 ? "Mes médicaments" : "Aucun médicament"}
               </h2>
-              {medications.map(med => (
-                <div key={med.id} className="bg-card rounded-xl p-4 shadow-sm border border-border">
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => toggleActive(med.id, med.is_active)}
-                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${med.is_active ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}
-                    >
-                      {med.is_active ? <Check className="w-6 h-6 text-green-600" /> : <Pill className="w-6 h-6 text-muted-foreground" />}
-                    </button>
-                    <div className="flex-1">
-                      <h3 className={`font-semibold ${med.is_active ? "text-foreground" : "text-muted-foreground line-through"}`}>{med.name}</h3>
-                      {med.dosage && <p className="text-sm text-muted-foreground">{med.dosage}</p>}
-                      {med.frequency && (
-                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-secondary rounded-full text-sm text-foreground">
-                          <Clock className="w-3 h-3" />{med.frequency}
-                        </span>
-                      )}
+              {medications.map(med => {
+                const reminder = medReminders[med.id];
+                return (
+                  <div key={med.id} className="bg-card rounded-xl p-4 shadow-sm border border-border space-y-3">
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => toggleActive(med.id, med.is_active)}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors flex-shrink-0 ${med.is_active ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}
+                      >
+                        {med.is_active ? <Check className="w-6 h-6 text-green-600" /> : <Pill className="w-6 h-6 text-muted-foreground" />}
+                      </button>
+                      <div className="flex-1">
+                        <h3 className={`font-semibold ${med.is_active ? "text-foreground" : "text-muted-foreground line-through"}`}>{med.name}</h3>
+                        {med.dosage && <p className="text-sm text-muted-foreground">{med.dosage}</p>}
+                        {med.frequency && (
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-secondary rounded-full text-sm text-foreground">
+                            <Clock className="w-3 h-3" />{med.frequency}
+                          </span>
+                        )}
+                      </div>
+                      <button onClick={() => handleDelete(med.id)} className="p-2 hover:bg-destructive/10 rounded-full transition-colors">
+                        <Trash2 className="w-5 h-5 text-destructive" />
+                      </button>
                     </div>
-                    <button onClick={() => handleDelete(med.id)} className="p-2 hover:bg-destructive/10 rounded-full transition-colors">
-                      <Trash2 className="w-5 h-5 text-destructive" />
-                    </button>
+                    {med.notes && <p className="text-sm text-muted-foreground">{med.notes}</p>}
+                    {/* Reminder row */}
+                    <div className="flex items-center gap-2 pt-1 border-t border-border">
+                      <button
+                        onClick={() => toggleMedReminder(med)}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium transition-all ${
+                          reminder
+                            ? "bg-primary/10 text-primary border border-primary/20"
+                            : "border border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                        }`}
+                      >
+                        {reminder ? (
+                          <><Bell className="w-4 h-4" /> Rappel à {reminder.time || "08:00"}</>
+                        ) : (
+                          <><BellOff className="w-4 h-4" /> Me rappeler</>
+                        )}
+                      </button>
+                    </div>
                   </div>
-                  {med.notes && <p className="mt-2 text-sm text-muted-foreground">{med.notes}</p>}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </TabsContent>
 
