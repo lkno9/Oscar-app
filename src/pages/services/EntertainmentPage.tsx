@@ -13,7 +13,6 @@ interface EventSuggestion {
   lieu: string;
   date: string;
   conseilPratique: string;
-  source?: { name: string; url: string };
 }
 
 interface LeisurePreference {
@@ -32,7 +31,6 @@ const MOCK_EVENTS: EventSuggestion[] = [
     lieu: "Cinéma Le Champo, Paris 5e",
     date: "Mercredi 2 avril — 14h30",
     conseilPratique: "Séance accessible en fauteuil roulant · Tarif senior 7,50 €",
-    source: { name: "Le Champo", url: "https://www.lechampo.com" },
   },
   {
     id: "2",
@@ -42,7 +40,6 @@ const MOCK_EVENTS: EventSuggestion[] = [
     lieu: "Philharmonie de Paris, 19e",
     date: "Samedi 5 avril — 20h00",
     conseilPratique: "Métro ligne 5 arrêt Porte de Pantin · Places à tarif réduit le jour-même",
-    source: { name: "Philharmonie de Paris", url: "https://philharmoniedeparis.fr" },
   },
   {
     id: "3",
@@ -52,7 +49,6 @@ const MOCK_EVENTS: EventSuggestion[] = [
     lieu: "Musée d'Orsay, Paris 7e",
     date: "Jusqu'au 15 avril — Entrée gratuite le 1er dimanche",
     conseilPratique: "Entrée gratuite ce dimanche · Accès direct par le RER C Musée d'Orsay",
-    source: { name: "Musée d'Orsay", url: "https://www.musee-orsay.fr" },
   },
   {
     id: "4",
@@ -62,7 +58,6 @@ const MOCK_EVENTS: EventSuggestion[] = [
     lieu: "Jardin des Plantes, Paris 5e",
     date: "Dimanche 6 avril — 10h00",
     conseilPratique: "Gratuit · Parcours adapté aux personnes à mobilité réduite · Bus ligne 89 s'arrête devant",
-    source: { name: "Jardin des Plantes", url: "https://www.jardindesplantesdeparis.fr" },
   },
 ];
 
@@ -230,21 +225,9 @@ export function EntertainmentPage() {
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all border-2 border-primary/20 text-primary hover:bg-primary/5"
                       >
                         <Send className="w-4 h-4" />
-                        Partager
+                        Partager avec ma famille
                       </button>
                     </div>
-
-                    {/* Source */}
-                    {event.source && (
-                      <a
-                        href={event.source.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-primary/70 hover:text-primary transition-colors underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60"
-                      >
-                        Source : {event.source.name} →
-                      </a>
-                    )}
                   </div>
                 ))}
               </div>
