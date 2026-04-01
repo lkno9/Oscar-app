@@ -80,11 +80,6 @@ const NEARBY_HEALTH = [
   { name: "Médecin près de chez moi", desc: "Annuaire des professionnels de santé", url: "https://annuaire.sante.fr/web/site-pro/recherche-avancee", emoji: "👨‍⚕️" },
 ];
 
-const SPORT_LINKS = [
-  { name: "FFEPGV", desc: "Fédération sport pour tous, gym volontaire", url: "https://www.sport-sante.fr", emoji: "🤸" },
-  { name: "Randonnée France", desc: "Clubs et parcours de randonnée", url: "https://www.ffrandonnee.fr", emoji: "🥾" },
-  { name: "Gym seniors", desc: "Trouver un cours adapté près de chez vous", url: "https://www.pagesjaunes.fr/annuaire/chercherdans?quoiqui=gym+seniors&ou=", emoji: "💪" },
-];
 
 const EXERCISES = [
   { name: "Marche douce", desc: "20-30 min de marche à votre rythme, idéal chaque matin", emoji: "🚶", level: "Facile" },
@@ -777,30 +772,6 @@ export function HealthPage() {
               </div>
             )}
 
-            {/* Sport links — en ligne */}
-            <div className="flex items-center gap-3 pt-2">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Ressources en ligne</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            <div className="space-y-3">
-              {SPORT_LINKS.map((s, i) => (
-                <button
-                  key={i}
-                  onClick={() => window.open(s.url, "_blank")}
-                  className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-primary transition-all text-left"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
-                    {s.emoji}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground">{s.name}</h3>
-                    <p className="text-sm text-muted-foreground">{s.desc}</p>
-                  </div>
-                  <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                </button>
-              ))}
-            </div>
           </TabsContent>
 
           {/* WELLNESS TIPS TAB */}
