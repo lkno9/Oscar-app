@@ -23,7 +23,7 @@ import { ServiceTile } from "@/components/ServiceTile";
 const PRIMARY_SERVICES = [
   { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda", path: "/services/agenda" },
   { icon: <Heart className="w-6 h-6" />, label: "Ma santé & bien-être", path: "/services/health" },
-  { icon: <Image className="w-6 h-6" />, label: "Mon album photos", path: "/services/photos" },
+  { icon: <Image className="w-6 h-6" />, label: "Photos & souvenirs", path: "/services/photos" },
   { icon: <MessageCircle className="w-6 h-6" />, label: "Mes communications", path: "/services/communication" },
   { icon: <Navigation className="w-6 h-6" />, label: "Mes déplacements", path: "/services/transport" },
   { icon: <Ticket className="w-6 h-6" />, label: "Mes loisirs & sorties", path: "/services/entertainment" },

@@ -1,4 +1,4 @@
-import { ArrowLeft, Image, Camera, X, Trash2, Heart, Users, ZoomIn, BookOpen, Plus, Save } from "lucide-react";
+import { ArrowLeft, Image, Camera, X, Trash2, Heart, Users, ZoomIn, BookOpen, Plus, Save, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +21,7 @@ interface JournalEntry {
   id: string;
   content: string;
   title: string | null;
+  images: string[]; // URLs of attached images
   created_at: string;
 }
 
@@ -43,14 +44,23 @@ export function PhotosPage() {
   const [showJournalForm, setShowJournalForm] = useState(false);
   const [journalTitle, setJournalTitle] = useState("");
   const [journalContent, setJournalContent] = useState("");
+  const [journalImages, setJournalImages] = useState<string[]>([]);
+  const [journalUploading, setJournalUploading] = useState(false);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const journalFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) fetchPhotos();
-    // Load journal from localStorage
+    // Load journal from localStorage (migrate old entries without images field)
     try {
       const stored = localStorage.getItem(JOURNAL_STORAGE_KEY);
-      if (stored) setJournalEntries(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Ensure backward compat: add images field if missing
+        const migrated = parsed.map((e: any) => ({ ...e, images: e.images || [] }));
+        setJournalEntries(migrated);
+      }
     } catch {
       // Ignore corrupted localStorage data
     }
@@ -64,9 +74,7 @@ export function PhotosPage() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (data) {
-      // My photos — all uploaded by user
       setPhotos(data.filter(p => p.album !== "family_received"));
-      // Family-sent photos
       setReceivedPhotos(data.filter(p => p.album === "family_received"));
     }
     setLoading(false);
@@ -76,13 +84,11 @@ export function PhotosPage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate size before upload
     const sizeErr = validateStorageSize(file);
     if (sizeErr) { toast.error(sizeErr); return; }
 
     setUploading(true);
     try {
-      // Compress image for storage (handles HEIC, large photos, etc.)
       const compressed = await compressForUpload(file);
       const fileExt = compressed.name.split(".").pop() || "jpg";
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
@@ -105,10 +111,8 @@ export function PhotosPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette photo ?")) return;
-    // Find the photo to get its storage path
     const photo = [...photos, ...receivedPhotos].find(p => p.id === id);
     if (photo?.url && user) {
-      // Extract storage path from public URL
       const match = photo.url.match(/user-files\/(.+)$/);
       if (match) {
         await supabase.storage.from("user-files").remove([match[1]]);
@@ -132,12 +136,46 @@ export function PhotosPage() {
     catch { return d; }
   };
 
+  // ─── Journal handlers ──────────────────────────────────
+
+  const handleJournalImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const sizeErr = validateStorageSize(file);
+    if (sizeErr) { toast.error(sizeErr); return; }
+
+    setJournalUploading(true);
+    try {
+      const compressed = await compressForUpload(file);
+      const fileExt = compressed.name.split(".").pop() || "jpg";
+      const fileName = `${user.id}/journal/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("user-files").upload(fileName, compressed);
+      if (uploadError) { toast.error("Erreur lors de l'upload de l'image"); setJournalUploading(false); return; }
+      const { data: { publicUrl } } = supabase.storage.from("user-files").getPublicUrl(fileName);
+      setJournalImages(prev => [...prev, publicUrl]);
+      toast.success("Image ajoutée !");
+    } catch {
+      toast.error("Impossible de traiter cette image.");
+    }
+    setJournalUploading(false);
+    e.target.value = "";
+  };
+
+  const removeJournalImage = (index: number) => {
+    setJournalImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const saveJournalEntry = () => {
-    if (!journalContent.trim()) { toast.error("Écrivez quelque chose avant de sauvegarder"); return; }
+    if (!journalContent.trim() && journalImages.length === 0) {
+      toast.error("Écrivez quelque chose ou ajoutez une image");
+      return;
+    }
     const entry: JournalEntry = {
       id: Date.now().toString(),
       title: journalTitle.trim() || null,
       content: journalContent.trim(),
+      images: journalImages,
       created_at: new Date().toISOString(),
     };
     const updated = [entry, ...journalEntries];
@@ -145,8 +183,9 @@ export function PhotosPage() {
     localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(updated));
     setJournalTitle("");
     setJournalContent("");
+    setJournalImages([]);
     setShowJournalForm(false);
-    toast.success("Pensée enregistrée !");
+    toast.success("Souvenir enregistré !");
   };
 
   const deleteJournalEntry = (id: string) => {
@@ -245,16 +284,20 @@ export function PhotosPage() {
 
           {/* JOURNAL TAB */}
           <TabsContent value="journal" className="flex-1 overflow-y-auto p-4 space-y-4 pb-8 mt-0">
+            <input type="file" ref={journalFileRef} className="hidden" accept={IMAGE_ACCEPT} onChange={handleJournalImageUpload} />
+
             {!showJournalForm ? (
               <Button className="w-full min-h-[56px] gap-2" size="lg" onClick={() => setShowJournalForm(true)}>
                 <Plus className="w-5 h-5" />
-                Écrire une pensée
+                Écrire un souvenir
               </Button>
             ) : (
               <div className="bg-card rounded-xl p-4 border border-border space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-foreground">Nouvelle entrée</h3>
-                  <button onClick={() => setShowJournalForm(false)}><X className="w-5 h-5 text-muted-foreground" /></button>
+                  <button onClick={() => { setShowJournalForm(false); setJournalImages([]); }}>
+                    <X className="w-5 h-5 text-muted-foreground" />
+                  </button>
                 </div>
                 <Input
                   value={journalTitle}
@@ -265,13 +308,43 @@ export function PhotosPage() {
                   value={journalContent}
                   onChange={e => setJournalContent(e.target.value)}
                   placeholder="Écrivez ici vos pensées, vos souvenirs, vos poèmes... C'est votre espace privé."
-                  className="w-full min-h-[150px] p-3 rounded-lg border border-border bg-background text-foreground text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full min-h-[120px] p-3 rounded-lg border border-border bg-background text-foreground text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
                   autoFocus
                 />
-                <Button className="w-full min-h-[48px] gap-2" onClick={saveJournalEntry}>
-                  <Save className="w-5 h-5" />
-                  Enregistrer
-                </Button>
+
+                {/* Journal images preview */}
+                {journalImages.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {journalImages.map((url, i) => (
+                      <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden bg-secondary">
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => removeJournalImage(i)}
+                          className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => journalFileRef.current?.click()}
+                    disabled={journalUploading}
+                  >
+                    <ImagePlus className="w-4 h-4" />
+                    {journalUploading ? "..." : "Image"}
+                  </Button>
+                  <Button className="flex-1 min-h-[48px] gap-2" onClick={saveJournalEntry}>
+                    <Save className="w-5 h-5" />
+                    Enregistrer
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -279,7 +352,7 @@ export function PhotosPage() {
               <div className="bg-card rounded-xl p-8 text-center border border-border">
                 <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
                 <p className="text-foreground font-medium mb-1">Votre jardin secret est vide</p>
-                <p className="text-sm text-muted-foreground">Notez vos pensées, vos souvenirs, vos poèmes... C'est votre espace privé.</p>
+                <p className="text-sm text-muted-foreground">Notez vos pensées, ajoutez des photos, gardez vos souvenirs... C'est votre espace privé.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -289,10 +362,28 @@ export function PhotosPage() {
                       <div className="flex-1 min-w-0">
                         {entry.title && <h3 className="font-semibold text-foreground mb-1">{entry.title}</h3>}
                         <p className="text-sm text-muted-foreground mb-2">{formatDate(entry.created_at)}</p>
-                        <p className={`text-sm text-foreground whitespace-pre-wrap ${expandedEntry !== entry.id && entry.content.length > 150 ? "line-clamp-3" : ""}`}>
-                          {entry.content}
-                        </p>
-                        {entry.content.length > 150 && (
+
+                        {/* Entry images */}
+                        {entry.images && entry.images.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {entry.images.map((url, i) => (
+                              <button
+                                key={i}
+                                onClick={() => setPreviewImage(url)}
+                                className="w-24 h-24 rounded-lg overflow-hidden bg-secondary flex-shrink-0"
+                              >
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {entry.content && (
+                          <p className={`text-sm text-foreground whitespace-pre-wrap ${expandedEntry !== entry.id && entry.content.length > 150 ? "line-clamp-3" : ""}`}>
+                            {entry.content}
+                          </p>
+                        )}
+                        {entry.content && entry.content.length > 150 && (
                           <button
                             onClick={() => setExpandedEntry(expandedEntry === entry.id ? null : entry.id)}
                             className="text-sm text-primary font-medium mt-1"
@@ -313,7 +404,7 @@ export function PhotosPage() {
         </Tabs>
       </div>
 
-      {/* Fullscreen preview modal */}
+      {/* Fullscreen photo preview modal */}
       {previewPhoto && (
         <div className="fixed inset-0 z-50 bg-black/95 flex flex-col" onClick={() => { setPreviewPhoto(null); setEditingCaption(null); }}>
           <div className="flex items-center justify-between p-4" onClick={e => e.stopPropagation()}>
@@ -360,6 +451,16 @@ export function PhotosPage() {
               </p>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Fullscreen journal image preview */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center" onClick={() => setPreviewImage(null)}>
+          <button onClick={() => setPreviewImage(null)} className="absolute top-4 right-4 p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors z-10">
+            <X className="w-6 h-6" />
+          </button>
+          <img src={previewImage} alt="" className="max-w-full max-h-full object-contain rounded-xl p-4" onClick={e => e.stopPropagation()} />
         </div>
       )}
     </div>
