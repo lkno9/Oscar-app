@@ -230,17 +230,16 @@ export function EntertainmentPage() {
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all border-2 border-primary/20 text-primary hover:bg-primary/5"
                       >
                         <Send className="w-4 h-4" />
-                        Partager
+                        Partager avec ma famille
                       </button>
                     </div>
 
-                    {/* Source */}
                     {event.source && (
                       <a
                         href={event.source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-primary/70 hover:text-primary transition-colors underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60"
+                        className="text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors"
                       >
                         Source : {event.source.name} →
                       </a>
