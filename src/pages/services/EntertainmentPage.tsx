@@ -240,7 +240,7 @@ export function EntertainmentPage() {
                         href={event.source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-primary/70 hover:text-primary transition-colors underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60"
                       >
                         Source : {event.source.name} →
                       </a>
