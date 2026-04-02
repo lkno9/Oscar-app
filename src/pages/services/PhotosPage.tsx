@@ -1,4 +1,4 @@
-import { ArrowLeft, Image, Camera, X, Trash2, Heart, Users, ZoomIn, BookOpen, Plus, Save, ImagePlus } from "lucide-react";
+import { ArrowLeft, Image, Camera, X, Trash2, Heart, Users, ZoomIn, BookOpen, Plus, Save, ImagePlus, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,7 +7,7 @@ import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { IMAGE_ACCEPT, compressForUpload, validateStorageSize } from "@/lib/fileUtils";
+import { MEDIA_ACCEPT, IMAGE_ACCEPT, compressForUpload, validateStorageSize, isVideoFile, isVideoUrl } from "@/lib/fileUtils";
 
 interface Photo {
   id: string;
@@ -84,15 +84,26 @@ export function PhotosPage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    const sizeErr = validateStorageSize(file);
-    if (sizeErr) { toast.error(sizeErr); return; }
+    const isVideo = isVideoFile(file);
+
+    // Vidéos : limite à 50 Mo, images : 10 Mo
+    if (isVideo && file.size > 50 * 1024 * 1024) {
+      toast.error("La vidéo est trop lourde (max 50 Mo). Essayez une vidéo plus courte.");
+      e.target.value = "";
+      return;
+    }
+    const sizeErr = !isVideo ? validateStorageSize(file) : null;
+    if (sizeErr) { toast.error(sizeErr); e.target.value = ""; return; }
 
     setUploading(true);
     try {
-      const compressed = await compressForUpload(file);
-      const fileExt = compressed.name.split(".").pop() || "jpg";
+      // Compress images only, leave videos as-is
+      const toUpload = isVideo ? file : await compressForUpload(file);
+      const fileExt = toUpload.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from("user-files").upload(fileName, compressed);
+      const { error: uploadError } = await supabase.storage.from("user-files").upload(fileName, toUpload, {
+        contentType: toUpload.type,
+      });
       if (uploadError) { toast.error("Erreur lors de l'upload"); setUploading(false); return; }
       const { data: { publicUrl } } = supabase.storage.from("user-files").getPublicUrl(fileName);
       const { error: dbError } = await supabase.from("photos").insert({
@@ -101,9 +112,9 @@ export function PhotosPage() {
         title: null,
       });
       if (dbError) toast.error("Erreur lors de l'enregistrement");
-      else { toast.success("Photo ajoutée !"); fetchPhotos(); }
+      else { toast.success(isVideo ? "Vidéo ajoutée !" : "Photo ajoutée !"); fetchPhotos(); }
     } catch {
-      toast.error("Impossible de traiter cette photo. Essayez un autre format.");
+      toast.error("Impossible de traiter ce fichier. Essayez un autre format.");
     }
     setUploading(false);
     e.target.value = "";
@@ -224,11 +235,11 @@ export function PhotosPage() {
 
           {/* PHOTOS TAB */}
           <TabsContent value="photos" className="flex-1 overflow-y-auto p-4 space-y-6 pb-8 mt-0">
-            <input type="file" ref={fileInputRef} className="hidden" accept={IMAGE_ACCEPT} onChange={handlePhotoUpload} />
+            <input type="file" ref={fileInputRef} className="hidden" accept={MEDIA_ACCEPT} onChange={handlePhotoUpload} />
 
             <Button className="w-full min-h-[56px] gap-2" size="lg" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               <Camera className="w-6 h-6" />
-              {uploading ? "Envoi en cours..." : "Ajouter une photo"}
+              {uploading ? "Envoi en cours..." : "Ajouter une photo ou vidéo"}
             </Button>
 
             {receivedPhotos.length > 0 && (
@@ -240,10 +251,23 @@ export function PhotosPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {receivedPhotos.map(photo => (
                     <button key={photo.id} onClick={() => setPreviewPhoto(photo)} className="aspect-square rounded-xl overflow-hidden bg-secondary relative group">
-                      <img src={photo.url} alt={photo.title || ""} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Heart className="w-6 h-6 text-white" />
-                      </div>
+                      {isVideoUrl(photo.url) ? (
+                        <>
+                          <video src={photo.url} className="w-full h-full object-cover" muted preload="metadata" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+                              <Play className="w-5 h-5 text-white ml-0.5" />
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <img src={photo.url} alt={photo.title || ""} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Heart className="w-6 h-6 text-white" />
+                          </div>
+                        </>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -259,17 +283,30 @@ export function PhotosPage() {
               ) : photos.length === 0 ? (
                 <div className="bg-card rounded-xl p-8 text-center border border-border">
                   <Image className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-foreground font-medium mb-1">Aucune photo</p>
-                  <p className="text-sm text-muted-foreground">Appuyez sur "Ajouter une photo" pour commencer</p>
+                  <p className="text-foreground font-medium mb-1">Aucune photo ou vidéo</p>
+                  <p className="text-sm text-muted-foreground">Appuyez sur le bouton ci-dessus pour ajouter des photos ou vidéos</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-2">
                   {photos.map(photo => (
                     <button key={photo.id} onClick={() => setPreviewPhoto(photo)} className="aspect-square rounded-xl overflow-hidden bg-secondary relative group">
-                      <img src={photo.url} alt={photo.title || ""} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <ZoomIn className="w-5 h-5 text-white" />
-                      </div>
+                      {isVideoUrl(photo.url) ? (
+                        <>
+                          <video src={photo.url} className="w-full h-full object-cover" muted preload="metadata" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+                              <Play className="w-5 h-5 text-white ml-0.5" />
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <img src={photo.url} alt={photo.title || ""} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <ZoomIn className="w-5 h-5 text-white" />
+                          </div>
+                        </>
+                      )}
                       {photo.title && (
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                           <p className="text-white text-sm truncate">{photo.title}</p>
@@ -428,7 +465,17 @@ export function PhotosPage() {
             </div>
           </div>
           <div className="flex-1 flex items-center justify-center p-4" onClick={e => e.stopPropagation()}>
-            <img src={previewPhoto.url} alt={previewPhoto.title || ""} className="max-w-full max-h-full object-contain rounded-xl" />
+            {isVideoUrl(previewPhoto.url) ? (
+              <video
+                src={previewPhoto.url}
+                controls
+                autoPlay
+                className="max-w-full max-h-full rounded-xl"
+                style={{ background: "#000" }}
+              />
+            ) : (
+              <img src={previewPhoto.url} alt={previewPhoto.title || ""} className="max-w-full max-h-full object-contain rounded-xl" />
+            )}
           </div>
           <div className="p-4" onClick={e => e.stopPropagation()}>
             {editingCaption === previewPhoto.id ? (

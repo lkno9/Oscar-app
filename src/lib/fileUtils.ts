@@ -35,6 +35,11 @@ const COMPRESS_THRESHOLD = IS_MOBILE ? 200 * 1024 : 500 * 1024;
 export const IMAGE_ACCEPT = "image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif";
 
 /**
+ * Accept string for media file inputs (images + videos).
+ */
+export const MEDIA_ACCEPT = "image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif,.mp4,.mov,.webm";
+
+/**
  * Accept string for document file inputs.
  * Uses both MIME types and extensions for max compatibility.
  */
@@ -59,6 +64,23 @@ export function isImageFile(file: File): boolean {
   // iOS Safari sometimes doesn't set MIME type for HEIC
   const ext = file.name.toLowerCase().split(".").pop();
   return ext === "heic" || ext === "heif";
+}
+
+/**
+ * Check if a file is a video.
+ */
+export function isVideoFile(file: File): boolean {
+  if (file.type.startsWith("video/")) return true;
+  const ext = file.name.toLowerCase().split(".").pop();
+  return ext === "mp4" || ext === "mov" || ext === "webm";
+}
+
+/**
+ * Check if a URL points to a video (by extension).
+ */
+export function isVideoUrl(url: string): boolean {
+  const lower = url.toLowerCase().split("?")[0];
+  return lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".webm");
 }
 
 /**
@@ -252,7 +274,7 @@ export function readFileAsText(file: File): Promise<string> {
  * Only compresses if > 1MB.
  */
 export async function compressForUpload(file: File): Promise<File> {
-  if (!isImageFile(file)) return file;
+  if (!isImageFile(file) || isVideoFile(file)) return file;
   const threshold = IS_MOBILE ? 500 * 1024 : 1024 * 1024;
   if (file.size <= threshold) return file;
 
