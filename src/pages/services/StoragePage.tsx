@@ -1,14 +1,13 @@
-import { ArrowLeft, Cloud, HardDrive, FileText, FolderOpen, Lock, Upload, Eye, Trash2, X, Bot, Heart, Home, Folder, Shield } from "lucide-react";
+import { ArrowLeft, Cloud, FileText, FolderOpen, Lock, Upload, Eye, Trash2, X, Bot, Shield, Plus, FolderPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { STORAGE_ACCEPT, compressForUpload, validateStorageSize, formatFileSize } from "@/lib/fileUtils";
-
 
 interface StoredDocument {
   id: string;
@@ -20,37 +19,18 @@ interface StoredDocument {
   created_at: string;
 }
 
-interface StorageStats {
-  totalSize: number;
-  documentCount: number;
+const FOLDERS_STORAGE_KEY = "oscar_custom_folders";
+
+function loadFolders(): string[] {
+  try {
+    const stored = localStorage.getItem(FOLDERS_STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch { /* ignore */ }
+  return ["Mes courriers", "Santé", "Photos de famille"];
 }
 
-const MAX_STORAGE_MB = 50;
-
-const FOLDERS = [
-  { key: "administrative", label: "Administratif", emoji: "📋", icon: Folder },
-  { key: "health", label: "Santé", emoji: "❤️", icon: Heart },
-  { key: "personal", label: "Personnel", emoji: "🏠", icon: Home },
-  { key: "other", label: "Autre", emoji: "📁", icon: FolderOpen },
-];
-
-function formatSize(bytes: number) {
-  if (bytes === 0) return "0 B";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function parseFileSize(sizeStr: string | null): number {
-  if (!sizeStr) return 0;
-  const match = sizeStr.match(/(\d+\.?\d*)\s*(KB|MB|GB)/i);
-  if (!match) return 0;
-  const v = parseFloat(match[1]);
-  const u = match[2].toUpperCase();
-  if (u === "KB") return v * 1024;
-  if (u === "MB") return v * 1024 * 1024;
-  if (u === "GB") return v * 1024 * 1024 * 1024;
-  return 0;
+function saveFolders(folders: string[]) {
+  localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders));
 }
 
 export function StoragePage() {
@@ -58,12 +38,16 @@ export function StoragePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [documents, setDocuments] = useState<StoredDocument[]>([]);
-  const [stats, setStats] = useState<StorageStats>({ totalSize: 0, documentCount: 0 });
   const [loading, setLoading] = useState(true);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<StoredDocument | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Dossiers personnalisables
+  const [folders, setFolders] = useState<string[]>(loadFolders);
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
 
   useEffect(() => {
     if (user) fetchDocuments();
@@ -71,11 +55,7 @@ export function StoragePage() {
 
   const fetchDocuments = async () => {
     const { data } = await supabase.from("documents").select("*").order("created_at", { ascending: false });
-    if (data) {
-      setDocuments(data);
-      const totalSize = data.reduce((acc, d) => acc + parseFileSize(d.file_size), 0);
-      setStats({ totalSize, documentCount: data.length });
-    }
+    if (data) setDocuments(data);
     setLoading(false);
   };
 
@@ -83,13 +63,11 @@ export function StoragePage() {
     const file = e.target.files?.[0];
     if (!file || !user || !selectedFolder) return;
 
-    // Validate file size
     const sizeErr = validateStorageSize(file);
     if (sizeErr) { toast.error(sizeErr); e.target.value = ""; return; }
 
     setUploading(true);
     try {
-      // Compress images if needed (handles HEIC, large photos from mobile)
       const processed = await compressForUpload(file);
       const fileExt = processed.name.split(".").pop() || "file";
       const fileName = `${user.id}/documents/${Date.now()}.${fileExt}`;
@@ -115,15 +93,38 @@ export function StoragePage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Supprimer ce fichier ?")) return;
     await supabase.from("documents").delete().eq("id", id);
     toast.success("Fichier supprimé");
     fetchDocuments();
     if (previewDoc?.id === id) setPreviewDoc(null);
   };
 
+  const addFolder = () => {
+    const name = newFolderName.trim();
+    if (!name) { toast.error("Donnez un nom au dossier"); return; }
+    if (folders.includes(name)) { toast.error("Ce dossier existe déjà"); return; }
+    const updated = [...folders, name];
+    setFolders(updated);
+    saveFolders(updated);
+    setNewFolderName("");
+    setShowNewFolder(false);
+    toast.success(`Dossier "${name}" créé`);
+  };
+
+  const deleteFolder = (folderName: string) => {
+    const count = documents.filter(d => d.category === folderName).length;
+    const msg = count > 0
+      ? `Supprimer le dossier "${folderName}" ? Les ${count} fichier(s) qu'il contient resteront accessibles.`
+      : `Supprimer le dossier "${folderName}" ?`;
+    if (!window.confirm(msg)) return;
+    const updated = folders.filter(f => f !== folderName);
+    setFolders(updated);
+    saveFolders(updated);
+    toast.success(`Dossier "${folderName}" supprimé`);
+  };
+
   const folderDocs = selectedFolder ? documents.filter(d => d.category === selectedFolder) : [];
-  const usedMB = stats.totalSize / (1024 * 1024);
-  const usagePercent = Math.min(100, (usedMB / MAX_STORAGE_MB) * 100);
 
   const isImage = (doc: StoredDocument) => {
     const ext = (doc.document_type || "").toLowerCase();
@@ -138,53 +139,78 @@ export function StoragePage() {
         </button>
         <div className="flex-1">
           <h1 className="text-lg font-bold text-foreground">
-            {selectedFolder ? FOLDERS.find(f => f.key === selectedFolder)?.label || "Dossier" : "Mes documents"}
+            {selectedFolder || "Mes documents"}
           </h1>
-          <p className="text-sm text-muted-foreground">{selectedFolder ? `${folderDocs.length} fichier(s)` : "Classez vos fichiers importants"}</p>
+          <p className="text-sm text-muted-foreground">
+            {selectedFolder ? `${folderDocs.length} fichier(s)` : "Rangez vos fichiers comme vous voulez"}
+          </p>
         </div>
         <Cloud className="w-6 h-6 text-primary" />
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-8">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-8">
         {!selectedFolder ? (
           <>
-            {/* Storage bar */}
-            <div className="bg-card rounded-2xl p-5 border border-border">
-              <div className="flex items-center gap-3 mb-4">
-                <HardDrive className="w-8 h-8 text-primary" />
-                <div>
-                  <h2 className="font-bold text-foreground">Espace utilisé</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {loading ? "Calcul..." : `${formatSize(stats.totalSize)} sur ${MAX_STORAGE_MB} MB`}
-                  </p>
-                </div>
-              </div>
-              <Progress value={usagePercent} className="h-3" />
-              <p className="text-sm text-muted-foreground mt-2">{Math.max(0, MAX_STORAGE_MB - usedMB).toFixed(1)} MB disponibles</p>
-            </div>
-
-            {/* Folders */}
+            {/* Dossiers */}
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Mes dossiers</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Mes dossiers</h2>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
-                {FOLDERS.map(folder => {
-                  const count = documents.filter(d => d.category === folder.key).length;
+                {folders.map(folder => {
+                  const count = documents.filter(d => d.category === folder).length;
                   return (
                     <button
-                      key={folder.key}
-                      onClick={() => setSelectedFolder(folder.key)}
-                      className="bg-card rounded-xl p-4 border border-border hover:border-primary transition-colors text-left"
+                      key={folder}
+                      onClick={() => setSelectedFolder(folder)}
+                      className="bg-card rounded-xl p-4 border border-border hover:border-primary transition-colors text-left relative group"
                     >
-                      <div className="text-3xl mb-2">{folder.emoji}</div>
-                      <p className="font-semibold text-foreground">{folder.label}</p>
-                      <p className="text-sm text-muted-foreground">{count} fichier{count !== 1 ? "s" : ""}</p>
+                      <div className="text-3xl mb-2">📁</div>
+                      <p className="font-semibold text-foreground text-sm">{folder}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{count} fichier{count !== 1 ? "s" : ""}</p>
+                      {/* Supprimer dossier */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteFolder(folder); }}
+                        className="absolute top-2 right-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-all"
+                        aria-label="Supprimer le dossier"
+                      >
+                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
                     </button>
                   );
                 })}
+
+                {/* Bouton créer un dossier */}
+                <button
+                  onClick={() => setShowNewFolder(true)}
+                  className="bg-card rounded-xl p-4 border-2 border-dashed border-border hover:border-primary/50 transition-colors text-center flex flex-col items-center justify-center gap-2"
+                >
+                  <FolderPlus className="w-8 h-8 text-muted-foreground" />
+                  <p className="text-sm font-medium text-muted-foreground">Nouveau dossier</p>
+                </button>
               </div>
+
+              {/* Formulaire nouveau dossier */}
+              {showNewFolder && (
+                <div className="bg-card rounded-xl p-4 border border-primary/30 space-y-3">
+                  <p className="font-semibold text-foreground text-sm">Créer un dossier</p>
+                  <Input
+                    value={newFolderName}
+                    onChange={e => setNewFolderName(e.target.value)}
+                    placeholder="Nom du dossier (ex: Impôts 2025)"
+                    autoFocus
+                    onKeyDown={e => { if (e.key === "Enter") addFolder(); }}
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={addFolder} className="flex-1 min-h-[44px]">Créer</Button>
+                    <Button variant="outline" onClick={() => { setShowNewFolder(false); setNewFolderName(""); }} className="min-h-[44px]">Annuler</Button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Digital Safe shortcut */}
+            {/* Coffre-fort numérique */}
             <button
               onClick={() => navigate("/services/vault")}
               className="w-full bg-card rounded-xl p-4 border-2 border-primary/30 hover:border-primary transition-colors flex items-center gap-4"
@@ -194,7 +220,7 @@ export function StoragePage() {
               </div>
               <div className="flex-1 text-left">
                 <p className="font-bold text-foreground">Coffre-fort numérique</p>
-                <p className="text-sm text-muted-foreground">Documents sensibles protégés par PIN</p>
+                <p className="text-sm text-muted-foreground">Notes sensibles protégées par PIN</p>
               </div>
               <Shield className="w-5 h-5 text-primary" />
             </button>
@@ -231,7 +257,7 @@ export function StoragePage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-foreground truncate">{doc.name}</p>
-                        <p className="text-sm text-muted-foreground">{doc.file_size || "Taille inconnue"}</p>
+                        <p className="text-sm text-muted-foreground">{doc.file_size || ""}</p>
                       </div>
                       <div className="flex gap-1">
                         {doc.file_url && (
@@ -244,7 +270,6 @@ export function StoragePage() {
                         </button>
                       </div>
                     </div>
-                    {/* Oscar analysis button */}
                     {doc.file_url && (
                       <button
                         onClick={() => navigate(`/?oscar_doc=${encodeURIComponent(doc.file_url!)}`)}
