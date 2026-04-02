@@ -688,7 +688,7 @@ style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "#
             disabled={isTyping || isRecording}
             className="w-full border-none bg-transparent outline-none text-slate-800 dark:text-foreground placeholder:text-slate-400 resize-none"
             style={{
-              fontSize: 15,
+              fontSize: 16,
               lineHeight: 1.5,
               maxHeight: 120,
               overflowY: "auto",

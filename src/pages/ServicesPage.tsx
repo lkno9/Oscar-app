@@ -148,7 +148,7 @@ export function ServicesPage() {
                   <p style={{ fontSize: 14, fontWeight: 500, color: item.accent ? "#ef4444" : "#1A1A2E" }}>
                     {item.label}
                   </p>
-                  <p style={{ fontSize: 12, color: "#64748B", marginTop: 1, fontWeight: 500 }}>
+                  <p style={{ fontSize: 13, color: "#64748B", marginTop: 1, fontWeight: 500 }}>
                     {item.sublabel}
                   </p>
                 </div>
