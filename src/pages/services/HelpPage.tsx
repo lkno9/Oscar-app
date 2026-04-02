@@ -49,7 +49,7 @@ const FAQ_CATEGORIES: FaqCategory[] = [
     emoji: "📅",
     items: [
       { q: "Comment ajouter un rendez-vous ?", a: "Dans Services > Agenda, appuyez sur le bouton '+' en bas. Renseignez le titre, la date, l'heure et le lieu. Activez le rappel Oscar pour ne rien oublier." },
-      { q: "Comment scanner un document ?", a: "Dans Services > Stockage & fichiers, appuyez sur '+' et choisissez de prendre une photo. Le document sera enregistré dans votre espace sécurisé." },
+      { q: "Comment scanner un document ?", a: "Dans Services > Mes documents, appuyez sur '+' et choisissez de prendre une photo. Le document sera enregistré dans votre espace sécurisé." },
       { q: "Comment mettre un document en favori ?", a: "Dans Services > Documents, ouvrez le document et appuyez sur l'étoile pour l'ajouter aux favoris. Retrouvez-le ensuite dans l'onglet Favoris." },
       { q: "Comment savoir si un document expire bientôt ?", a: "Sur la page d'accueil, la section « Documents urgents » vous alerte 30 jours avant l'expiration de vos documents importants." },
     ],
@@ -61,7 +61,7 @@ const FAQ_CATEGORIES: FaqCategory[] = [
       { q: "Mes données sont-elles sécurisées ?", a: "Oui, toutes vos données sont chiffrées et stockées de manière sécurisée. Seuls vous et les membres de famille que vous avez invités y ont accès." },
       { q: "Comment activer la double authentification ?", a: "Dans Réglages > Sécurité, appuyez sur « Activer ». Vous devrez scanner un QR code avec une application d'authentification (comme Google Authenticator)." },
       { q: "Comment signaler une arnaque ?", a: "Allez dans Services > Protection Arnaques. Vous pouvez vérifier un message suspect, consulter les alertes récentes, ou faire le quiz sécurité. Oscar vous guide pour porter plainte si nécessaire." },
-      { q: "Que fait le bouton SOS ?", a: "Le bouton SOS vous permet d'appeler les secours (15, 18, 17, 112), d'appeler votre famille ou d'envoyer votre position GPS en cas d'urgence." },
+      { q: "Que fait le bouton SOS ?", a: "La page SOS se trouve dans le menu Services, section Aide & Support. Elle vous permet d'appeler les secours (15, 18, 17, 112), d'appeler votre famille, ou de localiser les hôpitaux et pharmacies les plus proches." },
     ],
   },
   {
@@ -80,7 +80,7 @@ const FAQ_CATEGORIES: FaqCategory[] = [
     emoji: "🎮",
     items: [
       { q: "Comment jouer aux jeux Oscar ?", a: "Dans Services > Jeux & mémoire, choisissez un jeu Oscar (Memory, Sudoku, Quiz, 2048). Vos scores et progressions sont enregistrés automatiquement." },
-      { q: "Comment écouter de la musique ?", a: "Allez dans Services > Musique & radio. Vous pouvez écouter des stations de radio ou de la musique directement dans l'application." },
+      { q: "Comment écouter de la musique ?", a: "Allez dans Services > Ma radio. Vous pouvez écouter en direct France Inter, Nostalgie, RTL, France Musique et d'autres stations directement dans l'application." },
       { q: "Comment consulter les photos de ma famille ?", a: "Dans Services > Photos & souvenirs, l'onglet « Reçues » affiche les photos que vos proches vous ont envoyées." },
     ],
   },
