@@ -225,7 +225,7 @@ export function HelpPage() {
               </p>
             </div>
             <a
-              href="mailto:support@oscar-app.fr"
+              href="mailto:hello@oscaria.co"
               className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors border-b border-border"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -233,23 +233,19 @@ export function HelpPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">Envoyer un e-mail</p>
-                <p className="text-sm text-muted-foreground">support@oscar-app.fr</p>
+                <p className="text-sm text-muted-foreground">hello@oscaria.co</p>
               </div>
               <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </a>
-            <a
-              href="tel:+33180000000"
-              className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors"
-            >
+            <div className="w-full flex items-center gap-3 px-4 py-3.5">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <PhoneIcon className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Appeler le support</p>
-                <p className="text-sm text-muted-foreground">01 80 00 00 00 (appel non surtaxé)</p>
+                <p className="text-sm font-semibold text-foreground">Réponse sous 24h</p>
+                <p className="text-sm text-muted-foreground">Contactez-nous par email, nous vous répondons sous 24h.</p>
               </div>
-              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            </a>
+            </div>
           </div>
         </div>
       </div>
