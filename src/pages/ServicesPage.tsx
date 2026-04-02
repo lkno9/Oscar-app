@@ -17,6 +17,7 @@ import {
   Navigation,
   Wrench,
   Newspaper,
+  Radio,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 
@@ -24,6 +25,7 @@ const PRIMARY_SERVICES = [
   { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda", sublabel: "RDV, rappels, anniversaires", path: "/services/agenda" },
   { icon: <Heart className="w-6 h-6" />, label: "Ma santé", sublabel: "Médicaments, humeur, RDV", path: "/services/health" },
   { icon: <Image className="w-6 h-6" />, label: "Photos & souvenirs", sublabel: "Albums, vidéos, journal", path: "/services/photos" },
+  { icon: <Radio className="w-6 h-6" />, label: "Ma radio", sublabel: "France Inter, Nostalgie…", path: "/services/radio" },
   { icon: <MessageCircle className="w-6 h-6" />, label: "Appeler ou écrire", sublabel: "Messages et appels famille", path: "/services/communication" },
   { icon: <Navigation className="w-6 h-6" />, label: "Me déplacer", sublabel: "Bus, métro, itinéraire", path: "/services/transport" },
   { icon: <Ticket className="w-6 h-6" />, label: "Sorties & loisirs", sublabel: "Cinéma, expos, balades", path: "/services/entertainment" },
