@@ -18,6 +18,7 @@ import {
   Wrench,
   Newspaper,
   Radio,
+  ChefHat,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 
@@ -34,6 +35,7 @@ const PRIMARY_SERVICES = [
   { icon: <Gamepad2 className="w-6 h-6" />, label: "Jeux & mémoire", sublabel: "Quiz, memory, sudoku", path: "/services/games" },
   { icon: <ShieldAlert className="w-6 h-6" />, label: "Ma sécurité", sublabel: "Vérifier un message suspect", path: "/services/scam-protection" },
   { icon: <Newspaper className="w-6 h-6" />, label: "Actualités & infos", sublabel: "Articles, droits, conseils", path: "/services/knowledge" },
+  { icon: <ChefHat className="w-6 h-6" />, label: "Mes recettes", sublabel: "Cuisine régionale", path: "/services/recipes" },
 ];
 
 const SUPPORT_ITEMS = [
