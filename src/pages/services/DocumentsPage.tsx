@@ -695,6 +695,16 @@ export function DocumentsPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Lien vers l'espace de stockage complet */}
+      <div className="px-4 pb-6 pt-2 flex-shrink-0">
+        <button
+          onClick={() => navigate("/services/storage")}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium border-2 border-primary/30 text-primary hover:bg-primary/5 transition-colors"
+        >
+          Mon espace de stockage complet →
+        </button>
+      </div>
     </div>
   );
 }
