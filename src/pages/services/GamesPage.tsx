@@ -142,39 +142,13 @@ export function GamesPage() {
           </div>
         )}
 
-        {/* Jouer avec vos proches */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Jouer avec vos proches
-          </h2>
-          <p className="text-sm text-muted-foreground -mt-1">
-            Jouez en ligne avec vos proches, chacun sur son appareil !
+        {/* Jouer avec vos proches — bientôt disponible */}
+        <div className="bg-card rounded-xl border border-border p-6 text-center">
+          <Users className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+          <p className="font-semibold text-foreground mb-1">Jouer ensemble</p>
+          <p className="text-sm text-muted-foreground">
+            Bientôt disponible — Jouez en duo avec un proche à distance.
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            {togetherGames.map((game) => (
-              <button
-                key={game.id}
-                onClick={() => navigate(game.path)}
-                className="bg-gradient-to-br from-orange-500/15 to-rose-500/10 rounded-xl p-4 shadow-sm border border-orange-300/30 dark:border-orange-700/30 flex flex-col items-center gap-2 text-center transition-all hover:shadow-md hover:border-orange-400 dark:hover:border-orange-600 relative"
-              >
-                <div className="absolute top-2 right-2">
-                  <Wifi className="w-4 h-4 text-orange-400" />
-                </div>
-                <span className="text-4xl">{game.emoji}</span>
-                <h3 className="font-semibold text-foreground">{game.name}</h3>
-                <p className="text-sm text-muted-foreground">{game.description}</p>
-                <div className="flex gap-1.5">
-                  <span className="text-xs bg-orange-200/60 dark:bg-orange-800/40 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full">
-                    En ligne
-                  </span>
-                  <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-                    {game.difficulty}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Jeux Oscar solo */}
