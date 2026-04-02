@@ -30,7 +30,6 @@ const PRIMARY_SERVICES = [
   { icon: <Wrench className="w-6 h-6" />, label: "Outils pratiques", sublabel: "Météo, traducteur, minuteur", path: "/services/tools" },
   { icon: <Cloud className="w-6 h-6" />, label: "Mes documents", sublabel: "Classer mes fichiers", path: "/services/storage" },
   { icon: <Gamepad2 className="w-6 h-6" />, label: "Jeux & mémoire", sublabel: "Quiz, memory, sudoku", path: "/services/games" },
-  { icon: <Sparkles className="w-6 h-6" />, label: "Mes avantages", sublabel: "Bons plans seniors", path: "/services/partners" },
   { icon: <ShieldAlert className="w-6 h-6" />, label: "Ma sécurité", sublabel: "Vérifier un message suspect", path: "/services/scam-protection" },
   { icon: <Newspaper className="w-6 h-6" />, label: "Actualités & infos", sublabel: "Articles, droits, conseils", path: "/services/knowledge" },
 ];
