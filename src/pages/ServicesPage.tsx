@@ -17,7 +17,6 @@ import {
   Navigation,
   Wrench,
   Newspaper,
-  Radio,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 
@@ -25,12 +24,11 @@ const PRIMARY_SERVICES = [
   { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda", sublabel: "Rendez-vous, rappels", path: "/services/agenda" },
   { icon: <Heart className="w-6 h-6" />, label: "Ma santé", sublabel: "Médicaments, médecin", path: "/services/health" },
   { icon: <Image className="w-6 h-6" />, label: "Photos & souvenirs", sublabel: "Souvenirs, famille", path: "/services/photos" },
-  { icon: <Radio className="w-6 h-6" />, label: "Ma radio", sublabel: "France Inter, Nostalgie…", path: "/services/radio" },
   { icon: <MessageCircle className="w-6 h-6" />, label: "Appeler ou écrire", sublabel: "Messages, appels", path: "/services/communication" },
   { icon: <Navigation className="w-6 h-6" />, label: "Me déplacer", sublabel: "Bus, train, itinéraire", path: "/services/transport" },
   { icon: <Ticket className="w-6 h-6" />, label: "Sorties & loisirs", sublabel: "Idées de sorties", path: "/services/entertainment" },
   { icon: <Wrench className="w-6 h-6" />, label: "Outils pratiques", sublabel: "Météo, minuteur, calcul", path: "/services/tools" },
-  { icon: <Cloud className="w-6 h-6" />, label: "Mes documents", sublabel: "Courriers, ordonnances", path: "/services/documents" },
+  { icon: <Cloud className="w-6 h-6" />, label: "Mes documents", sublabel: "Courriers, ordonnances", path: "/services/storage" },
   { icon: <Gamepad2 className="w-6 h-6" />, label: "Jeux & mémoire", sublabel: "Mémoire, quiz, sudoku", path: "/services/games" },
   { icon: <ShieldAlert className="w-6 h-6" />, label: "Ma sécurité", sublabel: "Arnaques, alertes", path: "/services/scam-protection" },
   { icon: <Newspaper className="w-6 h-6" />, label: "Actualités & infos", sublabel: "L'info du jour", path: "/services/knowledge" },
