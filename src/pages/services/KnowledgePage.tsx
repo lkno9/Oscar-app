@@ -26,7 +26,7 @@ export function KnowledgePage() {
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
-          <h1 className="text-lg font-bold text-foreground">À savoir</h1>
+          <h1 className="text-lg font-bold text-foreground">Actualités & infos</h1>
           <p className="text-sm text-muted-foreground">
             Actualités, droits, santé & conseils
           </p>

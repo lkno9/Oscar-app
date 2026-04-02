@@ -28,11 +28,11 @@ const PRIMARY_SERVICES = [
   { icon: <Navigation className="w-6 h-6" />, label: "Mes déplacements", path: "/services/transport" },
   { icon: <Ticket className="w-6 h-6" />, label: "Mes loisirs & sorties", path: "/services/entertainment" },
   { icon: <Wrench className="w-6 h-6" />, label: "Mes outils pratiques", path: "/services/tools" },
-  { icon: <Cloud className="w-6 h-6" />, label: "Mon coffre-fort", path: "/services/storage" },
+  { icon: <Cloud className="w-6 h-6" />, label: "Mes documents", path: "/services/storage" },
   { icon: <Gamepad2 className="w-6 h-6" />, label: "Mes jeux & mémoire", path: "/services/games" },
   { icon: <Sparkles className="w-6 h-6" />, label: "Mes avantages", path: "/services/partners" },
   { icon: <ShieldAlert className="w-6 h-6" />, label: "Ma sécurité", path: "/services/scam-protection" },
-  { icon: <Newspaper className="w-6 h-6" />, label: "À savoir", path: "/services/knowledge" },
+  { icon: <Newspaper className="w-6 h-6" />, label: "Actualités & infos", path: "/services/knowledge" },
 ];
 
 const SUPPORT_ITEMS = [

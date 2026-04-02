@@ -138,9 +138,9 @@ export function StoragePage() {
         </button>
         <div className="flex-1">
           <h1 className="text-lg font-bold text-foreground">
-            {selectedFolder ? FOLDERS.find(f => f.key === selectedFolder)?.label || "Dossier" : "Stockage & fichiers"}
+            {selectedFolder ? FOLDERS.find(f => f.key === selectedFolder)?.label || "Dossier" : "Mes documents"}
           </h1>
-          <p className="text-sm text-muted-foreground">{selectedFolder ? `${folderDocs.length} fichier(s)` : "Votre espace cloud"}</p>
+          <p className="text-sm text-muted-foreground">{selectedFolder ? `${folderDocs.length} fichier(s)` : "Classez vos fichiers importants"}</p>
         </div>
         <Cloud className="w-6 h-6 text-primary" />
       </header>

@@ -85,7 +85,7 @@ const ALL_ACTIONS: QuickAction[] = [
   { label: "Mon agenda", icon: <CalendarDays className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Ma santé & bien-être", icon: <Heart className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Mes communications", icon: <MessageCircle className="w-5 h-5 text-[#2DD4BF]" /> },
-  { label: "Mon coffre-fort", icon: <Cloud className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Mes documents", icon: <Cloud className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Mes jeux & mémoire", icon: <Gamepad2 className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Mes avantages", icon: <Sparkles className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Ma sécurité", icon: <ShieldAlert className="w-5 h-5 text-[#2DD4BF]" /> },
@@ -103,7 +103,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ full_name: string | null }>({ full_name: null });
   const [weather, setWeather] = useState<Weather | null>(null);
-  const [selectedActions, setSelectedActions] = useState<string[]>(["Mon agenda", "Ma santé & bien-être", "Mes communications", "Mon coffre-fort"]);
+  const [selectedActions, setSelectedActions] = useState<string[]>(["Mon agenda", "Ma santé & bien-être", "Mes communications", "Mes documents"]);
   const [showPersonnaliser, setShowPersonnaliser] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState<{id: string; title: string; event_date: string; event_time: string | null; category: string | null}[]>([]);
   const [unreadMessages, setUnreadMessages] = useState<{id: string; content: string; sender_id: string; sender_name: string | null; created_at: string}[]>([]);
@@ -441,9 +441,9 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       })()}
 
 
-      {/* À SAVOIR */}
+      {/* ACTUALITÉS & INFOS */}
       <div style={{ padding: "24px 16px 0" }}>
-        <SectionHeader title="À savoir" />
+        <SectionHeader title="Actualités & infos" />
         {/* Category pills */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12, paddingRight: 16 }}>
           {ACTU_CATEGORIES.map(cat => (
@@ -630,7 +630,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     "Mon agenda": "/services/agenda",
                     "Ma santé & bien-être": "/services/health",
                     "Mes communications": "/services/communication",
-                    "Mon coffre-fort": "/services/storage",
+                    "Mes documents": "/services/storage",
                     "Mes jeux & mémoire": "/services/games",
                     "Mes avantages": "/services/partners",
                     "Ma sécurité": "/services/scam-protection",
