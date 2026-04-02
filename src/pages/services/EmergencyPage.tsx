@@ -79,16 +79,6 @@ const ESSENTIAL_NUMBERS = [
       { name: "RATP", number: "3424", desc: "Métro, bus, RER Île-de-France" },
     ],
   },
-  {
-    category: "Autres urgences",
-    emoji: "⚠️",
-    numbers: [
-      { name: "Violences conjugales", number: "3919", desc: "Écoute, information, orientation" },
-      { name: "Enfance en danger", number: "119", desc: "Signaler un enfant en danger" },
-      { name: "Drogues Info Service", number: "0 800 23 13 13", desc: "Aide et information (gratuit)" },
-      { name: "Joueurs Info Service", number: "09 74 75 13 13", desc: "Addiction aux jeux" },
-    ],
-  },
 ];
 
 export function EmergencyPage() {
