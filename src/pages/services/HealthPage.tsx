@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, CalendarDays, Lightbulb, ExternalLink, Dumbbell, MapPin, Loader2, Phone, Navigation, Bell, BellOff, ChevronDown } from "lucide-react";
+import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, CalendarDays, Lightbulb, ExternalLink, Dumbbell, MapPin, Loader2, Phone, Navigation, Bell, BellOff } from "lucide-react";
 import { getCurrentPosition, reverseGeocode, formatDistance, googleMapsDirectionsUrl, type Coordinates } from "@/lib/geo";
 import { searchNearbyPOIs, getPOIEmoji, type OverpassPOI, type POIType } from "@/lib/overpass";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -110,16 +111,6 @@ export function HealthPage() {
   const [savingMood, setSavingMood] = useState(false);
   const dailyTip = WELLNESS_TIPS[new Date().getDay() % WELLNESS_TIPS.length];
 
-  // Sections ouvertes (toutes ouvertes par défaut)
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    medications: true,
-    mood: true,
-    services: true,
-    activity: false,
-    wellness: false,
-  });
-  const toggleSection = (key: string) =>
-    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   // Doctolib recherche
   const [doctoSpec, setDoctoSpec] = useState<string | null>(null);
@@ -331,20 +322,35 @@ export function HealthPage() {
         <Heart className="w-6 h-6 text-primary" />
       </header>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4 space-y-3 pb-24">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue="medications" className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="px-2 pt-3 pb-1 flex-shrink-0">
+            <TabsList className="grid grid-cols-5 h-auto p-1 w-full gap-0">
+              <TabsTrigger value="medications" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+                <Pill className="w-4 h-4" />
+                Médic.
+              </TabsTrigger>
+              <TabsTrigger value="mood" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+                <Heart className="w-4 h-4" />
+                Humeur
+              </TabsTrigger>
+              <TabsTrigger value="platforms" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+                <CalendarDays className="w-4 h-4" />
+                Services
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+                <Dumbbell className="w-4 h-4" />
+                Activité
+              </TabsTrigger>
+              <TabsTrigger value="wellness" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+                <Lightbulb className="w-4 h-4" />
+                Conseils
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          {/* ══════════ MÉDICAMENTS ══════════ */}
-          <button onClick={() => toggleSection("medications")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 transition-all">
-            <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-              <Pill className="w-5 h-5 text-green-600" />
-            </div>
-            <span className="flex-1 text-left font-semibold text-foreground">Médicaments</span>
-            <span className="text-xs text-muted-foreground mr-1">{medications.length > 0 ? `${medications.filter(m => m.is_active).length} actif(s)` : ""}</span>
-            <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${openSections.medications ? "rotate-180" : ""}`} />
-          </button>
-          {openSections.medications && (
-          <div className="space-y-4 pl-1">
+          {/* MEDICATIONS TAB */}
+          <TabsContent value="medications" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
             {!showForm ? (
               <Button className="w-full gap-2 min-h-[52px]" size="lg" onClick={() => setShowForm(true)}>
                 <Plus className="w-5 h-5" />
@@ -472,20 +478,10 @@ export function HealthPage() {
                 );
               })}
             </div>
-          </div>
-          )}
+          </TabsContent>
 
-          {/* ══════════ HUMEUR ══════════ */}
-          <button onClick={() => toggleSection("mood")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 transition-all">
-            <div className="w-9 h-9 rounded-lg bg-pink-500/10 flex items-center justify-center flex-shrink-0">
-              <Heart className="w-5 h-5 text-pink-500" />
-            </div>
-            <span className="flex-1 text-left font-semibold text-foreground">Humeur du jour</span>
-            {todayMood && <span className="text-lg mr-1">{MOODS.find(m => m.level === todayMood)?.emoji}</span>}
-            <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${openSections.mood ? "rotate-180" : ""}`} />
-          </button>
-          {openSections.mood && (
-          <div className="space-y-6 pl-1">
+          {/* MOOD TAB */}
+          <TabsContent value="mood" className="flex-1 overflow-y-auto p-4 space-y-6 mt-0">
             {/* Today's mood */}
             <div className="bg-card rounded-2xl p-5 border border-border">
               <h2 className="font-bold text-foreground text-base mb-1">Comment vous sentez-vous aujourd'hui ?</h2>
@@ -537,19 +533,10 @@ export function HealthPage() {
                 </div>
               </div>
             )}
-          </div>
-          )}
+          </TabsContent>
 
-          {/* ══════════ SERVICES SANTÉ ══════════ */}
-          <button onClick={() => toggleSection("services")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 transition-all">
-            <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-              <CalendarDays className="w-5 h-5 text-blue-500" />
-            </div>
-            <span className="flex-1 text-left font-semibold text-foreground">Services & RDV</span>
-            <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${openSections.services ? "rotate-180" : ""}`} />
-          </button>
-          {openSections.services && (
-          <div className="space-y-4 pl-1">
+          {/* PLATFORMS TAB */}
+          <TabsContent value="platforms" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
             {/* Doctolib RDV Tool — avec localisation */}
             <div className="bg-card rounded-xl border border-border p-4 space-y-3">
               <div className="flex items-center gap-3">
@@ -776,19 +763,10 @@ export function HealthPage() {
                 ))}
               </div>
             )}
-          </div>
-          )}
+          </TabsContent>
 
-          {/* ══════════ ACTIVITÉ PHYSIQUE ══════════ */}
-          <button onClick={() => toggleSection("activity")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 transition-all">
-            <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-              <Dumbbell className="w-5 h-5 text-orange-500" />
-            </div>
-            <span className="flex-1 text-left font-semibold text-foreground">Activité physique</span>
-            <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${openSections.activity ? "rotate-180" : ""}`} />
-          </button>
-          {openSections.activity && (
-          <div className="space-y-4 pl-1">
+          {/* ACTIVITY TAB */}
+          <TabsContent value="activity" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
             <div className="bg-accent rounded-2xl p-4 border border-border">
               <div className="flex items-center gap-3 mb-2">
                 <Dumbbell className="w-6 h-6 text-accent-foreground" />
@@ -895,19 +873,10 @@ export function HealthPage() {
               </div>
             )}
 
-          </div>
-          )}
+          </TabsContent>
 
-          {/* ══════════ CONSEILS BIEN-ÊTRE ══════════ */}
-          <button onClick={() => toggleSection("wellness")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 transition-all">
-            <div className="w-9 h-9 rounded-lg bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
-              <Lightbulb className="w-5 h-5 text-yellow-600" />
-            </div>
-            <span className="flex-1 text-left font-semibold text-foreground">Conseils bien-être</span>
-            <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${openSections.wellness ? "rotate-180" : ""}`} />
-          </button>
-          {openSections.wellness && (
-          <div className="space-y-4 pl-1">
+          {/* WELLNESS TIPS TAB */}
+          <TabsContent value="wellness" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
             {/* Daily tip */}
             <div className="bg-accent rounded-2xl p-5 border border-border">
               <div className="flex items-center gap-3 mb-3">
@@ -929,10 +898,8 @@ export function HealthPage() {
                 </div>
               ))}
             </div>
-          </div>
-          )}
-
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
