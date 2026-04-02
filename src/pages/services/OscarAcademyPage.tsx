@@ -1,4 +1,4 @@
-import { ArrowLeft, GraduationCap, Play, CheckCircle, Clock, ChevronRight, ExternalLink, Globe } from "lucide-react";
+import { ArrowLeft, GraduationCap, Play, CheckCircle, Clock, ChevronRight, ExternalLink, Globe, Video, BookOpen, PlayCircle } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useState } from "react";
 
@@ -94,6 +94,29 @@ const MODULES: Module[] = [
   },
 ];
 
+interface VideoTutorial {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  emoji: string;
+  category: string;
+  youtubeId?: string;
+}
+
+const VIDEO_TUTORIALS: VideoTutorial[] = [
+  { id: "vid-decouverte", title: "Découvrir Oscar en 3 minutes", description: "Présentation générale d'Oscar et de toutes ses fonctionnalités.", duration: "3 min", emoji: "👋", category: "Premiers pas" },
+  { id: "vid-parler-oscar", title: "Parler à Oscar au micro", description: "Comment utiliser la commande vocale pour poser des questions.", duration: "2 min", emoji: "🎙️", category: "Premiers pas" },
+  { id: "vid-agenda", title: "Gérer ses rendez-vous", description: "Ajouter, modifier et consulter vos rendez-vous.", duration: "3 min", emoji: "📅", category: "Services" },
+  { id: "vid-medicaments", title: "Suivre ses médicaments", description: "Ajouter vos médicaments et activer les rappels.", duration: "3 min", emoji: "💊", category: "Services" },
+  { id: "vid-famille", title: "Communiquer avec sa famille", description: "Envoyer des messages et passer des appels.", duration: "4 min", emoji: "👨‍👩‍👧", category: "Services" },
+  { id: "vid-photos", title: "Partager des photos", description: "Envoyer et recevoir des photos avec vos proches.", duration: "2 min", emoji: "📷", category: "Services" },
+  { id: "vid-sos", title: "Utiliser le bouton SOS", description: "Comment accéder aux secours en cas d'urgence.", duration: "2 min", emoji: "🆘", category: "Sécurité" },
+  { id: "vid-arnaques", title: "Se protéger des arnaques", description: "Reconnaître les messages frauduleux.", duration: "4 min", emoji: "🛡️", category: "Sécurité" },
+  { id: "vid-documents", title: "Stocker ses documents", description: "Organiser et retrouver vos documents importants.", duration: "3 min", emoji: "📂", category: "Services" },
+  { id: "vid-reglages", title: "Personnaliser Oscar", description: "Mode sombre, voix, notifications.", duration: "2 min", emoji: "⚙️", category: "Réglages" },
+];
+
 interface ExternalResource {
   title: string;
   description: string;
@@ -111,8 +134,10 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
 
 export function OscarAcademyPage() {
   const goBack = useBackNavigation();
+  const [activeSection, setActiveSection] = useState<"modules" | "videos">("modules");
   const [activeModule, setActiveModule] = useState<Module | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [playingVideo, setPlayingVideo] = useState<VideoTutorial | null>(null);
   const [completed, setCompleted] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem("academy_completed") || "[]"); }
     catch { return []; }
@@ -139,6 +164,39 @@ export function OscarAcademyPage() {
     }
   };
 
+  // Video detail view (only for videos with youtubeId)
+  if (playingVideo) {
+    return (
+      <div className="flex flex-col h-full bg-background">
+        <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">
+          <button onClick={() => setPlayingVideo(null)} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-lg font-bold text-foreground">{playingVideo.title}</h1>
+            <p className="text-sm text-muted-foreground">{playingVideo.category} • {playingVideo.duration}</p>
+          </div>
+          <span className="text-2xl">{playingVideo.emoji}</span>
+        </header>
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
+          <div className="rounded-2xl overflow-hidden border border-border aspect-video">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${playingVideo.youtubeId}?rel=0&modestbranding=1`}
+              title={playingVideo.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            />
+          </div>
+          <div className="bg-card rounded-2xl border border-border p-5">
+            <h2 className="text-lg font-bold text-foreground mb-2">À propos</h2>
+            <p className="text-base text-muted-foreground leading-relaxed">{playingVideo.description}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Module step view
   if (activeModule) {
     const step = activeModule.steps[currentStep];
@@ -155,18 +213,15 @@ export function OscarAcademyPage() {
           </div>
           <span className="text-2xl">{activeModule.emoji}</span>
         </header>
-
         <div className="h-1.5 bg-muted">
           <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
         </div>
-
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
           <div className="flex gap-2 justify-center">
             {activeModule.steps.map((_, i) => (
               <div key={i} className={`w-2.5 h-2.5 rounded-full transition-all ${i === currentStep ? 'bg-primary w-6' : i < currentStep ? 'bg-primary/40' : 'bg-muted'}`} />
             ))}
           </div>
-
           <div className="bg-card rounded-2xl border border-border p-6 flex-1 flex flex-col justify-center">
             <div className="text-center mb-6">
               <div className="text-5xl mb-4">{activeModule.emoji}</div>
@@ -174,7 +229,6 @@ export function OscarAcademyPage() {
               <p className="text-base text-muted-foreground leading-relaxed">{step.content}</p>
             </div>
           </div>
-
           <button
             onClick={nextStep}
             className="w-full min-h-[56px] bg-primary text-primary-foreground rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-primary/90 transition-colors"
@@ -231,71 +285,173 @@ export function OscarAcademyPage() {
           </div>
         </div>
 
-        {/* Modules */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Modules disponibles</h2>
-          {MODULES.map((mod) => {
-            const isDone = completed.includes(mod.id);
-            return (
-              <button
-                key={mod.id}
-                onClick={() => startModule(mod)}
-                className="w-full bg-card rounded-2xl border border-border p-4 text-left flex items-center gap-4 hover:border-primary/40 transition-all active:scale-[0.98]"
-              >
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl ${isDone ? 'bg-accent' : 'bg-primary/10'}`}>
-                  {isDone ? '✅' : mod.emoji}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="font-bold text-foreground text-base">{mod.title}</p>
-                    {mod.isNew && !isDone && (
-                      <span className="text-sm bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-semibold">Nouveau</span>
-                    )}
-                    {isDone && (
-                      <span className="text-sm bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-semibold">Terminé</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-tight">{mod.description}</p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="w-3 h-3" />{mod.duration}
-                    </span>
-                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Play className="w-3 h-3" />{mod.steps.length} étapes
-                    </span>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-              </button>
-            );
-          })}
+        {/* Section tabs */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveSection("modules")}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
+              activeSection === "modules"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card border border-border text-foreground hover:bg-secondary"
+            }`}
+          >
+            <GraduationCap className="w-4 h-4" />
+            Modules interactifs
+          </button>
+          <button
+            onClick={() => setActiveSection("videos")}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
+              activeSection === "videos"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card border border-border text-foreground hover:bg-secondary"
+            }`}
+          >
+            <Video className="w-4 h-4" />
+            Tutoriels vidéo
+          </button>
         </div>
 
-        {/* External resources */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Ressources recommandées</h2>
-          {EXTERNAL_RESOURCES.map((res, i) => (
-            <a
-              key={i}
-              href={res.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full bg-card rounded-2xl border border-border p-4 flex items-center gap-4 hover:border-primary/40 transition-all no-underline"
-            >
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-xl flex-shrink-0">
-                {res.emoji}
+        {activeSection === "modules" ? (
+          <>
+            {/* Modules */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Modules disponibles</h2>
+              {MODULES.map((mod) => {
+                const isDone = completed.includes(mod.id);
+                return (
+                  <button
+                    key={mod.id}
+                    onClick={() => startModule(mod)}
+                    className="w-full bg-card rounded-2xl border border-border p-4 text-left flex items-center gap-4 hover:border-primary/40 transition-all active:scale-[0.98]"
+                  >
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl ${isDone ? 'bg-accent' : 'bg-primary/10'}`}>
+                      {isDone ? '✅' : mod.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-bold text-foreground text-base">{mod.title}</p>
+                        {mod.isNew && !isDone && (
+                          <span className="text-sm bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-semibold">Nouveau</span>
+                        )}
+                        {isDone && (
+                          <span className="text-sm bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-semibold">Terminé</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-tight">{mod.description}</p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="w-3 h-3" />{mod.duration}
+                        </span>
+                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Play className="w-3 h-3" />{mod.steps.length} étapes
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* External resources */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Ressources recommandées</h2>
+              {EXTERNAL_RESOURCES.map((res, i) => (
+                <a
+                  key={i}
+                  href={res.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-card rounded-2xl border border-border p-4 flex items-center gap-4 hover:border-primary/40 transition-all no-underline"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-xl flex-shrink-0">
+                    {res.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-foreground text-base flex items-center gap-1.5">
+                      {res.title}
+                      <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-tight">{res.description}</p>
+                  </div>
+                  <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                </a>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Bandeau "bientôt disponible" */}
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex items-start gap-3">
+              <Video className="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold text-amber-800 dark:text-amber-200">Tutoriels vidéo — bientôt disponibles</p>
+                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">En attendant, nos modules interactifs vous guident pas à pas.</p>
+                <button
+                  onClick={() => setActiveSection("modules")}
+                  className="mt-2 text-sm font-semibold text-amber-800 dark:text-amber-200 underline underline-offset-2"
+                >
+                  Voir les modules →
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-foreground text-base flex items-center gap-1.5">
-                  {res.title}
-                  <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-                </p>
-                <p className="text-sm text-muted-foreground leading-tight">{res.description}</p>
-              </div>
-              <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            </a>
-          ))}
-        </div>
+            </div>
+
+            {/* Video cards */}
+            <div className="space-y-3">
+              {(() => {
+                const categories = [...new Set(VIDEO_TUTORIALS.map(v => v.category))];
+                return categories.map(cat => (
+                  <div key={cat} className="space-y-2">
+                    <p className="text-sm font-semibold text-primary uppercase tracking-wide">{cat}</p>
+                    {VIDEO_TUTORIALS.filter(v => v.category === cat).map(vid => {
+                      const hasVideo = !!vid.youtubeId;
+                      return hasVideo ? (
+                        <button
+                          key={vid.id}
+                          onClick={() => setPlayingVideo(vid)}
+                          className="w-full bg-card rounded-2xl border border-border p-4 text-left flex items-center gap-4 hover:border-primary/40 transition-all active:scale-[0.98]"
+                        >
+                          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 relative">
+                            <span className="text-2xl">{vid.emoji}</span>
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                              <PlayCircle className="w-3.5 h-3.5 text-primary-foreground" />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-foreground text-base">{vid.title}</p>
+                            <p className="text-sm text-muted-foreground leading-tight">{vid.description}</p>
+                            <span className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                              <Clock className="w-3 h-3" />{vid.duration}
+                            </span>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                        </button>
+                      ) : (
+                        <div
+                          key={vid.id}
+                          className="w-full bg-card rounded-2xl border border-border p-4 flex items-center gap-4"
+                          style={{ opacity: 0.6, cursor: "not-allowed" }}
+                        >
+                          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center flex-shrink-0">
+                            <span className="text-2xl">{vid.emoji}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-foreground text-base">{vid.title}</p>
+                            <p className="text-sm text-muted-foreground leading-tight">{vid.description}</p>
+                            <span className="inline-flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full mt-1.5">
+                              <Clock className="w-3 h-3" />
+                              Bientôt disponible
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ));
+              })()}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
