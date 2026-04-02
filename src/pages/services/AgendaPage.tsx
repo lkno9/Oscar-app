@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, CalendarDays, Plus, Clock, Trash2, X, MapPin, Bell, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, CalendarDays, Plus, Clock, Trash2, X, MapPin, Bell, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -108,11 +109,18 @@ function MiniCalendar({ currentMonth, events, selectedDate, onSelectDate, onMont
 export function AgendaPage() {
   const goBack = useBackNavigation();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+
+  // Filtre par type (peut venir du query param ?type=medical)
+  const [filterType, setFilterType] = useState<string | null>(
+    searchParams.get("type") || null
+  );
 
   // Form state
   const [title, setTitle] = useState("");
@@ -152,10 +160,47 @@ export function AgendaPage() {
     if (error) toast.error("Erreur lors de l'ajout");
     else {
       toast.success("Événement ajouté !");
-      setTitle(""); setDescription(""); setLocation(""); setEventDate(""); setEventTime(""); setEventType("general"); setReminder(false);
-      setShowForm(false);
+      resetForm();
       fetchEvents();
     }
+  };
+
+  const startEdit = (event: Event) => {
+    setEditingEvent(event);
+    setTitle(event.title);
+    const descParts = event.description?.split("\n📍 ") || [];
+    setDescription(descParts[0] || "");
+    setLocation(descParts[1] || "");
+    setEventDate(event.event_date);
+    setEventTime(event.event_time?.slice(0, 5) || "");
+    setEventType(event.event_type);
+    setReminder(event.reminder || false);
+    setShowForm(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent || !title || !eventDate) { toast.error("Titre et date requis"); return; }
+    const { error } = await supabase.from("events").update({
+      title,
+      description: location ? `${description || ""}\n📍 ${location}`.trim() : (description || null),
+      event_date: eventDate,
+      event_time: eventTime || null,
+      event_type: eventType,
+      reminder,
+    }).eq("id", editingEvent.id);
+    if (error) toast.error("Erreur lors de la modification");
+    else {
+      toast.success("Événement modifié !");
+      resetForm();
+      fetchEvents();
+    }
+  };
+
+  const resetForm = () => {
+    setTitle(""); setDescription(""); setLocation(""); setEventDate(""); setEventTime(""); setEventType("general"); setReminder(false);
+    setShowForm(false);
+    setEditingEvent(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -173,15 +218,22 @@ export function AgendaPage() {
 
   const getTypeInfo = (type: string) => EVENT_TYPES.find(t => t.value === type) || EVENT_TYPES[0];
 
-  // Filter events for selected date or show upcoming
+  // Filter events for selected date, type filter, or show upcoming
   const today = new Date().toISOString().split("T")[0];
-  const filteredEvents = selectedDate
-    ? events.filter(e => isSameDay(new Date(e.event_date + "T00:00:00"), selectedDate))
-    : events.filter(e => e.event_date >= today);
+  const filteredEvents = (() => {
+    let result = selectedDate
+      ? events.filter(e => isSameDay(new Date(e.event_date + "T00:00:00"), selectedDate))
+      : events.filter(e => e.event_date >= today);
+    if (filterType) result = result.filter(e => e.event_type === filterType);
+    return result;
+  })();
 
+  const filterLabel = filterType ? EVENT_TYPES.find(t => t.value === filterType)?.label : null;
   const sectionTitle = selectedDate
     ? `Événements du ${format(selectedDate, "d MMMM", { locale: fr })}`
-    : filteredEvents.length > 0 ? "Prochains événements" : "Aucun événement à venir";
+    : filteredEvents.length > 0
+      ? filterLabel ? `${filterLabel}` : "Prochains événements"
+      : filterLabel ? `Aucun événement "${filterLabel}"` : "Aucun événement à venir";
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -231,17 +283,36 @@ export function AgendaPage() {
           );
         })()}
 
+        {/* Filtres par type */}
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setFilterType(null)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${!filterType ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-foreground border-border hover:border-primary/40"}`}
+          >
+            Tous
+          </button>
+          {EVENT_TYPES.map(t => (
+            <button
+              key={t.value}
+              onClick={() => setFilterType(filterType === t.value ? null : t.value)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${filterType === t.value ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-foreground border-border hover:border-primary/40"}`}
+            >
+              {t.emoji} {t.label}
+            </button>
+          ))}
+        </div>
+
         {/* Add button */}
         {!showForm ? (
-          <Button className="w-full gap-2 min-h-[52px]" size="lg" onClick={() => { setShowForm(true); if (selectedDate) setEventDate(format(selectedDate, "yyyy-MM-dd")); }}>
+          <Button className="w-full gap-2 min-h-[52px]" size="lg" onClick={() => { setShowForm(true); setEditingEvent(null); if (selectedDate) setEventDate(format(selectedDate, "yyyy-MM-dd")); }}>
             <Plus className="w-5 h-5" />
             Ajouter un rendez-vous
           </Button>
         ) : (
-          <form onSubmit={handleAdd} className="bg-card rounded-xl p-4 border border-border space-y-4">
+          <form onSubmit={editingEvent ? handleUpdate : handleAdd} className="bg-card rounded-xl p-4 border border-border space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">Nouveau rendez-vous</h3>
-              <button type="button" onClick={() => setShowForm(false)}><X className="w-5 h-5 text-muted-foreground" /></button>
+              <h3 className="font-semibold text-foreground">{editingEvent ? "Modifier le rendez-vous" : "Nouveau rendez-vous"}</h3>
+              <button type="button" onClick={resetForm}><X className="w-5 h-5 text-muted-foreground" /></button>
             </div>
 
             {/* Event type */}
@@ -287,7 +358,7 @@ export function AgendaPage() {
               </div>
               <Switch id="reminder" checked={reminder} onCheckedChange={setReminder} />
             </div>
-            <Button type="submit" className="w-full min-h-[48px]">Enregistrer</Button>
+            <Button type="submit" className="w-full min-h-[48px]">{editingEvent ? "Modifier" : "Enregistrer"}</Button>
           </form>
         )}
 
@@ -337,9 +408,14 @@ export function AgendaPage() {
                         {event.reminder && <span className="text-sm bg-accent text-accent-foreground px-2 py-0.5 rounded-full flex items-center gap-1"><Bell className="w-3 h-3" />Rappel</span>}
                       </div>
                     </div>
-                    <button onClick={() => handleDelete(event.id)} className="p-2 hover:bg-destructive/10 rounded-full transition-colors flex-shrink-0">
-                      <Trash2 className="w-5 h-5 text-destructive" />
-                    </button>
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <button onClick={() => startEdit(event)} className="p-2 hover:bg-primary/10 rounded-full transition-colors" aria-label="Modifier">
+                        <Pencil className="w-4 h-4 text-primary" />
+                      </button>
+                      <button onClick={() => handleDelete(event.id)} className="p-2 hover:bg-destructive/10 rounded-full transition-colors" aria-label="Supprimer">
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

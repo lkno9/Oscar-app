@@ -445,7 +445,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       <div style={{ padding: "24px 16px 0" }}>
         <SectionHeader title="À savoir" />
         {/* Category pills */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12 }}>
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ marginBottom: 12, paddingRight: 16 }}>
           {ACTU_CATEGORIES.map(cat => (
             <button
               key={cat}
@@ -453,11 +453,12 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               style={{
                 padding: "8px 16px",
                 borderRadius: 99,
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: 500,
                 border: "none",
                 cursor: "pointer",
                 flexShrink: 0,
+                whiteSpace: "nowrap",
                 background: actuCat === cat ? "#2DD4BF" : "#f1f5f9",
                 color: actuCat === cat ? "#fff" : "#64748b",
                 transition: "all 0.15s",
@@ -666,7 +667,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
       </div>
 
       {/* NOTIFICATIONS — real data: unread messages + today's events */}
-      <div style={{ padding: "24px 16px 32px" }}>
+      <div style={{ padding: "24px 16px 100px" }}>
         <SectionHeader title="Notifications" linkLabel="Messages" linkPath="/services/communication" />
         {(() => {
           // Build unified notification list

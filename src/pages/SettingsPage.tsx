@@ -192,7 +192,14 @@ export function SettingsPage() {
                 </div>
                 <div className="flex-1">
                   <h2 className="text-lg font-bold text-foreground">{profile?.full_name || "Utilisateur"}</h2>
-                  <p className="text-sm text-muted-foreground">{user?.email || user?.phone}</p>
+                  <p className="text-sm text-muted-foreground truncate max-w-[220px]">
+                    {(() => {
+                      const email = user?.email || user?.phone || "";
+                      // Humaniser les emails internes de dev bypass
+                      if (email.includes("oscar-internal.app")) return "demo@oscar-app.fr";
+                      return email;
+                    })()}
+                  </p>
                 </div>
                 <button onClick={startEditProfile} className="p-3 rounded-full hover:bg-secondary transition-colors" aria-label="Modifier le profil">
                   <Pencil className="w-5 h-5 text-primary" />

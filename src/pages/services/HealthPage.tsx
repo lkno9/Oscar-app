@@ -324,20 +324,25 @@ export function HealthPage() {
       <div className="flex-1 overflow-hidden flex flex-col">
         <Tabs defaultValue="medications" className="flex-1 flex flex-col overflow-hidden">
           <div className="mx-2 mt-4 flex-shrink-0">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="medications" className="text-xs px-1.5 py-2">
-                Médic.
+            <TabsList className="flex w-full overflow-x-auto scrollbar-hide">
+              <TabsTrigger value="medications" className="text-xs px-3 py-2 flex items-center gap-1 flex-shrink-0">
+                <Pill className="w-3.5 h-3.5" />
+                M\u00e9dicaments
               </TabsTrigger>
-              <TabsTrigger value="mood" className="text-xs px-1.5 py-2">
+              <TabsTrigger value="mood" className="text-xs px-3 py-2 flex items-center gap-1 flex-shrink-0">
+                <Heart className="w-3.5 h-3.5" />
                 Humeur
               </TabsTrigger>
-              <TabsTrigger value="platforms" className="text-xs px-1.5 py-2">
+              <TabsTrigger value="platforms" className="text-xs px-3 py-2 flex items-center gap-1 flex-shrink-0">
+                <CalendarDays className="w-3.5 h-3.5" />
                 Services
               </TabsTrigger>
-              <TabsTrigger value="activity" className="text-xs px-1.5 py-2">
-                Activité
+              <TabsTrigger value="activity" className="text-xs px-3 py-2 flex items-center gap-1 flex-shrink-0">
+                <Dumbbell className="w-3.5 h-3.5" />
+                Activit\u00e9
               </TabsTrigger>
-              <TabsTrigger value="wellness" className="text-xs px-1.5 py-2">
+              <TabsTrigger value="wellness" className="text-xs px-3 py-2 flex items-center gap-1 flex-shrink-0">
+                <Lightbulb className="w-3.5 h-3.5" />
                 Conseils
               </TabsTrigger>
             </TabsList>
@@ -416,8 +421,8 @@ export function HealthPage() {
                     </div>
                   ))}
                 </div>
-                <button onClick={() => navigate("/services/agenda")} className="mt-3 text-sm text-primary font-medium underline-offset-2 hover:underline">
-                  Voir l'agenda →
+                <button onClick={() => navigate("/services/agenda?type=medical")} className="mt-3 text-sm text-primary font-medium underline-offset-2 hover:underline">
+                  Voir l'agenda médical →
                 </button>
               </div>
             )}

@@ -102,12 +102,10 @@ export function ScamChecker() {
       </CardHeader>
       <CardContent className="space-y-4">
         <Textarea
-          placeholder="Copiez-collez ici le message que vous avez reçu...
-
-Exemple : « Votre carte vitale arrive à expiration. Mettez à jour vos informations sur ameli-renouvellement.fr »"
+          placeholder="Copiez-collez ici le message suspect..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="min-h-[120px] text-base"
+          className="min-h-[140px] text-base"
           disabled={isAnalyzing}
         />
 

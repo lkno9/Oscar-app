@@ -121,6 +121,7 @@ const App = () => (
             <Route path="/family/senior/:seniorId" element={<ProtectedRoute><SubPageLayout><SeniorDetailPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/notifications" element={<ProtectedRoute><SubPageLayout><FamilyNotificationsPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/family/settings" element={<ProtectedRoute><SubPageLayout><FamilySettingsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services" element={<Navigate to="/" state={{ tab: "services" }} replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

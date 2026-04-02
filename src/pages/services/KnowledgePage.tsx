@@ -38,7 +38,7 @@ export function KnowledgePage() {
       <div className="flex-1 overflow-y-auto">
         {/* Category pills */}
         <div className="sticky top-0 z-[5] bg-background px-4 pt-4 pb-3">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ paddingRight: 16 }}>
             {ACTU_CATEGORIES.map((cat) => (
               <button
                 key={cat}
@@ -46,11 +46,12 @@ export function KnowledgePage() {
                 style={{
                   padding: "8px 16px",
                   borderRadius: 99,
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: actuCat === cat ? 600 : 500,
                   border: "none",
                   cursor: "pointer",
                   flexShrink: 0,
+                  whiteSpace: "nowrap",
                   background: actuCat === cat ? "#48A29E" : "#f1f5f9",
                   color: actuCat === cat ? "#fff" : "#64748b",
                   transition: "all 0.15s",
