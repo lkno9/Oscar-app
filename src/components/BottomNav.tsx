@@ -37,18 +37,18 @@ function NavButton({ icon, label, active, onClick }: NavButtonProps) {
     <button
       onClick={onClick}
       className="flex-1 flex flex-col items-center justify-center gap-[3px] border-none bg-transparent cursor-pointer"
-      style={{ paddingBottom: 4, minHeight: 50 }}
+      style={{ paddingBottom: 4, minHeight: 56 }}
     >
       {/* Icon */}
-      <span style={{ color: active ? "#2DD4BF" : "#8E8E93", transition: "color 0.18s ease" }}>
+      <span style={{ color: active ? "#2DD4BF" : "#6B7280", transition: "color 0.18s ease" }}>
         {icon}
       </span>
 
       {/* Label */}
       <span style={{
-        fontSize: 10,
-        fontWeight: 400,
-        color: active ? "#2DD4BF" : "#8E8E93",
+        fontSize: 13,
+        fontWeight: 500,
+        color: active ? "#2DD4BF" : "#6B7280",
         letterSpacing: "0.2px",
         transition: "color 0.18s ease",
       }}>

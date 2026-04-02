@@ -21,18 +21,18 @@ import {
 import { ServiceTile } from "@/components/ServiceTile";
 
 const PRIMARY_SERVICES = [
-  { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda", path: "/services/agenda" },
-  { icon: <Heart className="w-6 h-6" />, label: "Ma santé & bien-être", path: "/services/health" },
-  { icon: <Image className="w-6 h-6" />, label: "Photos & souvenirs", path: "/services/photos" },
-  { icon: <MessageCircle className="w-6 h-6" />, label: "Mes communications", path: "/services/communication" },
-  { icon: <Navigation className="w-6 h-6" />, label: "Mes déplacements", path: "/services/transport" },
-  { icon: <Ticket className="w-6 h-6" />, label: "Mes loisirs & sorties", path: "/services/entertainment" },
-  { icon: <Wrench className="w-6 h-6" />, label: "Mes outils pratiques", path: "/services/tools" },
-  { icon: <Cloud className="w-6 h-6" />, label: "Mes documents", path: "/services/storage" },
-  { icon: <Gamepad2 className="w-6 h-6" />, label: "Mes jeux & mémoire", path: "/services/games" },
-  { icon: <Sparkles className="w-6 h-6" />, label: "Mes avantages", path: "/services/partners" },
-  { icon: <ShieldAlert className="w-6 h-6" />, label: "Ma sécurité", path: "/services/scam-protection" },
-  { icon: <Newspaper className="w-6 h-6" />, label: "Actualités & infos", path: "/services/knowledge" },
+  { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda", sublabel: "RDV, rappels, anniversaires", path: "/services/agenda" },
+  { icon: <Heart className="w-6 h-6" />, label: "Ma santé", sublabel: "Médicaments, humeur, RDV", path: "/services/health" },
+  { icon: <Image className="w-6 h-6" />, label: "Photos & souvenirs", sublabel: "Albums, vidéos, journal", path: "/services/photos" },
+  { icon: <MessageCircle className="w-6 h-6" />, label: "Appeler ou écrire", sublabel: "Messages et appels famille", path: "/services/communication" },
+  { icon: <Navigation className="w-6 h-6" />, label: "Me déplacer", sublabel: "Bus, métro, itinéraire", path: "/services/transport" },
+  { icon: <Ticket className="w-6 h-6" />, label: "Sorties & loisirs", sublabel: "Cinéma, expos, balades", path: "/services/entertainment" },
+  { icon: <Wrench className="w-6 h-6" />, label: "Outils pratiques", sublabel: "Météo, traducteur, minuteur", path: "/services/tools" },
+  { icon: <Cloud className="w-6 h-6" />, label: "Mes documents", sublabel: "Classer mes fichiers", path: "/services/storage" },
+  { icon: <Gamepad2 className="w-6 h-6" />, label: "Jeux & mémoire", sublabel: "Quiz, memory, sudoku", path: "/services/games" },
+  { icon: <Sparkles className="w-6 h-6" />, label: "Mes avantages", sublabel: "Bons plans seniors", path: "/services/partners" },
+  { icon: <ShieldAlert className="w-6 h-6" />, label: "Ma sécurité", sublabel: "Vérifier un message suspect", path: "/services/scam-protection" },
+  { icon: <Newspaper className="w-6 h-6" />, label: "Actualités & infos", sublabel: "Articles, droits, conseils", path: "/services/knowledge" },
 ];
 
 const SUPPORT_ITEMS = [
@@ -84,6 +84,7 @@ export function ServicesPage() {
               key={s.label}
               icon={s.icon}
               label={s.label}
+              sublabel={s.sublabel}
               onClick={() => navigate(s.path)}
             />
           ))}

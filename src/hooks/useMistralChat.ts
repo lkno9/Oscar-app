@@ -1,7 +1,9 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import type { RichCard } from "@/types/chat";
+import { supabase } from "@/integrations/supabase/client";
 
 const MISTRAL_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mistral-chat`;
+const MAX_PERSISTED_MESSAGES = 30;
 
 export interface MistralMessage {
   role: "user" | "assistant";
@@ -18,6 +20,9 @@ interface UseMistralChatOptions {
   onDone: (fullText: string) => void;
   onError: (error: string) => void;
   onToolResult?: (card: RichCard) => void;
+  userId?: string | null;
+  /** Called with loaded messages from DB on mount */
+  onHistoryLoaded?: (messages: MistralMessage[]) => void;
 }
 
 export function useMistralChat({
@@ -25,10 +30,52 @@ export function useMistralChat({
   onDone,
   onError,
   onToolResult,
+  userId,
+  onHistoryLoaded,
 }: UseMistralChatOptions) {
   // Conversation history in ref (no re-renders on update)
   const historyRef = useRef<MistralMessage[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load conversation from Supabase on mount
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("conversations")
+          .select("messages")
+          .eq("user_id", userId)
+          .single();
+        if (data?.messages && Array.isArray(data.messages)) {
+          const loaded = (data.messages as MistralMessage[]).slice(-MAX_PERSISTED_MESSAGES);
+          historyRef.current = loaded;
+          onHistoryLoaded?.(loaded);
+        }
+      } catch {
+        // No conversation yet — that's fine
+      }
+    })();
+  }, [userId]);
+
+  // Debounced persist to Supabase
+  const persistConversation = useCallback(() => {
+    if (!userId) return;
+    if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
+    persistTimeoutRef.current = setTimeout(async () => {
+      try {
+        const trimmed = historyRef.current.slice(-MAX_PERSISTED_MESSAGES);
+        await supabase.from("conversations").upsert({
+          user_id: userId,
+          messages: trimmed,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+      } catch {
+        // Non-blocking
+      }
+    }, 1000);
+  }, [userId]);
 
   // Stable callback refs to avoid stale closures
   const onDeltaRef = useRef(onDelta);
@@ -58,6 +105,7 @@ export function useMistralChat({
         ...historyRef.current,
         { role: "user", content: imageBase64 ? `${text} [fichier joint analysé]` : text },
       ];
+      persistConversation();
 
       // Cancel any in-flight request
       abortControllerRef.current?.abort();
@@ -175,6 +223,7 @@ export function useMistralChat({
             ...historyRef.current,
             { role: "assistant", content: fullText },
           ];
+          persistConversation();
         }
 
         onDoneRef.current(fullText);
@@ -195,7 +244,8 @@ export function useMistralChat({
 
   const clearHistory = useCallback(() => {
     historyRef.current = [];
-  }, []);
+    persistConversation();
+  }, [persistConversation]);
 
   const cancelRequest = useCallback(() => {
     abortControllerRef.current?.abort();

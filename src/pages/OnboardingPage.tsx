@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { ChevronRight, Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 // --- Options ---
 const INTEREST_OPTIONS = [
@@ -32,6 +34,7 @@ const TOTAL_STEPS = 4;
 
 export function OnboardingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [interests, setInterests] = useState<string[]>([]);
   const [techLevel, setTechLevel] = useState("");
@@ -51,17 +54,33 @@ export function OnboardingPage() {
     return false;
   };
 
-  const finish = () => {
-    localStorage.setItem(
-      "oscar_onboarding",
-      JSON.stringify({
-        completed: true,
-        interests,
-        techLevel,
-        contactTime,
-        completedAt: new Date().toISOString(),
-      })
-    );
+  const finish = async () => {
+    const prefs = {
+      completed: true,
+      interests,
+      techLevel,
+      contactTime,
+      completedAt: new Date().toISOString(),
+    };
+
+    // Persist to localStorage as fallback
+    localStorage.setItem("oscar_onboarding", JSON.stringify(prefs));
+
+    // Persist to Supabase profiles if user is authenticated
+    if (user) {
+      try {
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          interests: interests,
+          tech_level: techLevel,
+          contact_time: contactTime,
+          onboarding_completed: true,
+        }, { onConflict: "id" });
+      } catch {
+        // Non-blocking: localStorage fallback already saved
+      }
+    }
+
     navigate("/");
   };
 
@@ -96,9 +115,9 @@ export function OnboardingPage() {
             );
             navigate("/");
           }}
-          style={{ fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
+          style={{ fontSize: 14, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
         >
-          Passer →
+          Je ferai ça plus tard
         </button>
       </div>
 

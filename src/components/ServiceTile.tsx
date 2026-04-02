@@ -3,11 +3,12 @@ import { cn } from "@/lib/utils";
 interface ServiceTileProps {
   icon: React.ReactNode;
   label: string;
+  sublabel?: string;
   intent?: "default" | "danger";
   onClick?: () => void;
 }
 
-export function ServiceTile({ icon, label, intent = "default", onClick }: ServiceTileProps) {
+export function ServiceTile({ icon, label, sublabel, intent = "default", onClick }: ServiceTileProps) {
   return (
     <button
       onClick={onClick}
@@ -43,7 +44,10 @@ export function ServiceTile({ icon, label, intent = "default", onClick }: Servic
       >
         {icon}
       </div>
-      <span style={{ fontSize: 12.5, lineHeight: 1.3 }}>{label}</span>
+      <div className="flex flex-col items-center gap-0.5">
+        <span style={{ fontSize: 14, lineHeight: 1.3, fontWeight: 500 }}>{label}</span>
+        {sublabel && <span style={{ fontSize: 11, lineHeight: 1.3, color: "#94a3b8" }}>{sublabel}</span>}
+      </div>
     </button>
   );
 }

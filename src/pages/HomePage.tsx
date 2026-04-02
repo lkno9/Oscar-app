@@ -212,11 +212,25 @@ export function HomePage() {
     });
   }, []);
 
+  const handleHistoryLoaded = useCallback((loaded: import("@/hooks/useMistralChat").MistralMessage[]) => {
+    // Restore messages from DB into chat UI
+    const restored: ChatMessageData[] = loaded.map((m, i) => ({
+      id: `restored-${i}`,
+      role: m.role,
+      content: typeof m.content === "string" ? m.content : m.content.map(c => c.type === "text" ? c.text : "[fichier]").join(" "),
+    }));
+    if (restored.length > 0) {
+      setMessages(restored);
+    }
+  }, []);
+
   const { sendMessage: sendToMistral } = useMistralChat({
     onDelta: handleStreamDelta,
     onDone: handleStreamDone,
     onError: handleStreamError,
     onToolResult: handleToolResult,
+    userId: user?.id,
+    onHistoryLoaded: handleHistoryLoaded,
   });
 
   // Medication reminders
