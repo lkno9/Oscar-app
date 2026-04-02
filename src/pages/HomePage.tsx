@@ -574,17 +574,17 @@ export function HomePage() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setIsCallOpen(true)}
-style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
             aria-label="Appeler Oscar"
           >
-            <Phone className="w-[18px] h-[18px]" />
+            <Phone className="w-5 h-5" />
           </button>
           <button
             onClick={() => navigate("/settings")}
-style={{ width: 36, height: 36, borderRadius: 99, border: "none", background: "#F2F2F7", color: "#8E8E93", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "#F2F2F7", color: "#8E8E93", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
             aria-label="Paramètres"
           >
-            <Settings className="w-[18px] h-[18px]" />
+            <Settings className="w-5 h-5" />
           </button>
         </div>
       </header>
