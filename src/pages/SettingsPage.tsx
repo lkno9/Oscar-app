@@ -158,6 +158,7 @@ export function SettingsPage() {
     const root = document.documentElement;
     root.classList.remove("text-size-normal", "text-size-large", "text-size-xlarge");
     root.classList.add(`text-size-${size}`);
+    root.setAttribute("data-text-size", size);
     toast.success(size === "normal" ? "Taille normale" : size === "large" ? "Gros texte activé" : "Très gros texte activé");
   };
 
@@ -166,6 +167,7 @@ export function SettingsPage() {
     const root = document.documentElement;
     root.classList.remove("text-size-normal", "text-size-large", "text-size-xlarge");
     root.classList.add(`text-size-${textSize}`);
+    root.setAttribute("data-text-size", textSize);
   }, []);
 
   return (

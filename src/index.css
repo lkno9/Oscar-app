@@ -310,3 +310,7 @@
 .text-size-xlarge .text-sm { font-size: 1.0625rem !important; /* 17px */ }
 .text-size-xlarge .text-base { font-size: 1.1875rem !important; /* 19px */ }
 .text-size-xlarge .text-lg { font-size: 1.375rem !important; /* 22px */ }
+
+/* data-attribute fallback for global scaling */
+[data-text-size="large"] { font-size: 110%; }
+[data-text-size="xlarge"] { font-size: 125%; }
