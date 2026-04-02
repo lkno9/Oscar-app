@@ -162,7 +162,7 @@ export function SecurityQuiz() {
             const isSelected = selectedAnswer === index;
             const isCorrect = option.isCorrect;
             
-            let buttonClass = "w-full text-left p-4 h-auto justify-start";
+            let buttonClass = "w-full text-left p-4 h-auto justify-start whitespace-normal";
             
             if (showExplanation) {
               if (isCorrect) {

@@ -327,7 +327,7 @@ export function HealthPage() {
             <TabsList className="flex w-full overflow-x-auto scrollbar-hide">
               <TabsTrigger value="medications" className="text-xs px-3 py-2 flex items-center gap-1 flex-shrink-0">
                 <Pill className="w-3.5 h-3.5" />
-                M\u00e9dicaments
+                Médicaments
               </TabsTrigger>
               <TabsTrigger value="mood" className="text-xs px-3 py-2 flex items-center gap-1 flex-shrink-0">
                 <Heart className="w-3.5 h-3.5" />
@@ -339,7 +339,7 @@ export function HealthPage() {
               </TabsTrigger>
               <TabsTrigger value="activity" className="text-xs px-3 py-2 flex items-center gap-1 flex-shrink-0">
                 <Dumbbell className="w-3.5 h-3.5" />
-                Activit\u00e9
+                Activité
               </TabsTrigger>
               <TabsTrigger value="wellness" className="text-xs px-3 py-2 flex items-center gap-1 flex-shrink-0">
                 <Lightbulb className="w-3.5 h-3.5" />
