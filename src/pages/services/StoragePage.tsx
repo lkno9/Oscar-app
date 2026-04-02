@@ -26,7 +26,7 @@ function loadFolders(): string[] {
     const stored = localStorage.getItem(FOLDERS_STORAGE_KEY);
     if (stored) return JSON.parse(stored);
   } catch { /* ignore */ }
-  return ["Mes courriers", "Santé", "Photos de famille"];
+  return ["Mes courriers", "Santé"];
 }
 
 function saveFolders(folders: string[]) {
