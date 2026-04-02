@@ -622,31 +622,6 @@ export function HealthPage() {
               </p>
             </div>
 
-            {/* Plateformes de santé */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Services en ligne</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            <div className="space-y-3">
-              {HEALTH_PLATFORMS.map((p, i) => (
-                <button
-                  key={i}
-                  onClick={() => window.open(p.url, "_blank")}
-                  className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-primary transition-all text-left"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
-                    {p.emoji}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground">{p.name}</h3>
-                    <p className="text-sm text-muted-foreground">{p.desc}</p>
-                  </div>
-                  <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                </button>
-              ))}
-            </div>
-
             {/* Trouver autour de moi — recherche intégrée */}
             <div className="flex items-center gap-3 pt-2">
               <div className="flex-1 h-px bg-border" />
@@ -763,6 +738,30 @@ export function HealthPage() {
                 ))}
               </div>
             )}
+            {/* Plateformes de santé */}
+            <div className="flex items-center gap-3 pt-2">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Services en ligne</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <div className="space-y-3">
+              {HEALTH_PLATFORMS.map((p, i) => (
+                <button
+                  key={i}
+                  onClick={() => window.open(p.url, "_blank")}
+                  className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-primary transition-all text-left"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
+                    {p.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground">{p.name}</h3>
+                    <p className="text-sm text-muted-foreground">{p.desc}</p>
+                  </div>
+                  <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                </button>
+              ))}
+            </div>
           </TabsContent>
 
           {/* ACTIVITY TAB */}

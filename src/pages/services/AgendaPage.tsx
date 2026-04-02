@@ -283,25 +283,6 @@ export function AgendaPage() {
           );
         })()}
 
-        {/* Filtres par type */}
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => setFilterType(null)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${!filterType ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-foreground border-border hover:border-primary/40"}`}
-          >
-            Tous
-          </button>
-          {EVENT_TYPES.map(t => (
-            <button
-              key={t.value}
-              onClick={() => setFilterType(filterType === t.value ? null : t.value)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${filterType === t.value ? "bg-primary text-primary-foreground border-primary" : "bg-secondary text-foreground border-border hover:border-primary/40"}`}
-            >
-              {t.emoji} {t.label}
-            </button>
-          ))}
-        </div>
-
         {/* Add button */}
         {!showForm ? (
           <Button className="w-full gap-2 min-h-[52px]" size="lg" onClick={() => { setShowForm(true); setEditingEvent(null); if (selectedDate) setEventDate(format(selectedDate, "yyyy-MM-dd")); }}>
