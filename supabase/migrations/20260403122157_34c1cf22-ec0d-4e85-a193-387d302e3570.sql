@@ -1,0 +1,1 @@
+UPDATE public.user_roles SET role = 'family_member' WHERE user_id = '5a200243-6483-472f-936a-8c8384cb6bef';
