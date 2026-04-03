@@ -40,10 +40,20 @@ export interface LinkPreviewData {
   domain: string;
 }
 
+export interface DemarcheCardData {
+  templateId: string;
+  label: string;
+  recipient: string;
+  generatedText: string;
+  subject: string;
+  status: "brouillon" | "copie" | "ouvert_email" | "sauvegarde";
+}
+
 export type RichCard =
   | { type: "weather"; data: WeatherData }
   | { type: "translation"; data: TranslationData }
   | { type: "map"; data: MapData }
   | { type: "emergency"; data: EmergencyData }
   | { type: "webview"; data: WebViewData }
-  | { type: "link_preview"; data: LinkPreviewData };
+  | { type: "link_preview"; data: LinkPreviewData }
+  | { type: "demarche"; data: DemarcheCardData };

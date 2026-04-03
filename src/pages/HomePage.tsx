@@ -5,10 +5,11 @@ import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { CallScreen } from "@/components/CallScreen";
 import { useMistralChat } from "@/hooks/useMistralChat";
+import { useDemarcheChat } from "@/hooks/useDemarcheChat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import type { RichCard } from "@/types/chat";
+import type { RichCard, DemarcheCardData } from "@/types/chat";
 import {
   ANALYSIS_ACCEPT,
   isImageFile,
@@ -184,9 +185,14 @@ export function HomePage() {
     });
   }, []);
 
-  const handleStreamDone = useCallback((_fullText: string) => {
+  // Ref to hold the démarche completion callback (set after demarcheChat is initialized)
+  const demarcheDoneRef = useRef<((text: string) => void) | null>(null);
+
+  const handleStreamDone = useCallback((fullText: string) => {
     setIsTyping(false);
     lastAssistantIdRef.current = null;
+    // If we're in a démarche flow, finalize the card
+    demarcheDoneRef.current?.(fullText);
   }, []);
 
   const handleStreamError = useCallback((error: string) => {
@@ -232,6 +238,36 @@ export function HomePage() {
     userId: user?.id,
     onHistoryLoaded: handleHistoryLoaded,
   });
+
+  // ─── Démarche chat integration ───
+  const addAssistantMessageForDemarche = useCallback((text: string) => {
+    const id = Date.now().toString();
+    setMessages(prev => [...prev, { id, role: "assistant" as const, content: text }]);
+    setIsTyping(false);
+  }, []);
+
+  const addDemarcheCardToChat = useCallback((data: DemarcheCardData) => {
+    const id = Date.now().toString();
+    const card: RichCard = { type: "demarche", data };
+    setMessages(prev => [...prev, {
+      id,
+      role: "assistant" as const,
+      content: "Votre texte est prêt. Appuyez sur Ouvrir pour l'envoyer depuis votre application email.",
+      richCards: [card],
+    }]);
+    setIsTyping(false);
+  }, []);
+
+  const demarcheChat = useDemarcheChat({
+    addAssistantMessage: addAssistantMessageForDemarche,
+    addDemarcheCard: addDemarcheCardToChat,
+    sendToOrchestrator: sendToMistral,
+  });
+
+  // Wire up the démarche completion ref
+  demarcheDoneRef.current = demarcheChat.isActive
+    ? demarcheChat.onGenerationComplete
+    : null;
 
   // Medication reminders
   useEffect(() => {
@@ -521,6 +557,11 @@ export function HomePage() {
     setIsRecording(false);
     const userMessage: ChatMessageData = { id: Date.now().toString(), role: "user", content };
     setMessages(prev => [...prev, userMessage]);
+
+    // Check if this message matches a démarche intent
+    const isDemarche = demarcheChat.checkIntent(content);
+    if (isDemarche) return;
+
     setIsTyping(true);
     sendToMistral(content);
   };

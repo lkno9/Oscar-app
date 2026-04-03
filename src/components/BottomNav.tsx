@@ -1,8 +1,10 @@
-import { Home, MessageCircle, Menu } from "lucide-react";
+import { Home, MessageCircle, Menu, FileText } from "lucide-react";
+
+export type TabId = "oscar" | "accueil" | "services" | "demarches";
 
 interface BottomNavProps {
-  active: "oscar" | "accueil" | "services";
-  onNavigate: (tab: "oscar" | "accueil" | "services") => void;
+  active: TabId;
+  onNavigate: (tab: TabId) => void;
 }
 
 export function BottomNav({ active, onNavigate }: BottomNavProps) {
@@ -18,9 +20,10 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
         borderTop: "0.5px solid rgba(0,0,0,0.1)",
       }}
     >
-      <NavButton icon={<Home   className="w-[22px] h-[22px]" />} label="Accueil" active={active === "accueil"} onClick={() => onNavigate("accueil")} />
-      <NavButton icon={<MessageCircle className="w-[22px] h-[22px]" />} label="Oscar"   active={active === "oscar"}   onClick={() => onNavigate("oscar")}   />
-      <NavButton icon={<Menu   className="w-[22px] h-[22px]" />} label="Menu"    active={active === "services"} onClick={() => onNavigate("services")} />
+      <NavButton icon={<Home   className="w-[22px] h-[22px]" />} label="Accueil"    active={active === "accueil"}    onClick={() => onNavigate("accueil")} />
+      <NavButton icon={<MessageCircle className="w-[22px] h-[22px]" />} label="Oscar"      active={active === "oscar"}      onClick={() => onNavigate("oscar")} />
+      <NavButton icon={<FileText className="w-[22px] h-[22px]" />} label="Démarches"  active={active === "demarches"}  onClick={() => onNavigate("demarches")} />
+      <NavButton icon={<Menu   className="w-[22px] h-[22px]" />} label="Menu"       active={active === "services"}   onClick={() => onNavigate("services")} />
     </nav>
   );
 }

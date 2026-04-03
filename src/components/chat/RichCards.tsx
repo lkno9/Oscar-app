@@ -1,6 +1,7 @@
 import { Phone, Copy, ExternalLink, Check, MapPin, Globe, X, Maximize2, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
-import type { RichCard, WeatherData, TranslationData, MapData, EmergencyData, WebViewData, LinkPreviewData } from "@/types/chat";
+import type { RichCard, WeatherData, TranslationData, MapData, EmergencyData, WebViewData, LinkPreviewData, DemarcheCardData } from "@/types/chat";
+import { DemarcheCard } from "@/components/chat/DemarcheCard";
 
 export function RichCardRenderer({ card }: { card: RichCard }) {
   switch (card.type) {
@@ -16,6 +17,8 @@ export function RichCardRenderer({ card }: { card: RichCard }) {
       return <WebViewCard data={card.data} />;
     case "link_preview":
       return <LinkPreviewCard data={card.data} />;
+    case "demarche":
+      return <DemarcheCard data={card.data} />;
     default:
       return null;
   }
