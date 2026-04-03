@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/BottomNav";
+import type { TabId } from "@/components/BottomNav";
 import { HomePage } from "@/pages/HomePage";
 import { RecapPage } from "@/pages/RecapPage";
 import { ServicesPage } from "@/pages/ServicesPage";
+import { DemarchesPage } from "@/pages/DemarchesPage";
 
 const Index = () => {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<"oscar" | "accueil" | "services">(() => {
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
     const state = location.state as { tab?: string } | null;
     if (state?.tab === "services") return "services";
     if (state?.tab === "accueil") return "accueil";
+    if (state?.tab === "demarches") return "demarches";
     return "oscar";
   });
 
@@ -19,6 +22,7 @@ const Index = () => {
     const state = location.state as { tab?: string } | null;
     if (state?.tab === "services") setActiveTab("services");
     else if (state?.tab === "oscar") setActiveTab("oscar");
+    else if (state?.tab === "demarches") setActiveTab("demarches");
   }, [location.state]);
 
   const renderTab = () => {
@@ -29,6 +33,8 @@ const Index = () => {
         return <RecapPage onGoToOscar={() => setActiveTab("oscar")} />;
       case "services":
         return <ServicesPage />;
+      case "demarches":
+        return <DemarchesPage />;
     }
   };
 
