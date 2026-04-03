@@ -308,28 +308,36 @@ export function AuthPage() {
           </Button>
 
           {/* Dev bypass */}
-          <Button
-            variant="ghost"
-            className="w-full text-sm text-muted-foreground/50 hover:text-muted-foreground"
-            onClick={async () => {
-              try {
-                toast.info('Connexion en cours...');
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/dev-bypass-login`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
-                  body: JSON.stringify({ phone_number: '+33669305283' }),
-                });
-                const data = await response.json();
-                if (!response.ok) { toast.error(data.error); return; }
-                const { error } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' });
-                if (error) { toast.error('Erreur session'); return; }
-                toast.success('Connecté en tant que Fouquet');
-                navigate('/');
-              } catch { toast.error('Erreur bypass'); }
-            }}
-          >
-            🔓 Dev bypass (Fouquet)
-          </Button>
+          <div className="flex gap-2">
+            {[
+              { label: 'Fouquet', phone: '+33669305283' },
+              { label: 'Porche', phone: '+33783594733' },
+            ].map(({ label, phone }) => (
+              <Button
+                key={label}
+                variant="ghost"
+                className="flex-1 text-sm text-muted-foreground/50 hover:text-muted-foreground"
+                onClick={async () => {
+                  try {
+                    toast.info('Connexion en cours...');
+                    const response = await fetch(`${SUPABASE_URL}/functions/v1/dev-bypass-login`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                      body: JSON.stringify({ phone_number: phone }),
+                    });
+                    const data = await response.json();
+                    if (!response.ok) { toast.error(data.error); return; }
+                    const { error } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' });
+                    if (error) { toast.error('Erreur session'); return; }
+                    toast.success(`Connecté en tant que ${label}`);
+                    navigate('/');
+                  } catch { toast.error('Erreur bypass'); }
+                }}
+              >
+                🔓 {label}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
     );
