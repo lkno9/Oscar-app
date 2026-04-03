@@ -171,12 +171,12 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
     const fetchEvents = async () => {
       const today = new Date().toISOString().split("T")[0];
       const { data } = await supabase
-        .from("agenda_events")
-        .select("id, title, event_date, event_time, category")
+        .from("events")
+        .select("id, title, event_date, event_time, event_type")
         .gte("event_date", today)
         .order("event_date", { ascending: true })
         .limit(5);
-      if (data) setUpcomingEvents(data);
+      if (data) setUpcomingEvents(data.map(e => ({ ...e, category: e.event_type || 'general', event_time: e.event_time || '' })));
     };
     fetchEvents();
   }, [user]);
