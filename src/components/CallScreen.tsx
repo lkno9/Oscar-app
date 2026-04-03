@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────
-interface CallScreenProps { isOpen: boolean; onClose: () => void; }
+interface CallScreenProps { isOpen: boolean; onClose: () => void; initialVideoEnabled?: boolean; }
 type CallPhase = "permissions" | "active" | "ended" | "error";
 type OscarState = "listening" | "thinking" | "speaking" | "idle";
 

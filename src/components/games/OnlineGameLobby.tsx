@@ -313,7 +313,7 @@ export function OnlineGameLobby({ gameTitle, gameEmoji, gameType, onGameReady }:
   }
 
   // Joining state (waiting for connection)
-  if (mode === "join" && gameRoom.status !== "connected" && gameRoom.status !== "playing") {
+  if (mode === "join" && (gameRoom.status as string) !== "connected" && gameRoom.status !== "playing") {
     return (
       <div className="flex flex-col h-full bg-background">
         <header className="px-4 py-4 bg-card border-b border-border flex items-center gap-3">

@@ -66,7 +66,7 @@ export function useMistralChat({
     persistTimeoutRef.current = setTimeout(async () => {
       try {
         const trimmed = historyRef.current.slice(-MAX_PERSISTED_MESSAGES);
-        await supabase.from("conversations").upsert({
+        await supabase.from("conversations" as any).upsert({
           user_id: userId,
           messages: trimmed,
           updated_at: new Date().toISOString(),
