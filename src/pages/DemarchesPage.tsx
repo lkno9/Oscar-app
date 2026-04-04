@@ -369,9 +369,16 @@ function Dashboard({ monthlyAlerts, inProgressTasks, tasksLoading, onGoToWrite, 
           <ActionCard icon={<PenLine className="w-6 h-6" />} label="Écrire un courrier" sublabel="Réclamation, demande, résiliation..." color="#1EB89A" onClick={onGoToWrite} />
           <ActionCard icon={<ListChecks className="w-6 h-6" />} label="Mes démarches" sublabel="Suivre mes dossiers en cours" color="#3B82F6" badge={inProgressTasks.length > 0 ? inProgressTasks.length : undefined} onClick={onGoToTasks} />
           <ActionCard icon={<BookOpen className="w-6 h-6" />} label="Mes droits & aides" sublabel="APL, retraite, APA, allocations..." color="#8B5CF6" onClick={onGoToDroits} />
-          <ActionCard icon={<MessageCircle className="w-6 h-6" />} label="Demander à Oscar" sublabel="Une question administrative ?" color="#F59E0B" onClick={() => onAskOscar("Bonjour Oscar, j'ai une question administrative.")} />
         </div>
-      </div>
+        <button
+          onClick={() => onAskOscar("Bonjour Oscar, j'ai une question administrative.")}
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl transition-all active:scale-[0.98]"
+          style={{ border: "1px solid rgba(45,212,191,0.2)", background: "rgba(45,212,191,0.04)", cursor: "pointer" }}
+        >
+          <MessageCircle className="w-4 h-4" style={{ color: "#2DD4BF" }} />
+          <span style={{ fontSize: 13, color: "#64748B" }}>Oscar peut aussi vous aider sur vos démarches</span>
+          <ChevronRight className="w-4 h-4" style={{ color: "#94A3B8" }} />
+        </button>
 
       {/* Démarches en cours */}
       {!tasksLoading && inProgressTasks.length > 0 && (
