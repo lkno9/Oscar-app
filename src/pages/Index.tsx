@@ -5,7 +5,6 @@ import type { TabId } from "@/components/BottomNav";
 import { HomePage } from "@/pages/HomePage";
 import { RecapPage } from "@/pages/RecapPage";
 import { ServicesPage } from "@/pages/ServicesPage";
-import { DemarchesPage } from "@/pages/DemarchesPage";
 
 const Index = () => {
   const location = useLocation();
@@ -13,16 +12,13 @@ const Index = () => {
     const state = location.state as { tab?: string } | null;
     if (state?.tab === "services") return "services";
     if (state?.tab === "accueil") return "accueil";
-    if (state?.tab === "demarches") return "demarches";
     return "oscar";
   });
 
-  // Listen for navigation state changes (e.g. back from service pages)
   useEffect(() => {
     const state = location.state as { tab?: string } | null;
     if (state?.tab === "services") setActiveTab("services");
     else if (state?.tab === "oscar") setActiveTab("oscar");
-    else if (state?.tab === "demarches") setActiveTab("demarches");
   }, [location.state]);
 
   const renderTab = () => {
@@ -33,8 +29,6 @@ const Index = () => {
         return <RecapPage onGoToOscar={() => setActiveTab("oscar")} />;
       case "services":
         return <ServicesPage />;
-      case "demarches":
-        return <DemarchesPage />;
     }
   };
 

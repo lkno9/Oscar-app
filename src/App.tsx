@@ -57,6 +57,7 @@ import { RadioPage } from "./pages/services/RadioPage";
 import { RecipesPage } from "./pages/services/RecipesPage";
 import { DailyQuizPage } from "./pages/DailyQuizPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
+import { DemarchesPage } from "./pages/DemarchesPage";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ const App = () => (
             <Route path="/services/transport" element={<ProtectedRoute><SubPageLayout><TransportPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/entertainment" element={<ProtectedRoute><SubPageLayout><EntertainmentPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/tools" element={<ProtectedRoute><SubPageLayout><ToolsPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/demarches" element={<ProtectedRoute><SubPageLayout><DemarchesPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/knowledge" element={<ProtectedRoute><SubPageLayout><KnowledgePage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/radio" element={<ProtectedRoute><SubPageLayout><RadioPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/recipes" element={<ProtectedRoute><SubPageLayout><RecipesPage /></SubPageLayout></ProtectedRoute>} />

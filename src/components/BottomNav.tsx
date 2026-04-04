@@ -1,6 +1,6 @@
-import { Home, MessageCircle, Menu, FileText } from "lucide-react";
+import { Home, MessageCircle, Menu } from "lucide-react";
 
-export type TabId = "oscar" | "accueil" | "services" | "demarches";
+export type TabId = "oscar" | "accueil" | "services";
 
 interface BottomNavProps {
   active: TabId;
@@ -20,10 +20,9 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
         borderTop: "0.5px solid rgba(0,0,0,0.1)",
       }}
     >
-      <NavButton icon={<Home   className="w-[22px] h-[22px]" />} label="Accueil"    active={active === "accueil"}    onClick={() => onNavigate("accueil")} />
-      <NavButton icon={<MessageCircle className="w-[22px] h-[22px]" />} label="Oscar"      active={active === "oscar"}      onClick={() => onNavigate("oscar")} />
-      <NavButton icon={<FileText className="w-[22px] h-[22px]" />} label="Démarches"  active={active === "demarches"}  onClick={() => onNavigate("demarches")} />
-      <NavButton icon={<Menu   className="w-[22px] h-[22px]" />} label="Menu"       active={active === "services"}   onClick={() => onNavigate("services")} />
+      <NavButton icon={<Home className="w-[22px] h-[22px]" />} label="Accueil" active={active === "accueil"} onClick={() => onNavigate("accueil")} />
+      <NavButton icon={<MessageCircle className="w-[22px] h-[22px]" />} label="Oscar" active={active === "oscar"} onClick={() => onNavigate("oscar")} />
+      <NavButton icon={<Menu className="w-[22px] h-[22px]" />} label="Menu" active={active === "services"} onClick={() => onNavigate("services")} />
     </nav>
   );
 }
@@ -42,12 +41,9 @@ function NavButton({ icon, label, active, onClick }: NavButtonProps) {
       className="flex-1 flex flex-col items-center justify-center gap-[3px] border-none bg-transparent cursor-pointer"
       style={{ paddingBottom: 4, minHeight: 56 }}
     >
-      {/* Icon */}
       <span style={{ color: active ? "#2DD4BF" : "#6B7280", transition: "color 0.18s ease" }}>
         {icon}
       </span>
-
-      {/* Label */}
       <span style={{
         fontSize: 13,
         fontWeight: 500,
@@ -57,8 +53,6 @@ function NavButton({ icon, label, active, onClick }: NavButtonProps) {
       }}>
         {label}
       </span>
-
-      {/* Active dot indicator */}
       <span style={{
         width: active ? 4 : 0,
         height: 4,
