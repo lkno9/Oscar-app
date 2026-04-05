@@ -57,6 +57,7 @@ export function DemarchesPage() {
 
   // Write flow
   const [writeView, setWriteView] = useState<WriteView>("list");
+  const [writeMode, setWriteMode] = useState<"email" | "document" | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<DemarcheTemplate | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [fields, setFields] = useState<DemarcheFields>({});
@@ -141,6 +142,7 @@ export function DemarchesPage() {
       setView("dashboard");
       setWriteView("list");
       setSelectedTemplate(null);
+      setWriteMode(null);
     }
   };
 
@@ -224,6 +226,8 @@ export function DemarchesPage() {
         {view === "write" && (
           <WriteSection
             writeView={writeView}
+            writeMode={writeMode}
+            onWriteModeChange={setWriteMode}
             selectedTemplate={selectedTemplate}
             currentQuestion={currentQuestion || null}
             currentQuestionIndex={currentQuestionIndex}
@@ -234,8 +238,8 @@ export function DemarchesPage() {
             onSelectTemplate={handleSelectTemplate}
             onAnswerSubmit={handleAnswerSubmit}
             onSave={handleSaveDocument}
-            onDeleteDocument={(id) => setSavedDocuments(prev => prev.filter(d => d.id !== id))}
-            onNewDemarche={() => { setWriteView("list"); setSelectedTemplate(null); }}
+            onDeleteDocument={handleDeleteDocument}
+            onNewDemarche={() => { setWriteView("list"); setSelectedTemplate(null); setWriteMode(null); }}
           />
         )}
         {view === "chat" && (
@@ -286,7 +290,156 @@ function ActionCard({ icon, label, sublabel, color, badge, onClick }: { icon: Re
   );
 }
 
-function PillBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+// ═══════════════════════════════════════════════════════════
+// WRITE SECTION (letters)
+// ═══════════════════════════════════════════════════════════
+
+function WriteSection({
+  writeView, writeMode, onWriteModeChange, selectedTemplate, currentQuestion, currentQuestionIndex, fields,
+  generatedText, isGenerating, savedDocuments,
+  onSelectTemplate, onAnswerSubmit, onSave, onDeleteDocument, onNewDemarche,
+}: {
+  writeView: WriteView;
+  writeMode: "email" | "document" | null;
+  onWriteModeChange: (mode: "email" | "document" | null) => void;
+  selectedTemplate: DemarcheTemplate | null;
+  currentQuestion: DemarcheTemplate["questions"][number] | null;
+  currentQuestionIndex: number;
+  fields: DemarcheFields;
+  generatedText: string;
+  isGenerating: boolean;
+  savedDocuments: SavedDocument[];
+  onSelectTemplate: (t: DemarcheTemplate) => void;
+  onAnswerSubmit: (v: string) => void;
+  onSave: () => void;
+  onDeleteDocument: (id: string) => void;
+  onNewDemarche: () => void;
+}) {
+  const [showSaved, setShowSaved] = useState(false);
+  const setWriteMode = onWriteModeChange;
+
+  if (writeView === "list") {
+    // Mode not chosen yet — show 2 entry cards
+    if (!writeMode) {
+      return (
+        <div className="px-5 py-4 space-y-4">
+          <p style={{ fontSize: 15, color: "#64748B" }}>Que souhaitez-vous faire ?</p>
+
+          {/* Email card */}
+          <button
+            onClick={() => setWriteMode("email")}
+            className="w-full flex items-center gap-4 p-5 rounded-2xl transition-all active:scale-[0.98]"
+            style={{ border: "none", cursor: "pointer", background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)", textAlign: "left", boxShadow: "0 4px 16px rgba(59,130,246,0.3)" }}
+          >
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
+              <Mail className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <p style={{ fontSize: 17, fontWeight: 600, color: "white", margin: 0 }}>Envoyer un email</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", margin: "4px 0 0" }}>Oscar rédige, vous envoyez depuis votre boîte email</p>
+            </div>
+          </button>
+
+          {/* Document card */}
+          <button
+            onClick={() => setWriteMode("document")}
+            className="w-full flex items-center gap-4 p-5 rounded-2xl transition-all active:scale-[0.98]"
+            style={{ border: "none", cursor: "pointer", background: "linear-gradient(135deg, #1EB89A 0%, #0F766E 100%)", textAlign: "left", boxShadow: "0 4px 16px rgba(30,184,154,0.3)" }}
+          >
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
+              <FileText className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <p style={{ fontSize: 17, fontWeight: 600, color: "white", margin: 0 }}>Créer un document</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", margin: "4px 0 0" }}>Courrier PDF formel, prêt à imprimer ou envoyer par courrier</p>
+            </div>
+          </button>
+
+          {/* Saved documents */}
+          {savedDocuments.length > 0 && (
+            <button
+              onClick={() => setShowSaved(true)}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl transition-all"
+              style={{ border: "1px solid #E2E8F0", cursor: "pointer", background: "white", textAlign: "left" }}
+            >
+              <Clock className="w-5 h-5" style={{ color: "#94A3B8" }} />
+              <span style={{ fontSize: 14, color: "#64748B" }}>Mes courriers sauvegardés ({savedDocuments.length})</span>
+              <ChevronRight className="w-4 h-4 ml-auto" style={{ color: "#CBD5E1" }} />
+            </button>
+          )}
+
+          {showSaved && (
+            <DocumentsList documents={savedDocuments} onDelete={onDeleteDocument} />
+          )}
+        </div>
+      );
+    }
+
+    // Mode chosen — show templates filtered by mode
+    return (
+      <div className="px-5 py-4">
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setWriteMode(null)}
+            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+            style={{ border: "none", background: "transparent", cursor: "pointer" }}
+          >
+            <ArrowLeft className="w-4 h-4" style={{ color: "#64748B" }} />
+          </button>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: writeMode === "email" ? "rgba(59,130,246,0.1)" : "rgba(30,184,154,0.1)" }}>
+            {writeMode === "email" ? <Mail className="w-4 h-4" style={{ color: "#3B82F6" }} /> : <FileText className="w-4 h-4" style={{ color: "#1EB89A" }} />}
+            <span style={{ fontSize: 13, fontWeight: 600, color: writeMode === "email" ? "#3B82F6" : "#1EB89A" }}>
+              {writeMode === "email" ? "Email" : "Document PDF"}
+            </span>
+          </div>
+        </div>
+        <TemplateList onSelect={onSelectTemplate} />
+      </div>
+    );
+  }
+
+  if (writeView === "form" && selectedTemplate && currentQuestion) {
+    return (
+      <div className="px-5 py-4">
+        <QuestionForm
+          template={selectedTemplate}
+          question={currentQuestion}
+          questionIndex={currentQuestionIndex}
+          totalQuestions={selectedTemplate.questions.length}
+          onSubmit={onAnswerSubmit}
+          isGenerating={isGenerating}
+        />
+        {isGenerating && (
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <div className="flex gap-1.5 items-center">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="w-3 h-3 rounded-full" style={{ background: "#1EB89A", animation: "bounce 1.2s ease-in-out infinite", animationDelay: `${i * 0.2}s` }} />
+              ))}
+            </div>
+            <p style={{ fontSize: 16, color: "#1A1E35", fontWeight: 500 }}>Oscar rédige votre texte...</p>
+            {generatedText && (
+              <div className="w-full rounded-2xl p-4 mt-2" style={{ background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+                <p style={{ fontSize: 14, lineHeight: 1.7, color: "#334155", whiteSpace: "pre-wrap" }}>{generatedText}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (writeView === "result" && selectedTemplate) {
+    return (
+      <div className="px-5 py-4">
+        <ResultView text={generatedText} template={selectedTemplate} fields={fields} onSave={onSave} onNewDemarche={onNewDemarche} mode={writeMode || "document"} />
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function PillButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick} className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
       style={{ border: "none", cursor: "pointer", background: active ? "#1A1E35" : "white", color: active ? "white" : "#64748B", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
@@ -538,29 +691,66 @@ function QuestionForm({ template, question, questionIndex, totalQuestions, onSub
   );
 }
 
-function ResultView({ text, template, fields, onSave, onNewDemarche }: { text: string; template: DemarcheTemplate; fields: DemarcheFields; onSave: () => void; onNewDemarche: () => void }) {
+function ResultView({ text, template, fields, onSave, onNewDemarche, mode }: {
+  text: string; template: DemarcheTemplate; fields: DemarcheFields; onSave: () => void; onNewDemarche: () => void; mode: "email" | "document";
+}) {
   const [copied, setCopied] = useState(false);
-  const handleCopy = async () => { try { await navigator.clipboard.writeText(text); setCopied(true); toast.success("Texte copié !"); setTimeout(() => setCopied(false), 2000); } catch { toast.error("Impossible de copier"); } };
+  const handleCopy = async () => {
+    try { await navigator.clipboard.writeText(text); setCopied(true); toast.success("Texte copié !"); setTimeout(() => setCopied(false), 2000); } catch { toast.error("Impossible de copier"); }
+  };
   const recipient = fields.destinataire || fields.entreprise || fields.mairie || fields.organisme || "";
+  const handleEmail = () => {
+    openMailtoLink({ subject: template.label, body: text });
+    toast.success("Votre texte est prêt. Appuyez sur Envoyer dans votre application email.");
+  };
+  const handlePdf = () => {
+    downloadDocument(template.id, text, template.label, undefined, { recipient, subject: template.label });
+    toast.success("Document téléchargé !");
+  };
+
+  const isEmail = mode === "email";
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingBottom: 16 }}>
-      <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: "rgba(30,184,154,0.1)" }}>
-        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#1EB89A" }}><FileText className="w-5 h-5 text-white" /></div>
-        <div><p style={{ fontSize: 15, fontWeight: 600, color: "#1A1E35", margin: 0 }}>Votre texte est prêt !</p><p style={{ fontSize: 13, color: "#64748B", margin: 0 }}>{template.label}{recipient ? ` — ${recipient}` : ""}</p></div>
+    <div className="flex flex-col gap-4 py-2">
+      {/* Success header */}
+      <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: isEmail ? "rgba(59,130,246,0.1)" : "rgba(30,184,154,0.1)" }}>
+        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: isEmail ? "#3B82F6" : "#1EB89A" }}>
+          {isEmail ? <Mail className="w-5 h-5 text-white" /> : <FileText className="w-5 h-5 text-white" />}
+        </div>
+        <div>
+          <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1E35", margin: 0 }}>
+            {isEmail ? "Votre email est prêt !" : "Votre document est prêt !"}
+          </p>
+          <p style={{ fontSize: 13, color: "#64748B", margin: 0 }}>{template.label}{recipient ? ` — ${recipient}` : ""}</p>
+        </div>
       </div>
+
+      {/* Generated text */}
       <div className="rounded-2xl p-4" style={{ background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
         <p style={{ fontSize: 14, lineHeight: 1.7, color: "#334155", whiteSpace: "pre-wrap" }}>{text}</p>
       </div>
-      <BigBtn icon={<Mail className="w-5 h-5" />} label="Ouvrir dans mes emails" subtitle="Le texte sera pré-rempli" onClick={() => openMailtoLink({ subject: template.label, body: text })} primary />
-      <div className="flex gap-3">
-        <BigBtn icon={<FileText className="w-5 h-5" />} label={copied ? "Copié !" : "Copier"} onClick={handleCopy} primary={false} />
-        <BigBtn icon={<Download className="w-5 h-5" />} label="PDF" onClick={() => downloadDocument(template.id, text, template.label)} primary={false} />
+
+      {/* Actions — different depending on mode */}
+      <div className="flex flex-col gap-3">
+        {isEmail ? (
+          <>
+            <BigBtn icon={<Mail className="w-5 h-5" />} label="Ouvrir dans mes emails" subtitle="Le texte sera pré-rempli dans votre app email" onClick={handleEmail} primary />
+            <BigBtn icon={<FileText className="w-5 h-5" />} label={copied ? "Copié !" : "Copier le texte"} onClick={handleCopy} primary={false} />
+          </>
+        ) : (
+          <>
+            <BigBtn icon={<Download className="w-5 h-5" />} label="Télécharger le PDF" subtitle="Courrier mis en page, prêt à imprimer" onClick={handlePdf} primary />
+            <div className="flex gap-3">
+              <BigBtn icon={<FileText className="w-5 h-5" />} label={copied ? "Copié !" : "Copier le texte"} onClick={handleCopy} primary={false} />
+              <BigBtn icon={<Mail className="w-5 h-5" />} label="Envoyer par email" onClick={handleEmail} primary={false} />
+            </div>
+          </>
+        )}
         <BigBtn icon={<FileText className="w-5 h-5" />} label="Sauvegarder" onClick={onSave} primary={false} />
+        <button onClick={onNewDemarche} className="w-full py-3 rounded-2xl text-sm font-medium transition-all" style={{ border: "2px solid #E2E8F0", background: "transparent", color: "#64748B", cursor: "pointer", fontSize: 14 }}>
+          Recommencer
+        </button>
       </div>
-      <button onClick={onNewDemarche} className="w-full py-3 rounded-2xl text-sm font-medium"
-        style={{ border: "2px solid #E2E8F0", background: "transparent", color: "#64748B", cursor: "pointer" }}>
-        Écrire un autre courrier
-      </button>
     </div>
   );
 }

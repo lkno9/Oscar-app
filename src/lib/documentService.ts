@@ -234,14 +234,25 @@ function formatDateFR(date: Date): string {
   });
 }
 
+/** Options for PDF generation */
+export interface DocumentOptions {
+  subject?: string;
+  recipient?: string;
+  senderName?: string;
+  senderAddress?: string;
+  city?: string;
+}
+
 /**
- * Generate a PDF document from the generated text.
+ * Generate a formal PDF letter with proper postal layout.
+ * Layout: sender top-left, recipient top-right, city+date, subject, body, signature.
  * Returns a Blob ready for download.
  */
 export function generateDocument(
   type: string,
   content: string,
-  subject?: string
+  subject?: string,
+  options?: DocumentOptions
 ): Blob {
   const doc = new jsPDF({
     orientation: "portrait",
@@ -254,49 +265,86 @@ export function generateDocument(
   const marginLeft = 25;
   const marginRight = 25;
   const usableWidth = pageWidth - marginLeft - marginRight;
-  // Approximate chars per line with Georgia-like font at size 13
   const charsPerLine = Math.floor(usableWidth / 2.4);
+  const rightCol = pageWidth - marginRight;
 
-  let y = 30;
+  let y = 25;
 
-  // Header — Oscar branding (discreet)
-  doc.setFontSize(10);
-  doc.setTextColor(26, 30, 53); // navy
-  doc.text("Oscar", marginLeft, 15);
-  doc.setDrawColor(30, 184, 154); // teal
-  doc.setLineWidth(0.5);
-  doc.line(marginLeft, 18, pageWidth - marginRight, 18);
+  // ─── Sender (top-left) ───
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(33, 33, 33);
 
-  // Subject line
-  if (subject) {
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(26, 30, 53);
-    doc.text(`Objet : ${subject}`, marginLeft, y);
-    y += 12;
+  if (options?.senderName) {
+    doc.text(options.senderName, marginLeft, y);
+    y += 5;
+  }
+  if (options?.senderAddress) {
+    const addrLines = wrapText(options.senderAddress, 35);
+    for (const line of addrLines) {
+      doc.text(line, marginLeft, y);
+      y += 5;
+    }
   }
 
-  // Body text — serif style, professional
-  doc.setFontSize(12);
+  // ─── Recipient (top-right) ───
+  const recipientName = options?.recipient || subject || "";
+  if (recipientName) {
+    let ry = 25;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    const recipLines = wrapText(recipientName, 35);
+    for (const line of recipLines) {
+      doc.text(line, rightCol, ry, { align: "right" });
+      ry += 5;
+    }
+    doc.setFont("helvetica", "normal");
+  }
+
+  // ─── City + Date ───
+  y = Math.max(y, 55);
+  const city = options?.city || "";
+  const dateStr = formatDateFR(new Date());
+  const locationDate = city ? `${city}, le ${dateStr}` : `Le ${dateStr}`;
+  doc.setFontSize(11);
+  doc.text(locationDate, rightCol, y, { align: "right" });
+  y += 12;
+
+  // ─── Subject line ───
+  const subjectText = subject || options?.subject;
+  if (subjectText) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(26, 30, 53);
+    doc.text(`Objet : ${subjectText}`, marginLeft, y);
+    y += 10;
+  }
+
+  // ─── Body ───
+  doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(33, 33, 33);
 
   const wrappedLines = wrapText(content, charsPerLine);
 
   for (const line of wrappedLines) {
-    if (y > pageHeight - 30) {
+    if (y > pageHeight - 35) {
       doc.addPage();
       y = 25;
     }
     doc.text(line, marginLeft, y);
-    y += 6;
+    y += 5.5;
   }
 
-  // Footer
-  const footerText = `Document créé avec Oscar le ${formatDateFR(new Date())}`;
-  doc.setFontSize(9);
-  doc.setTextColor(150, 150, 150);
-  doc.text(footerText, pageWidth / 2, pageHeight - 12, { align: "center" });
+  // ─── Footer — Oscar branding (discreet) ───
+  doc.setFontSize(8);
+  doc.setTextColor(180, 180, 180);
+  doc.text(`Document créé avec Oscar le ${dateStr}`, pageWidth / 2, pageHeight - 10, { align: "center" });
+
+  // Thin teal line at very bottom
+  doc.setDrawColor(30, 184, 154);
+  doc.setLineWidth(0.3);
+  doc.line(marginLeft, pageHeight - 14, pageWidth - marginRight, pageHeight - 14);
 
   return doc.output("blob");
 }
@@ -308,9 +356,10 @@ export function downloadDocument(
   type: string,
   content: string,
   subject?: string,
-  filename?: string
+  filename?: string,
+  options?: DocumentOptions
 ): void {
-  const blob = generateDocument(type, content, subject);
+  const blob = generateDocument(type, content, subject, options);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
