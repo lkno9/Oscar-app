@@ -19,6 +19,7 @@ import {
   Newspaper,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
+import { useFamilyMessages } from "@/hooks/useFamilyMessages";
 
 const PRIMARY_SERVICES = [
   { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda", sublabel: "Rendez-vous, rappels", path: "/services/agenda" },
@@ -44,6 +45,7 @@ const SUPPORT_ITEMS = [
 
 export function ServicesPage() {
   const navigate = useNavigate();
+  const { unreadCount } = useFamilyMessages();
 
   return (
     <div className="flex flex-col h-full overflow-y-auto scrollbar-hide oscar-page-bg">
@@ -85,6 +87,7 @@ export function ServicesPage() {
               icon={s.icon}
               label={s.label}
               sublabel={s.sublabel}
+              badge={s.path === "/services/communication" ? unreadCount : undefined}
               onClick={() => navigate(s.path)}
             />
           ))}

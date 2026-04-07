@@ -1,6 +1,7 @@
-import { Phone, Copy, ExternalLink, Check, MapPin, Globe, X, Maximize2, Loader2 } from "lucide-react";
+import { Phone, Copy, ExternalLink, Check, MapPin, Globe, X, Maximize2, Loader2, Send, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
-import type { RichCard, WeatherData, TranslationData, MapData, EmergencyData, WebViewData, LinkPreviewData, DemarcheCardData } from "@/types/chat";
+import { useNavigate } from "react-router-dom";
+import type { RichCard, WeatherData, TranslationData, MapData, EmergencyData, WebViewData, LinkPreviewData, DemarcheCardData, FamilyMessageForwardData } from "@/types/chat";
 import { DemarcheCard } from "@/components/chat/DemarcheCard";
 
 export function RichCardRenderer({ card }: { card: RichCard }) {
@@ -19,9 +20,48 @@ export function RichCardRenderer({ card }: { card: RichCard }) {
       return <LinkPreviewCard data={card.data} />;
     case "demarche":
       return <DemarcheCard data={card.data} />;
+    case "family_message_forward":
+      return <FamilyMessageForwardCard data={card.data} />;
     default:
       return null;
   }
+}
+
+// ─── Family Message Forward Card ────────────────────────────
+
+function FamilyMessageForwardCard({ data }: { data: FamilyMessageForwardData }) {
+  const navigate = useNavigate();
+
+  const handleSend = () => {
+    navigate('/services/communication', {
+      state: { prefill: data.messageText, contactName: data.contactName }
+    });
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 overflow-hidden">
+      <div className="px-4 py-3 border-b border-primary/10 flex items-center gap-2">
+        <MessageCircle className="w-4 h-4 text-primary" />
+        <span className="text-sm font-semibold text-foreground">
+          Message pour {data.contactName || 'votre proche'}
+        </span>
+      </div>
+      <div className="px-4 py-3">
+        <p className="text-sm text-foreground bg-white/60 rounded-lg p-3 border border-primary/10 leading-relaxed">
+          {data.messageText}
+        </p>
+      </div>
+      <div className="px-4 pb-3">
+        <button
+          onClick={handleSend}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all active:scale-[0.98]"
+        >
+          <Send className="w-4 h-4" />
+          Envoyer à {data.contactName || 'un proche'}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ─── Weather Card ───────────────────────────────────────────

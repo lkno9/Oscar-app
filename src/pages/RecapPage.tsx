@@ -13,12 +13,15 @@ import {
   Zap,
   ShieldAlert,
   Bell,
+  ClipboardList,
+  PenLine,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEngagement } from "@/hooks/useEngagement";
 import { useRssArticles, ACTU_CATEGORIES, timeAgo } from "@/hooks/useRssArticles";
 import { OscarAvatar } from "@/components/OscarAvatar";
+import { useAdminTasks } from "@/hooks/useAdminTasks";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -86,6 +89,7 @@ const ALL_ACTIONS: QuickAction[] = [
   { label: "Ma santé & bien-être", icon: <Heart className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Mes communications", icon: <MessageCircle className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Mes documents", icon: <Cloud className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Démarches admin", icon: <ClipboardList className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Mes jeux & mémoire", icon: <Gamepad2 className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Mes avantages", icon: <Sparkles className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Ma sécurité", icon: <ShieldAlert className="w-5 h-5 text-[#2DD4BF]" /> },
@@ -100,6 +104,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { streak, todayQuiz, streakJustIncreased, recordActivity } = useEngagement();
+  const { getInProgressTasks } = useAdminTasks();
+  const adminInProgress = getInProgressTasks();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ full_name: string | null }>({ full_name: null });
   const [weather, setWeather] = useState<Weather | null>(null);
@@ -631,6 +637,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     "Ma santé & bien-être": "/services/health",
                     "Mes communications": "/services/communication",
                     "Mes documents": "/services/storage",
+                    "Démarches admin": "/services/demarches",
                     "Mes jeux & mémoire": "/services/games",
                     "Mes avantages": "/services/partners",
                     "Ma sécurité": "/services/scam-protection",
@@ -671,7 +678,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         <SectionHeader title="Notifications" linkLabel="Messages" linkPath="/services/communication" />
         {(() => {
           // Build unified notification list
-          const notifItems: { id: string; type: "message" | "event"; icon: React.ReactNode; title: string; body: string; time: string; path: string }[] = [];
+          const notifItems: { id: string; type: "message" | "event" | "demarche"; icon: React.ReactNode; title: string; body: string; time: string; path: string }[] = [];
 
           // Unread messages
           unreadMessages.forEach(msg => {
@@ -686,6 +693,20 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               body: msg.content.length > 80 ? msg.content.slice(0, 80) + "..." : msg.content,
               time: timeLabel,
               path: "/services/communication",
+            });
+          });
+
+          // In-progress admin tasks
+          adminInProgress.forEach(task => {
+            const completedSteps = task.steps.filter(s => s.completed).length;
+            notifItems.push({
+              id: `task-${task.id}`,
+              type: "demarche",
+              icon: <ClipboardList className="w-5 h-5 text-primary" />,
+              title: "Démarche en cours",
+              body: `${task.title} — ${completedSteps}/${task.steps.length} étapes`,
+              time: "En cours",
+              path: "/services/demarches",
             });
           });
 
@@ -735,7 +756,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                       width: 44,
                       height: 44,
                       borderRadius: "50%",
-                      background: item.type === "message" ? "rgba(59,130,246,0.1)" : "rgba(45,212,191,0.12)",
+                      background: item.type === "message" ? "rgba(59,130,246,0.1)" : item.type === "demarche" ? "rgba(30,184,154,0.1)" : "rgba(45,212,191,0.12)",
                       marginTop: 2,
                     }}
                   >

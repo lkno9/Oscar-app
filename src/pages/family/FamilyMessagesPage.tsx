@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, CheckCheck } from 'lucide-react';
+import { Send, CheckCheck, Camera, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,8 +8,27 @@ import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 import { useFamilyLinks } from '@/hooks/useFamilyLinks';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { supabase } from '@/integrations/supabase/client';
+import { compressForUpload, IMAGE_ACCEPT } from '@/lib/fileUtils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { toast } from 'sonner';
+
+// Parse photo messages: [photo:URL]
+function parsePhotoUrl(content: string): string | null {
+  const match = content.match(/^\[photo:(.*)\]$/);
+  return match ? match[1] : null;
+}
+
+// Parse mixed content (text + photo)
+function parseMessageContent(content: string): { text: string | null; photoUrl: string | null } {
+  const photoMatch = content.match(/\[photo:(.*?)\]/);
+  if (photoMatch) {
+    const text = content.replace(/\[photo:.*?\]/, '').trim() || null;
+    return { text, photoUrl: photoMatch[1] };
+  }
+  return { text: content, photoUrl: null };
+}
 
 export default function FamilyMessagesPage() {
   const [searchParams] = useSearchParams();
@@ -19,8 +38,12 @@ export default function FamilyMessagesPage() {
   const { linkedSeniors, linkedFamily } = useFamilyLinks();
   const [selectedContact, setSelectedContact] = useState<string | null>(contactIdParam);
   const [newMessage, setNewMessage] = useState('');
+  const [pendingPhoto, setPendingPhoto] = useState<{ file: File; previewUrl: string } | null>(null);
+  const [isSendingPhoto, setIsSendingPhoto] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const { messages, loading, sendMessage, markAsRead } = useFamilyMessages(selectedContact || undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const contacts = isSenior ? linkedFamily : linkedSeniors;
 
@@ -40,9 +63,79 @@ export default function FamilyMessagesPage() {
   }, [messages, selectedContact, user]);
 
   const handleSend = async () => {
-    if (!newMessage.trim() || !selectedContact) return;
-    await sendMessage(selectedContact, newMessage.trim());
+    if ((!newMessage.trim() && !pendingPhoto) || !selectedContact) return;
+
+    if (pendingPhoto) {
+      setIsSendingPhoto(true);
+      try {
+        // Compress and upload photo
+        const compressed = await compressForUpload(pendingPhoto.file);
+        const fileName = `family-photos/${user!.id}/${Date.now()}-${pendingPhoto.file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('user-files')
+          .upload(fileName, compressed, { contentType: compressed.type || 'image/jpeg' });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('user-files').getPublicUrl(fileName);
+        const photoUrl = urlData.publicUrl;
+
+        // Build message content
+        const messageContent = newMessage.trim()
+          ? `${newMessage.trim()} [photo:${photoUrl}]`
+          : `[photo:${photoUrl}]`;
+
+        // Send message
+        await sendMessage(selectedContact, messageContent);
+
+        // Also save to photos table for the recipient (so it shows in their Photos & Souvenirs)
+        const recipientId = selectedContact;
+        const { data: senderProfile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user!.id)
+          .single();
+
+        await supabase.from('photos').insert({
+          user_id: recipientId,
+          url: photoUrl,
+          title: `De ${senderProfile?.full_name || 'la famille'}`,
+          album: 'family_received',
+        });
+
+        toast.success('Photo envoyée !');
+      } catch (err) {
+        toast.error("Erreur lors de l'envoi de la photo");
+      } finally {
+        URL.revokeObjectURL(pendingPhoto.previewUrl);
+        setPendingPhoto(null);
+        setIsSendingPhoto(false);
+      }
+    } else {
+      await sendMessage(selectedContact, newMessage.trim());
+    }
     setNewMessage('');
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Photo trop volumineuse (max 10 Mo)');
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setPendingPhoto({ file, previewUrl });
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const cancelPhoto = () => {
+    if (pendingPhoto) {
+      URL.revokeObjectURL(pendingPhoto.previewUrl);
+      setPendingPhoto(null);
+    }
   };
 
   const getContactName = (contactId: string) => {
@@ -65,7 +158,9 @@ export default function FamilyMessagesPage() {
   };
 
   const isDifferentDay = (d1: string, d2: string) => format(new Date(d1), 'yyyy-MM-dd') !== format(new Date(d2), 'yyyy-MM-dd');
-  const quickReplies = ["Bonjour !", "Comment ça va ?", "Je pense à toi", "À bientôt !", "Merci"];
+  const quickReplies = isSenior
+    ? ["Bonjour !", "Comment ça va ?", "Je pense à toi", "À bientôt !", "Merci"]
+    : ["Bonjour !", "Comment tu vas ?", "Je pense à toi", "Appelle-moi quand tu peux", "Bisous !"];
 
   return (
     <div className="h-full bg-background flex flex-col overflow-hidden">
@@ -138,6 +233,8 @@ export default function FamilyMessagesPage() {
             {messages.map((message, index) => {
               const isOwn = message.sender_id === user?.id;
               const showDate = index === 0 || isDifferentDay(messages[index - 1].created_at, message.created_at);
+              const { text, photoUrl } = parseMessageContent(message.content);
+
               return (
                 <div key={message.id}>
                   {showDate && (
@@ -152,13 +249,30 @@ export default function FamilyMessagesPage() {
                         <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{getContactName(selectedContact!)?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                     )}
-                    <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                    <div className={`max-w-[75%] rounded-2xl overflow-hidden ${
                       isOwn
                         ? 'bg-primary text-white rounded-br-lg'
                         : 'bg-card border border-border rounded-bl-lg text-foreground'
                     }`}>
-                      <p className="text-[15px] leading-relaxed">{message.content}</p>
-                      <div className={`flex items-center justify-end gap-1 mt-1 ${isOwn ? 'text-white/50' : 'text-muted-foreground'}`}>
+                      {/* Photo */}
+                      {photoUrl && (
+                        <button onClick={() => setPreviewImage(photoUrl)} className="block w-full">
+                          <img
+                            src={photoUrl}
+                            alt="Photo"
+                            className="w-full max-h-[250px] object-cover"
+                            loading="lazy"
+                          />
+                        </button>
+                      )}
+                      {/* Text */}
+                      {text && (
+                        <div className="px-4 py-2.5">
+                          <p className="text-[15px] leading-relaxed">{text}</p>
+                        </div>
+                      )}
+                      {/* Timestamp */}
+                      <div className={`flex items-center justify-end gap-1 px-3 pb-2 ${!text && photoUrl ? 'pt-1' : ''} ${isOwn ? 'text-white/50' : 'text-muted-foreground'}`}>
                         <p className="text-[10px]">{format(new Date(message.created_at), 'HH:mm')}</p>
                         {isOwn && message.is_read && <CheckCheck className="w-3 h-3" />}
                       </div>
@@ -175,7 +289,8 @@ export default function FamilyMessagesPage() {
       {/* Input */}
       {selectedContact && contacts.length > 0 && (
         <div className="bg-card border-t border-border">
-          {messages.length > 0 && (
+          {/* Quick replies */}
+          {messages.length > 0 && !pendingPhoto && (
             <div className="px-3 pt-2 overflow-x-auto scrollbar-hide">
               <div className="flex gap-2 pb-2">
                 {quickReplies.map((r) => (
@@ -184,18 +299,75 @@ export default function FamilyMessagesPage() {
               </div>
             </div>
           )}
+
+          {/* Photo preview */}
+          {pendingPhoto && (
+            <div className="px-3 pt-3 relative">
+              <div className="relative inline-block">
+                <img src={pendingPhoto.previewUrl} alt="Preview" className="h-24 rounded-xl object-cover border border-border" />
+                <button
+                  onClick={cancelPhoto}
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Input row */}
           <div className="p-3 flex items-end gap-2">
+            {/* Photo button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-12 h-12 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 transition-colors flex-shrink-0"
+              aria-label="Envoyer une photo"
+            >
+              <Camera className="w-5 h-5 text-primary" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={IMAGE_ACCEPT}
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
             <input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Votre message..."
+              placeholder={pendingPhoto ? "Ajouter un message..." : "Votre message..."}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
               className="flex-1 h-12 rounded-2xl border border-border bg-secondary px-4 text-[15px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 transition-colors"
             />
-            <Button onClick={handleSend} disabled={!newMessage.trim()} size="icon" className="w-12 h-12 rounded-full shrink-0">
-              <Send className="w-5 h-5" />
+            <Button
+              onClick={handleSend}
+              disabled={(!newMessage.trim() && !pendingPhoto) || isSendingPhoto}
+              size="icon"
+              className="w-12 h-12 rounded-full shrink-0"
+            >
+              {isSendingPhoto ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* Photo fullscreen preview */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+          <img src={previewImage} alt="Photo" className="max-w-full max-h-full rounded-xl object-contain" />
         </div>
       )}
     </div>

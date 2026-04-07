@@ -5,15 +5,16 @@ interface ServiceTileProps {
   label: string;
   sublabel?: string;
   intent?: "default" | "danger";
+  badge?: number;
   onClick?: () => void;
 }
 
-export function ServiceTile({ icon, label, sublabel, intent = "default", onClick }: ServiceTileProps) {
+export function ServiceTile({ icon, label, sublabel, intent = "default", badge, onClick }: ServiceTileProps) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "p-5 flex flex-col items-center gap-3 text-sm font-normal text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
+        "p-5 flex flex-col items-center gap-3 text-sm font-normal text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] relative",
         intent === "danger"
           ? "bg-danger text-danger-foreground"
           : "bg-white text-foreground"
@@ -28,6 +29,13 @@ export function ServiceTile({ icon, label, sublabel, intent = "default", onClick
           : "0 4px 20px rgba(45,212,191,0.08), 0 2px 8px rgba(0,0,0,0.04)",
       }}
     >
+      {badge != null && badge > 0 && (
+        <span
+          className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
+        >
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
       <div
         style={{
           width: 44,

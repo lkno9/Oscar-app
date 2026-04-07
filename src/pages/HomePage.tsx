@@ -553,6 +553,25 @@ export function HomePage() {
     }
   };
 
+  // Detect family messaging intent (e.g. "envoie un message à ma fille", "écris à Marie")
+  const FAMILY_MSG_PATTERNS = [
+    /envo(?:ie|yer)\s+(?:un\s+)?(?:message|msg|sms|texto)\s+(?:à|a)\s+(.+)/i,
+    /(?:écri(?:s|re)|dire)\s+(?:à|a)\s+(.+?)(?:\s+que\s+|\s*:\s*|\s*$)/i,
+    /message\s+(?:pour|à|a)\s+(.+)/i,
+    /pr[ée]vien(?:s|dre)\s+(.+)/i,
+  ];
+
+  const detectFamilyMessageIntent = (text: string): { contactName: string } | null => {
+    for (const pattern of FAMILY_MSG_PATTERNS) {
+      const match = text.match(pattern);
+      if (match?.[1]) {
+        const name = match[1].replace(/^(mon|ma|mes|le|la|les)\s+/i, '').trim();
+        if (name.length > 1 && name.length < 40) return { contactName: name };
+      }
+    }
+    return null;
+  };
+
   const handleSend = async (content: string) => {
     setIsRecording(false);
     const userMessage: ChatMessageData = { id: Date.now().toString(), role: "user", content };
@@ -561,6 +580,44 @@ export function HomePage() {
     // Check if this message matches a démarche intent
     const isDemarche = demarcheChat.checkIntent(content);
     if (isDemarche) return;
+
+    // Check if this is a family messaging intent — let Oscar draft the message,
+    // then show a forward card after the response is done
+    const familyIntent = detectFamilyMessageIntent(content);
+    if (familyIntent) {
+      // Override onDone for this request to add a forward card
+      const origDoneRef = demarcheDoneRef.current;
+      const forwardContactName = familyIntent.contactName;
+
+      // We'll let Mistral generate the response normally, but after it's done
+      // we'll add a forward card. We use a one-time effect via handleStreamDone override.
+      const checkForForward = (fullText: string) => {
+        // Add a family_message_forward card after the AI response
+        if (fullText.trim()) {
+          setTimeout(() => {
+            const cardId = Date.now().toString();
+            const forwardCard: RichCard = {
+              type: "family_message_forward",
+              data: { messageText: fullText.trim(), contactName: forwardContactName }
+            };
+            setMessages(prev => {
+              const lastAssistant = [...prev].reverse().find(m => m.role === "assistant");
+              if (lastAssistant) {
+                return prev.map(m =>
+                  m.id === lastAssistant.id
+                    ? { ...m, richCards: [...(m.richCards || []), forwardCard] }
+                    : m
+                );
+              }
+              return [...prev, { id: cardId, role: "assistant" as const, content: "", richCards: [forwardCard] }];
+            });
+          }, 300);
+        }
+        // Restore original ref
+        demarcheDoneRef.current = origDoneRef;
+      };
+      demarcheDoneRef.current = checkForForward;
+    }
 
     setIsTyping(true);
     sendToMistral(content);

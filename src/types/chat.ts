@@ -49,6 +49,11 @@ export interface DemarcheCardData {
   status: "brouillon" | "copie" | "ouvert_email" | "sauvegarde";
 }
 
+export interface FamilyMessageForwardData {
+  messageText: string;
+  contactName?: string;
+}
+
 export type RichCard =
   | { type: "weather"; data: WeatherData }
   | { type: "translation"; data: TranslationData }
@@ -56,4 +61,5 @@ export type RichCard =
   | { type: "emergency"; data: EmergencyData }
   | { type: "webview"; data: WebViewData }
   | { type: "link_preview"; data: LinkPreviewData }
-  | { type: "demarche"; data: DemarcheCardData };
+  | { type: "demarche"; data: DemarcheCardData }
+  | { type: "family_message_forward"; data: FamilyMessageForwardData };
