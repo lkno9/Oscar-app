@@ -395,7 +395,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, seniorContext } = await req.json();
     const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");
 
     if (!MISTRAL_API_KEY) {
@@ -475,9 +475,13 @@ serve(async (req) => {
 
     console.log(`Using model: ${model}, vision: ${useVision}, messages: ${truncatedMessages.length}`);
 
-    // Build final messages array with system prompt
+    // Build final messages array with system prompt + senior context
+    const systemPrompt = seniorContext
+      ? `${OSCAR_SYSTEM_PROMPT}\n\n## CONTEXTE DU SENIOR\n${seniorContext}`
+      : OSCAR_SYSTEM_PROMPT;
+
     const mistralMessages = [
-      { role: "system", content: OSCAR_SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       ...sanitizedMessages,
     ];
 

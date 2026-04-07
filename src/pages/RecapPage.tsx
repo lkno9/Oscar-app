@@ -28,7 +28,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 // --- Types ---
-interface Weather { temp: number; icon: string; label: string; }
+interface Weather { temp: number; icon: string; label: string; city?: string; }
 
 // Conseils bien-être & citations — un par jour
 const DAILY_TIPS = [
@@ -111,7 +111,14 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ full_name: string | null }>({ full_name: null });
   const [weather, setWeather] = useState<Weather | null>(null);
-  const [selectedActions, setSelectedActions] = useState<string[]>(["Mon agenda", "Ma santé & bien-être", "Mes communications", "Mes documents"]);
+  const DEFAULT_ACTIONS = ["Mon agenda", "Ma santé & bien-être", "Mes communications", "Mes documents"];
+  const [selectedActions, setSelectedActions] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("quick_actions");
+      if (stored) return JSON.parse(stored);
+    } catch { /* ignore */ }
+    return DEFAULT_ACTIONS;
+  });
   const [showPersonnaliser, setShowPersonnaliser] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState<{id: string; title: string; event_date: string; event_time: string | null; category: string | null}[]>([]);
   const [unreadMessages, setUnreadMessages] = useState<{id: string; content: string; sender_id: string; sender_name: string | null; created_at: string}[]>([]);
@@ -135,40 +142,62 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
     if (user) recordActivity();
   }, [user]);
 
-  // Fetch weather
+  // Fetch weather + reverse geocode city name
   useEffect(() => {
-    const fetchWeather = async (lat: number, lon: number) => {
+    const fetchCity = async (lat: number, lon: number): Promise<string> => {
       try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`);
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=fr`);
         const data = await res.json();
-        const code = data.current.weather_code;
+        return data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || "";
+      } catch {
+        return "";
+      }
+    };
+
+    const fetchWeather = async (lat: number, lon: number, isFallback = false) => {
+      try {
+        const [weatherRes, city] = await Promise.all([
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`).then(r => r.json()),
+          fetchCity(lat, lon),
+        ]);
+        const code = weatherRes.current.weather_code;
         setWeather({
-          temp: Math.round(data.current.temperature_2m),
+          temp: Math.round(weatherRes.current.temperature_2m),
           icon: WEATHER_ICONS[code] || "🌡️",
           label: WEATHER_LABELS[code] || "Variable",
+          city: city || (isFallback ? "Paris" : ""),
         });
+        if (isFallback) console.log("Météo: géolocalisation indisponible, fallback Paris");
       } catch {
-        setWeather({ temp: 17, icon: "⛅", label: "Nuageux" });
+        setWeather({ temp: 17, icon: "⛅", label: "Nuageux", city: "Paris" });
       }
     };
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
-        () => fetchWeather(48.8566, 2.3522),
+        () => fetchWeather(48.8566, 2.3522, true),
         { timeout: 5000 }
       );
     } else {
-      fetchWeather(48.8566, 2.3522);
+      fetchWeather(48.8566, 2.3522, true);
     }
   }, []);
 
-  // Fetch profile
+  // Fetch profile + quick actions
   useEffect(() => {
     if (!user) return;
     const fetchProfile = async () => {
-      const { data } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
-      if (data) setProfile(data);
+      const { data } = await supabase.from("profiles").select("full_name, quick_actions").eq("id", user.id).maybeSingle();
+      if (data) {
+        setProfile(data);
+        // TODO: quick_actions column needs to be added to profiles table in Supabase
+        const dbActions = (data as any).quick_actions;
+        if (Array.isArray(dbActions) && dbActions.length > 0) {
+          setSelectedActions(dbActions);
+          localStorage.setItem("quick_actions", JSON.stringify(dbActions));
+        }
+      }
       setLoading(false);
     };
     fetchProfile();
@@ -285,6 +314,11 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               <span style={{ fontSize: 12, color: "#64748b", fontWeight: 500, marginTop: 4, textAlign: "center", maxWidth: 80 }}>
                 {weather.label}
               </span>
+              {weather.city && (
+                <span style={{ fontSize: 11, color: "#94a3b8", marginTop: 2, textAlign: "center" }}>
+                  {weather.city}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -854,7 +888,19 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
               })}
             </div>
             <button
-              onClick={() => setShowPersonnaliser(false)}
+              onClick={async () => {
+                setShowPersonnaliser(false);
+                localStorage.setItem("quick_actions", JSON.stringify(selectedActions));
+                // Persist to Supabase (non-blocking)
+                if (user) {
+                  try {
+                    await supabase.from("profiles").update({ quick_actions: selectedActions } as any).eq("id", user.id);
+                    toast.success("Préférences sauvegardées");
+                  } catch {
+                    // Fallback: localStorage is already set
+                  }
+                }
+              }}
               className="w-full"
               style={{
                 marginTop: 20,

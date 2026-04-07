@@ -8,6 +8,7 @@ import { useMistralChat } from "@/hooks/useMistralChat";
 import { useDemarcheChat } from "@/hooks/useDemarcheChat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSeniorContext } from "@/hooks/useSeniorContext";
 import { toast } from "sonner";
 import type { RichCard, DemarcheCardData } from "@/types/chat";
 import {
@@ -165,6 +166,7 @@ export function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { user } = useAuth();
+  const seniorContext = useSeniorContext(user?.id);
   const started = messages.length > 0;
 
   // Real SSE streaming: accumulate tokens into assistant message
@@ -237,6 +239,7 @@ export function HomePage() {
     onToolResult: handleToolResult,
     userId: user?.id,
     onHistoryLoaded: handleHistoryLoaded,
+    seniorContext,
   });
 
   // ─── Démarche chat integration ───

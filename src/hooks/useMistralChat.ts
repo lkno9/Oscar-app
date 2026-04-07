@@ -23,6 +23,8 @@ interface UseMistralChatOptions {
   userId?: string | null;
   /** Called with loaded messages from DB on mount */
   onHistoryLoaded?: (messages: MistralMessage[]) => void;
+  /** Dynamic context about the senior (name, meds, events) injected into system prompt */
+  seniorContext?: string | null;
 }
 
 export function useMistralChat({
@@ -32,6 +34,7 @@ export function useMistralChat({
   onToolResult,
   userId,
   onHistoryLoaded,
+  seniorContext,
 }: UseMistralChatOptions) {
   // Conversation history in ref (no re-renders on update)
   const historyRef = useRef<MistralMessage[]>([]);
@@ -131,7 +134,7 @@ export function useMistralChat({
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ messages: messagesToSend }),
+          body: JSON.stringify({ messages: messagesToSend, seniorContext }),
           signal: controller.signal,
         });
 
