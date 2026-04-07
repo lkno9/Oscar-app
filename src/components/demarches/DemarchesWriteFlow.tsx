@@ -7,6 +7,8 @@ import {
   Clock,
   Trash2,
   ArrowLeft,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DEMARCHE_TEMPLATES, buildPrompt, downloadDocument } from "@/lib/documentService";
@@ -150,6 +152,7 @@ export function DemarchesWriteFlow({ onBack }: DemarchesWriteFlowProps) {
           <div className="px-4 py-4">
             <ResultView
               text={generatedText}
+              onTextChange={setGeneratedText}
               template={selectedTemplate}
               fields={fields}
               onSave={handleSaveDocument}
@@ -227,20 +230,38 @@ function QuestionForm({ template, question, questionIndex, totalQuestions, onSub
   );
 }
 
-function ResultView({ text, template, fields, onSave, onNewDemarche }: {
-  text: string; template: DemarcheTemplate; fields: DemarcheFields; onSave: () => void; onNewDemarche: () => void;
+function ResultView({ text, onTextChange, template, fields, onSave, onNewDemarche }: {
+  text: string; onTextChange: (text: string) => void; template: DemarcheTemplate; fields: DemarcheFields; onSave: () => void; onNewDemarche: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const handleCopy = async () => { try { await navigator.clipboard.writeText(text); setCopied(true); toast.success("Texte copié !"); setTimeout(() => setCopied(false), 2000); } catch { toast.error("Impossible de copier"); } };
   const recipient = fields.destinataire || fields.entreprise || fields.mairie || fields.organisme || "";
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingBottom: 16 }}>
       <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: "rgba(30,184,154,0.1)" }}>
         <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#1EB89A" }}><FileText className="w-5 h-5 text-white" /></div>
-        <div><p style={{ fontSize: 15, fontWeight: 600, color: "#1A1E35", margin: 0 }}>Votre texte est prêt !</p><p style={{ fontSize: 13, color: "#64748B", margin: 0 }}>{template.label}{recipient ? ` — ${recipient}` : ""}</p></div>
+        <div className="flex-1"><p style={{ fontSize: 15, fontWeight: 600, color: "#1A1E35", margin: 0 }}>Votre texte est prêt !</p><p style={{ fontSize: 13, color: "#64748B", margin: 0 }}>{template.label}{recipient ? ` — ${recipient}` : ""}</p></div>
+        <button
+          onClick={() => { setIsEditing(!isEditing); if (isEditing) toast.success("Modifications enregistrées"); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all active:scale-[0.97]"
+          style={{ border: isEditing ? "2px solid #1EB89A" : "2px solid #E2E8F0", background: isEditing ? "rgba(30,184,154,0.1)" : "white", color: isEditing ? "#0F766E" : "#64748B", cursor: "pointer" }}
+        >
+          {isEditing ? <><Check className="w-4 h-4" /> OK</> : <><Pencil className="w-4 h-4" /> Modifier</>}
+        </button>
       </div>
-      <div className="rounded-2xl p-4 bg-card" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-        <p style={{ fontSize: 14, lineHeight: 1.7, color: "#334155", whiteSpace: "pre-wrap" }}>{text}</p>
+      <div className="rounded-2xl bg-card" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+        {isEditing ? (
+          <textarea
+            value={text}
+            onChange={e => onTextChange(e.target.value)}
+            autoFocus
+            className="w-full rounded-2xl p-4 text-base outline-none resize-none"
+            style={{ border: "2px solid #1EB89A", fontSize: 14, lineHeight: 1.7, color: "#334155", background: "white", minHeight: 300 }}
+          />
+        ) : (
+          <p className="p-4" style={{ fontSize: 14, lineHeight: 1.7, color: "#334155", whiteSpace: "pre-wrap", margin: 0 }}>{text}</p>
+        )}
       </div>
       <BigBtn icon={<Mail className="w-5 h-5" />} label="Ouvrir dans mes emails" subtitle="Le texte sera pré-rempli" onClick={() => openMailtoLink({ subject: template.label, body: text })} primary />
       <div className="flex gap-3">
