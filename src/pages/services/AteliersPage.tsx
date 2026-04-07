@@ -23,10 +23,8 @@ import { Button } from "@/components/ui/button";
 // TODO: connecter à Supabase partner_workshops
 const WORKSHOPS: { id: string; orga: string; title: string; date: string; time: string; location: string; spots: number; emoji: string; category: string }[] = [];
 
-const PARTNER_ORGS = [
-  { name: "Emmaüs Connect", description: "Inclusion numérique pour les personnes en difficulté.", emoji: "🤝", url: "https://emmaus-connect.org" },
-  { name: "Les Petits Frères des Pauvres", description: "Accompagnement des personnes âgées isolées.", emoji: "❤️", url: "https://www.petitsfreresdespauvres.fr" },
-];
+// TODO: connecter à Supabase — aucun partenariat pour l'instant
+const PARTNER_ORGS: { name: string; description: string; emoji: string; url: string }[] = [];
 
 const STORAGE_KEY = "ateliers_linked_org";
 
@@ -222,23 +220,33 @@ export function AteliersPage() {
         {/* Section 3 — Organismes partenaires */}
         <div>
           <h2 className="font-bold text-foreground text-lg mb-3">Nos organismes partenaires</h2>
-          <div className="space-y-2">
-            {PARTNER_ORGS.map(org => (
-              <button
-                key={org.name}
-                onClick={() => window.open(org.url, "_blank")}
-                className="w-full flex items-center gap-3 p-4 rounded-2xl bg-card border border-border text-left transition-all hover:shadow-sm active:scale-[0.98]"
-                style={{ cursor: "pointer" }}
-              >
-                <span className="text-2xl flex-shrink-0">{org.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">{org.name}</p>
-                  <p className="text-sm text-muted-foreground">{org.description}</p>
-                </div>
-                <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              </button>
-            ))}
-          </div>
+          {PARTNER_ORGS.length === 0 ? (
+            <div className="rounded-2xl p-6 bg-card border border-border text-center">
+              <Users className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+              <p className="font-medium text-foreground mb-1">Aucun partenaire pour le moment</p>
+              <p className="text-sm text-muted-foreground">
+                Nos futurs organismes partenaires apparaîtront ici.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {PARTNER_ORGS.map(org => (
+                <button
+                  key={org.name}
+                  onClick={() => window.open(org.url, "_blank")}
+                  className="w-full flex items-center gap-3 p-4 rounded-2xl bg-card border border-border text-left transition-all hover:shadow-sm active:scale-[0.98]"
+                  style={{ cursor: "pointer" }}
+                >
+                  <span className="text-2xl flex-shrink-0">{org.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">{org.name}</p>
+                    <p className="text-sm text-muted-foreground">{org.description}</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Section 4 — Bandeau de confiance */}
