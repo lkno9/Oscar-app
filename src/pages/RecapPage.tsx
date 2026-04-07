@@ -318,6 +318,11 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         </button>
       </div>
 
+      {/* MON ORGANISME PARTENAIRE */}
+      <div style={{ padding: "16px 16px 0" }}>
+        <PartnerWidget onNavigate={(path) => navigate(path)} />
+      </div>
+
       {/* ENGAGEMENT — Streak + Quiz */}
       <div style={{ padding: "16px 16px 0" }}>
         {/* Streak compact + Quiz CTA côte à côte */}
@@ -447,11 +452,6 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         );
       })()}
 
-
-      {/* MON ORGANISME PARTENAIRE */}
-      <div style={{ padding: "16px 16px 0" }}>
-        <PartnerWidget onNavigate={(path) => navigate(path)} />
-      </div>
 
       {/* ACTUALITÉS & INFOS */}
       <div style={{ padding: "24px 16px 0" }}>
