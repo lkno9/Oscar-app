@@ -288,8 +288,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         </div>
       </div>
 
-      {/* OSCAR WIDGET */}
-      <div style={{ padding: "0 16px", marginTop: 16 }}>
+      {/* OSCAR WIDGET + PARTNER */}
+      <div style={{ padding: "0 16px", marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
         <button
           onClick={onGoToOscar}
           className="w-full text-left"
@@ -316,10 +316,6 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           </div>
           <ChevronRight className="w-5 h-5 text-white/70 flex-shrink-0" />
         </button>
-      </div>
-
-      {/* MON ORGANISME PARTENAIRE */}
-      <div style={{ padding: "16px 16px 0" }}>
         <PartnerWidget onNavigate={(path) => navigate(path)} />
       </div>
 

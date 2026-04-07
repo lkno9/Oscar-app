@@ -28,28 +28,17 @@ export function PartnerWidget({ onNavigate }: PartnerWidgetProps) {
   const partner = getLinkedPartner();
 
   if (!partner) {
-    // No partner linked — show invitation card
     return (
       <button
         onClick={() => onNavigate("/services/partner")}
-        className="w-full flex items-center gap-3 transition-all active:scale-[0.98]"
-        style={{ borderRadius: 18, padding: "14px 16px", cursor: "pointer", textAlign: "left", background: "rgba(139,92,246,0.06)", border: "1.5px dashed rgba(139,92,246,0.25)" }}
+        className="w-full flex items-center gap-2.5 transition-all active:scale-[0.98]"
+        style={{ borderRadius: 14, padding: "10px 14px", cursor: "pointer", textAlign: "left", background: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.2)" }}
       >
-        <div
-          className="flex items-center justify-center flex-shrink-0"
-          style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(139,92,246,0.1)", fontSize: 22 }}
-        >
-          🤝
-        </div>
-        <div className="flex-1 min-w-0">
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#6D28D9", margin: 0 }}>
-            Vous participez à un atelier ?
-          </p>
-          <p className="text-muted-foreground" style={{ fontSize: 12, margin: "2px 0 0" }}>
-            Associez votre organisme pour retrouver ses infos
-          </p>
-        </div>
-        <ChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: "#8B5CF6" }} />
+        <span style={{ fontSize: 18, flexShrink: 0 }}>🤝</span>
+        <p className="flex-1" style={{ fontSize: 13, fontWeight: 500, color: "#6D28D9", margin: 0 }}>
+          Associer mon organisme d'atelier
+        </p>
+        <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "#8B5CF6" }} />
       </button>
     );
   }
@@ -59,29 +48,16 @@ export function PartnerWidget({ onNavigate }: PartnerWidgetProps) {
   return (
     <button
       onClick={() => onNavigate("/services/partner")}
-      className="w-full flex items-center gap-3 bg-card border border-border transition-all active:scale-[0.98]"
-      style={{ borderRadius: 18, padding: "14px 16px", cursor: "pointer", textAlign: "left" }}
+      className="w-full flex items-center gap-2.5 transition-all active:scale-[0.98]"
+      style={{ borderRadius: 14, padding: "10px 14px", cursor: "pointer", textAlign: "left", background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.12)" }}
     >
-      <div
-        className="flex items-center justify-center flex-shrink-0"
-        style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(139,92,246,0.1)", fontSize: 22 }}
-      >
-        {typeInfo.emoji}
-      </div>
+      <span style={{ fontSize: 18, flexShrink: 0 }}>{typeInfo.emoji}</span>
       <div className="flex-1 min-w-0">
-        <p style={{ fontSize: 11, fontWeight: 600, color: "#8B5CF6", margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>
-          Mon organisme partenaire
-        </p>
-        <p className="text-foreground truncate" style={{ fontSize: 15, fontWeight: 600, margin: "2px 0 0" }}>
+        <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: "#6D28D9", margin: 0 }}>
           {partner.name}
         </p>
-        {partner.schedule && (
-          <p className="text-muted-foreground" style={{ fontSize: 12, margin: "2px 0 0" }}>
-            {partner.schedule}
-          </p>
-        )}
       </div>
-      <ChevronRight className="w-5 h-5 flex-shrink-0 text-muted-foreground" />
+      <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "#8B5CF6" }} />
     </button>
   );
 }
