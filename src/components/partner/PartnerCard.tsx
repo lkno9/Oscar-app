@@ -27,7 +27,32 @@ interface PartnerWidgetProps {
 export function PartnerWidget({ onNavigate }: PartnerWidgetProps) {
   const partner = getLinkedPartner();
 
-  if (!partner) return null;
+  if (!partner) {
+    // No partner linked — show invitation card
+    return (
+      <button
+        onClick={() => onNavigate("/services/partner")}
+        className="w-full flex items-center gap-3 transition-all active:scale-[0.98]"
+        style={{ borderRadius: 18, padding: "14px 16px", cursor: "pointer", textAlign: "left", background: "rgba(139,92,246,0.06)", border: "1.5px dashed rgba(139,92,246,0.25)" }}
+      >
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(139,92,246,0.1)", fontSize: 22 }}
+        >
+          🤝
+        </div>
+        <div className="flex-1 min-w-0">
+          <p style={{ fontSize: 14, fontWeight: 600, color: "#6D28D9", margin: 0 }}>
+            Vous participez à un atelier ?
+          </p>
+          <p className="text-muted-foreground" style={{ fontSize: 12, margin: "2px 0 0" }}>
+            Associez votre organisme pour retrouver ses infos
+          </p>
+        </div>
+        <ChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: "#8B5CF6" }} />
+      </button>
+    );
+  }
 
   const typeInfo = PARTNER_TYPE_LABELS[partner.type];
 
