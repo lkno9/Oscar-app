@@ -17,6 +17,7 @@ import {
   Navigation,
   ClipboardList,
   Newspaper,
+  Users,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 import { useFamilyMessages } from "@/hooks/useFamilyMessages";
@@ -34,6 +35,7 @@ const PRIMARY_SERVICES = [
   { icon: <Sparkles className="w-6 h-6" />, label: "Mes avantages", sublabel: "Bons plans seniors", path: "/services/partners" },
   { icon: <ShieldAlert className="w-6 h-6" />, label: "Ma sécurité", sublabel: "Arnaques, alertes", path: "/services/scam-protection" },
   { icon: <Newspaper className="w-6 h-6" />, label: "Actualités & infos", sublabel: "L'info du jour", path: "/services/knowledge" },
+  { icon: <Users className="w-6 h-6" />, label: "Ateliers & Accompagnement", sublabel: "Rejoindre un atelier près de chez vous", path: "/services/ateliers" },
 ];
 
 const SUPPORT_ITEMS = [
