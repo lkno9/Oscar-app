@@ -298,6 +298,51 @@
   /* ── Text size scaling for seniors ── */
 }
 
+/* ── Dark mode overrides for inline styles ── */
+/* Many components use inline style={{ color: "#1A1E35" }} etc. which bypass
+   Tailwind dark mode. These rules force dark-friendly colors. */
+.dark [style*="color: #1A1E35"],
+.dark [style*="color: rgb(26, 30, 53)"] {
+  color: hsl(0 0% 93%) !important;
+}
+.dark [style*="color: #334155"],
+.dark [style*="color: rgb(51, 65, 85)"] {
+  color: hsl(215 20% 75%) !important;
+}
+.dark [style*="color: #64748B"],
+.dark [style*="color: rgb(100, 116, 139)"] {
+  color: hsl(215 20% 60%) !important;
+}
+.dark [style*="color: #94A3B8"],
+.dark [style*="color: rgb(148, 163, 184)"] {
+  color: hsl(215 15% 55%) !important;
+}
+.dark [style*="color: #CBD5E1"] {
+  color: hsl(215 15% 40%) !important;
+}
+.dark [style*="background: white"],
+.dark [style*="background: rgb(255, 255, 255)"] {
+  background: hsl(222 47% 12%) !important;
+}
+.dark [style*="background: #FAFAFA"],
+.dark [style*="background: #F8FAFC"],
+.dark [style*="background: #F1F5F9"] {
+  background: hsl(222 30% 15%) !important;
+}
+.dark [style*="border: 1px solid #E2E8F0"],
+.dark [style*="border: 2px solid #E2E8F0"] {
+  border-color: hsl(222 30% 22%) !important;
+}
+.dark [style*="border-bottom: 1px solid #F1F5F9"] {
+  border-bottom-color: hsl(222 30% 20%) !important;
+}
+.dark .oscar-page-bg {
+  background: hsl(222 47% 8%) !important;
+}
+.dark .oscar-card {
+  background: hsl(222 47% 12%) !important;
+}
+
 /* Text size preferences — applied on <html> */
 .text-size-normal { font-size: 16px; }
 .text-size-large { font-size: 18px; }

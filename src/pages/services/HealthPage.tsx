@@ -481,11 +481,11 @@ export function HealthPage() {
           </TabsContent>
 
           {/* MOOD TAB */}
-          <TabsContent value="mood" className="flex-1 overflow-y-auto p-4 space-y-6 mt-0">
-            {/* Today's mood */}
-            <div className="bg-card rounded-2xl p-5 border border-border">
-              <h2 className="font-bold text-foreground text-base mb-1">Comment vous sentez-vous aujourd'hui ?</h2>
-              <p className="text-sm text-muted-foreground mb-5">Appuyez sur un emoji pour enregistrer votre humeur</p>
+          <TabsContent value="mood" className="flex-1 overflow-y-auto p-4 space-y-5 mt-0">
+            {/* Today's mood picker */}
+            <div className="rounded-2xl p-5 border border-border" style={{ background: todayMood ? `linear-gradient(135deg, ${todayMood >= 4 ? 'rgba(34,197,94,0.08)' : todayMood >= 3 ? 'rgba(245,158,11,0.06)' : 'rgba(239,68,68,0.06)'} 0%, transparent 100%)` : undefined }}>
+              <h2 className="font-bold text-foreground text-lg mb-1">Comment allez-vous ?</h2>
+              <p className="text-sm text-muted-foreground mb-4">Choisissez l'emoji qui correspond à votre journée</p>
               <div className="grid grid-cols-5 gap-2">
                 {MOODS.map(m => (
                   <button
@@ -494,43 +494,91 @@ export function HealthPage() {
                     disabled={savingMood}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all cursor-pointer active:scale-95 select-none ${
                       todayMood === m.level
-                        ? "border-primary bg-primary/10 scale-105"
-                        : "border-border bg-secondary hover:border-primary/40"
+                        ? "border-primary bg-primary/10 scale-110 shadow-md"
+                        : "border-border bg-card hover:border-primary/40 hover:scale-105"
                     }`}
                   >
-                    <span className="text-3xl">{m.emoji}</span>
-                    <span className="text-sm text-foreground font-medium leading-tight text-center">{m.label}</span>
+                    <span style={{ fontSize: todayMood === m.level ? 36 : 28 }} className="transition-all">{m.emoji}</span>
+                    <span className={`text-xs font-medium leading-tight text-center ${todayMood === m.level ? 'text-primary' : 'text-muted-foreground'}`}>{m.label}</span>
                   </button>
                 ))}
               </div>
               {todayMood && (
-                <p className="text-center mt-4 text-sm text-primary font-medium">
-                  Humeur du jour : {MOODS.find(m => m.level === todayMood)?.emoji} {MOODS.find(m => m.level === todayMood)?.label}
-                </p>
+                <div className="mt-4 p-3 rounded-xl bg-card border border-border">
+                  <p className="text-sm text-foreground font-medium mb-1">
+                    {todayMood >= 4 ? "Super ! Continuez sur cette lancée." :
+                     todayMood >= 3 ? "Journée tranquille. Prenez soin de vous." :
+                     "Courage. N'hésitez pas à appeler un proche ou Oscar."}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {todayMood >= 4 ? "Un petit appel à un proche pourrait rendre cette journée encore meilleure !" :
+                     todayMood >= 3 ? "Une petite balade ou un jeu de mémoire peut faire du bien." :
+                     "Parler fait du bien. Vos proches sont là pour vous."}
+                  </p>
+                </div>
               )}
             </div>
 
-            {/* Mood history */}
-            {moodEntries.length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Historique (7 jours)</h2>
-                <div className="space-y-2">
-                  {moodEntries.map(entry => {
+            {/* Visual trend — 7 days */}
+            {moodEntries.length > 1 && (
+              <div className="bg-card rounded-2xl p-4 border border-border">
+                <h3 className="font-semibold text-foreground text-sm mb-3">Votre semaine</h3>
+                <div className="flex items-end justify-between gap-1" style={{ height: 80 }}>
+                  {[...moodEntries].reverse().slice(0, 7).map((entry, i) => {
                     const mood = MOODS.find(m => m.level === entry.mood_level);
+                    const height = (entry.mood_level / 5) * 100;
+                    const colors = ['#EF4444', '#F59E0B', '#EAB308', '#22C55E', '#16A34A'];
                     return (
-                      <div key={entry.id} className="bg-card rounded-xl p-4 border border-border flex items-center gap-4">
-                        <span className="text-2xl">{mood?.emoji}</span>
-                        <div className="flex-1">
-                          <p className="font-semibold text-foreground">{mood?.label}</p>
-                          {entry.notes && <p className="text-sm text-muted-foreground">{entry.notes}</p>}
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(entry.entry_date), "d MMM", { locale: fr })}
+                      <div key={entry.id || i} className="flex-1 flex flex-col items-center gap-1">
+                        <span style={{ fontSize: 14 }}>{mood?.emoji}</span>
+                        <div className="w-full rounded-t-md transition-all" style={{ height: `${height}%`, backgroundColor: colors[entry.mood_level - 1], opacity: 0.7, minHeight: 8 }} />
+                        <span className="text-[10px] text-muted-foreground">
+                          {format(new Date(entry.entry_date), "EEE", { locale: fr }).slice(0, 3)}
                         </span>
                       </div>
                     );
                   })}
                 </div>
+                {(() => {
+                  const avg = moodEntries.reduce((s, e) => s + e.mood_level, 0) / moodEntries.length;
+                  return (
+                    <p className="text-xs text-muted-foreground mt-3 text-center">
+                      Moyenne : {avg.toFixed(1)}/5 — {avg >= 3.5 ? "Bonne forme cette semaine !" : avg >= 2.5 ? "Semaine correcte." : "Prenez du temps pour vous."}
+                    </p>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Mood history list */}
+            {moodEntries.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Détail des 7 derniers jours</h3>
+                <div className="space-y-2">
+                  {moodEntries.map(entry => {
+                    const mood = MOODS.find(m => m.level === entry.mood_level);
+                    return (
+                      <div key={entry.id} className="bg-card rounded-xl p-3.5 border border-border flex items-center gap-3">
+                        <span className="text-2xl">{mood?.emoji}</span>
+                        <div className="flex-1">
+                          <p className="font-semibold text-foreground text-sm">{mood?.label}</p>
+                          {entry.notes && <p className="text-xs text-muted-foreground">{entry.notes}</p>}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(entry.entry_date), "EEEE d MMM", { locale: fr })}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {moodEntries.length === 0 && !todayMood && (
+              <div className="text-center py-8">
+                <Heart className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="font-medium text-foreground mb-1">Commencez votre suivi</p>
+                <p className="text-sm text-muted-foreground">Enregistrez votre humeur chaque jour pour voir votre tendance.</p>
               </div>
             )}
           </TabsContent>

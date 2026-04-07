@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Activity, Settings, RefreshCw, Clock, UserPlus, ChevronRight, Sparkles, Bell, MessageCircle, ExternalLink } from 'lucide-react';
+import { Heart, Activity, Settings, RefreshCw, Clock, UserPlus, ChevronRight, Lightbulb, Bell, MessageCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -319,7 +319,7 @@ export default function FamilyDashboard({ onNavigate }: FamilyDashboardProps = {
         <div className="bg-accent rounded-2xl p-4 border border-primary/20">
           <div className="flex gap-3 items-start">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Sparkles className="w-4 h-4 text-primary" />
+              <Lightbulb className="w-4 h-4 text-primary" />
             </div>
             <div>
               <p className="text-sm font-semibold text-primary mb-1">Conseil du jour</p>

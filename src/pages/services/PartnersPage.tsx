@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Sparkles, Shield, Inbox } from "lucide-react";
+import { ArrowLeft, Gift, Shield, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { PartnerServiceCard } from "@/components/partners/PartnerServiceCard";
@@ -58,7 +58,7 @@ export function PartnersPage() {
           <button onClick={goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors" aria-label="Retour"><ArrowLeft className="w-5 h-5 text-foreground" /></button>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
+              <Gift className="w-5 h-5 text-primary" />
               <h1 className="text-lg font-bold text-foreground">Bons Plans Seniors</h1>
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">

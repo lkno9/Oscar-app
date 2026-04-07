@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Plus, X, ListChecks, CalendarDays, Sparkles, AlertCircle } from "lucide-react";
+import { ArrowLeft, Plus, X, ListChecks, CalendarDays, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAdminTasks } from "@/hooks/useAdminTasks";
 import { TaskCard } from "@/components/documents/TaskCard";
 import { TASK_CATEGORIES } from "@/components/documents/TaskTemplates";
@@ -136,7 +136,7 @@ export function DemarchesTasksFlow({ onBack, onAskOscar }: DemarchesTasksFlowPro
           {/* Done */}
           {!loading && doneTasks.length > 0 && (
             <div>
-              <SectionTitle icon={<Sparkles className="w-4 h-4" />} label={`Terminées (${doneTasks.length})`} />
+              <SectionTitle icon={<CheckCircle2 className="w-4 h-4" />} label={`Terminées (${doneTasks.length})`} />
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {doneTasks.map(task => (
                   <TaskCard key={task.id} task={task} onUpdateStep={updateTaskStep} onDelete={deleteTask} />

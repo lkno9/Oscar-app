@@ -218,14 +218,27 @@ export function HelpPage() {
           <div className="bg-card rounded-2xl border border-border overflow-hidden">
             <div className="p-4 border-b border-border">
               <p className="text-sm text-foreground font-medium mb-1">
-                Vous ne trouvez pas la réponse ?
+                Besoin d'aide supplémentaire ?
               </p>
               <p className="text-sm text-muted-foreground">
-                Notre équipe est disponible du lundi au vendredi, de 9h à 18h.
+                Appelez Oscar ou contactez notre équipe humaine.
               </p>
             </div>
             <a
-              href="mailto:hello@oscaria.co"
+              href="tel:+33187210510"
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors border-b border-border"
+            >
+              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                <PhoneIcon className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Appeler Oscar</p>
+                <p className="text-sm text-muted-foreground">01 87 21 05 10 — Support vocal 24h/24</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            </a>
+            <a
+              href="mailto:support@oscaria.co"
               className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors border-b border-border"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -233,17 +246,17 @@ export function HelpPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">Envoyer un e-mail</p>
-                <p className="text-sm text-muted-foreground">hello@oscaria.co</p>
+                <p className="text-sm text-muted-foreground">support@oscaria.co</p>
               </div>
-              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </a>
             <div className="w-full flex items-center gap-3 px-4 py-3.5">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <PhoneIcon className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-5 h-5 text-orange-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Réponse sous 24h</p>
-                <p className="text-sm text-muted-foreground">Contactez-nous par email, nous vous répondons sous 24h.</p>
+                <p className="text-sm font-semibold text-foreground">Support humain</p>
+                <p className="text-sm text-muted-foreground">Du lundi au vendredi, 9h-18h — un conseiller vous rappelle sous 24h.</p>
               </div>
             </div>
           </div>

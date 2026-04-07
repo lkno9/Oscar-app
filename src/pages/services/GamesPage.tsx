@@ -1,4 +1,4 @@
-import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Sparkles, Zap, Users, Wifi } from "lucide-react";
+import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Award, Zap, Users, Wifi } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -180,7 +180,7 @@ export function GamesPage() {
         {/* Jeux Oscar solo */}
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
+            <Award className="w-4 h-4" />
             Jeux Solo
           </h2>
           <div className="grid grid-cols-2 gap-3">

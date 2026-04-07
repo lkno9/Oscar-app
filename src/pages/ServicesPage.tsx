@@ -5,7 +5,7 @@ import {
   Image,
   Ticket,
   Gamepad2,
-  Sparkles,
+  Gift,
   ShieldAlert,
   MessageCircle,
   Heart,
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 import { useFamilyMessages } from "@/hooks/useFamilyMessages";
+import { usePageAnnounce } from "@/hooks/usePageAnnounce";
 
 const PRIMARY_SERVICES = [
   { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda", sublabel: "Rendez-vous, rappels", path: "/services/agenda" },
@@ -31,7 +32,7 @@ const PRIMARY_SERVICES = [
   { icon: <ClipboardList className="w-6 h-6" />, label: "Démarches admin", sublabel: "Courriers, droits, aides", path: "/services/demarches" },
   { icon: <Cloud className="w-6 h-6" />, label: "Mes documents", sublabel: "Courriers, ordonnances", path: "/services/storage" },
   { icon: <Gamepad2 className="w-6 h-6" />, label: "Jeux & mémoire", sublabel: "Mémoire, quiz, sudoku", path: "/services/games" },
-  { icon: <Sparkles className="w-6 h-6" />, label: "Mes avantages", sublabel: "Bons plans seniors", path: "/services/partners" },
+  { icon: <Gift className="w-6 h-6" />, label: "Mes avantages", sublabel: "Bons plans seniors", path: "/services/partners" },
   { icon: <ShieldAlert className="w-6 h-6" />, label: "Ma sécurité", sublabel: "Arnaques, alertes", path: "/services/scam-protection" },
   { icon: <Newspaper className="w-6 h-6" />, label: "Actualités & infos", sublabel: "L'info du jour", path: "/services/knowledge" },
 ];
@@ -46,6 +47,7 @@ const SUPPORT_ITEMS = [
 export function ServicesPage() {
   const navigate = useNavigate();
   const { unreadCount } = useFamilyMessages();
+  usePageAnnounce("Mes services", "Retrouvez toutes les fonctionnalités d'Oscar");
 
   return (
     <div className="flex flex-col h-full overflow-y-auto scrollbar-hide oscar-page-bg">

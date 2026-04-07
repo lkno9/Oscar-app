@@ -7,7 +7,7 @@ import {
   ListChecks,
   BookOpen,
   CalendarDays,
-  Sparkles,
+  LayoutGrid,
   AlertCircle,
   ClipboardList,
   MessageCircle,
@@ -85,7 +85,7 @@ export function DemarchesPage() {
 
           {/* Actions rapides — grille 2×2 */}
           <div>
-            <SectionTitle icon={<Sparkles className="w-4 h-4" />} label="Que voulez-vous faire ?" />
+            <SectionTitle icon={<LayoutGrid className="w-4 h-4" />} label="Que voulez-vous faire ?" />
             <div className="grid grid-cols-2 gap-2.5">
               <ActionCard icon={<PenLine className="w-6 h-6" />} label="Écrire un courrier" sublabel="Réclamation, demande, résiliation..." color="#1EB89A" onClick={() => setActiveFlow("write")} />
               <ActionCard icon={<ListChecks className="w-6 h-6" />} label="Mes démarches" sublabel="Suivre mes dossiers en cours" color="#3B82F6" badge={inProgressTasks.length > 0 ? inProgressTasks.length : undefined} onClick={() => setActiveFlow("tasks")} />

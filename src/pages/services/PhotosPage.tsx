@@ -1,4 +1,4 @@
-import { ArrowLeft, Image, Camera, X, Trash2, Heart, Users, ZoomIn, BookOpen, Plus, Save, ImagePlus, Play, Sparkles } from "lucide-react";
+import { ArrowLeft, Image, Camera, X, Trash2, Heart, Users, ZoomIn, BookOpen, Plus, Save, ImagePlus, Play, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -318,7 +318,7 @@ export function PhotosPage() {
                         {newReceivedCount} nouvelle{newReceivedCount > 1 ? 's' : ''} photo{newReceivedCount > 1 ? 's' : ''} reçue{newReceivedCount > 1 ? 's' : ''}
                       </p>
                     </div>
-                    <Sparkles className="w-5 h-5 text-pink-400" />
+                    <Bookmark className="w-5 h-5 text-pink-400" />
                   </div>
                 )}
 

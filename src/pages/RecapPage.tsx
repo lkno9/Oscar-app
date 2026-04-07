@@ -6,7 +6,7 @@ import {
   Cloud,
   MessageCircle,
   Gamepad2,
-  Sparkles,
+  Gift,
   Check,
   Heart,
   Flame,
@@ -22,6 +22,7 @@ import { useEngagement } from "@/hooks/useEngagement";
 import { useRssArticles, ACTU_CATEGORIES, timeAgo } from "@/hooks/useRssArticles";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { useAdminTasks } from "@/hooks/useAdminTasks";
+import { usePageAnnounce } from "@/hooks/usePageAnnounce";
 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -92,7 +93,7 @@ const ALL_ACTIONS: QuickAction[] = [
   { label: "Mes documents", icon: <Cloud className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Démarches admin", icon: <ClipboardList className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Mes jeux & mémoire", icon: <Gamepad2 className="w-5 h-5 text-[#2DD4BF]" /> },
-  { label: "Mes avantages", icon: <Sparkles className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Mes avantages", icon: <Gift className="w-5 h-5 text-[#2DD4BF]" /> },
   { label: "Ma sécurité", icon: <ShieldAlert className="w-5 h-5 text-[#2DD4BF]" /> },
 ];
 
@@ -115,6 +116,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   const [upcomingEvents, setUpcomingEvents] = useState<{id: string; title: string; event_date: string; event_time: string | null; category: string | null}[]>([]);
   const [unreadMessages, setUnreadMessages] = useState<{id: string; content: string; sender_id: string; sender_name: string | null; created_at: string}[]>([]);
   const { filteredArticles, loading: articlesLoading, actuCat, setActuCat } = useRssArticles();
+  usePageAnnounce("Page d'accueil", profile?.full_name ? `Bonjour ${profile.full_name}` : undefined);
 
   // Rediriger vers l'onboarding si pas encore fait
   useEffect(() => {
