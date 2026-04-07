@@ -22,7 +22,7 @@ import { useEngagement } from "@/hooks/useEngagement";
 import { useRssArticles, ACTU_CATEGORIES, timeAgo } from "@/hooks/useRssArticles";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { useAdminTasks } from "@/hooks/useAdminTasks";
-import { PartnerWidget } from "@/components/partner/PartnerCard";
+
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -316,7 +316,6 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
           </div>
           <ChevronRight className="w-5 h-5 text-white/70 flex-shrink-0" />
         </button>
-        <PartnerWidget onNavigate={(path) => navigate(path)} />
       </div>
 
       {/* ENGAGEMENT — Streak + Quiz */}

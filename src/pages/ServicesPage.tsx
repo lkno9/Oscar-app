@@ -17,7 +17,6 @@ import {
   Navigation,
   ClipboardList,
   Newspaper,
-  Users,
 } from "lucide-react";
 import { ServiceTile } from "@/components/ServiceTile";
 import { useFamilyMessages } from "@/hooks/useFamilyMessages";
@@ -30,7 +29,6 @@ const PRIMARY_SERVICES = [
   { icon: <Navigation className="w-6 h-6" />, label: "Me déplacer", sublabel: "Bus, train, itinéraire", path: "/services/transport" },
   { icon: <Ticket className="w-6 h-6" />, label: "Sorties & loisirs", sublabel: "Idées de sorties", path: "/services/entertainment" },
   { icon: <ClipboardList className="w-6 h-6" />, label: "Démarches admin", sublabel: "Courriers, droits, aides", path: "/services/demarches" },
-  { icon: <Users className="w-6 h-6" />, label: "Ateliers & Accompagnement", sublabel: "Rejoindre un atelier", path: "/services/ateliers" },
   { icon: <Cloud className="w-6 h-6" />, label: "Mes documents", sublabel: "Courriers, ordonnances", path: "/services/storage" },
   { icon: <Gamepad2 className="w-6 h-6" />, label: "Jeux & mémoire", sublabel: "Mémoire, quiz, sudoku", path: "/services/games" },
   { icon: <Sparkles className="w-6 h-6" />, label: "Mes avantages", sublabel: "Bons plans seniors", path: "/services/partners" },
