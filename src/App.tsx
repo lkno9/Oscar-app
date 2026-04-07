@@ -55,6 +55,7 @@ import { ToolsPage } from "./pages/services/ToolsPage";
 import { KnowledgePage } from "./pages/services/KnowledgePage";
 import { RadioPage } from "./pages/services/RadioPage";
 import { RecipesPage } from "./pages/services/RecipesPage";
+import { MyPartnerPage } from "./pages/services/MyPartnerPage";
 import { DailyQuizPage } from "./pages/DailyQuizPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { DemarchesPage } from "./pages/DemarchesPage";
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="/services/emergency" element={<ProtectedRoute><SubPageLayout><EmergencyPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/help" element={<ProtectedRoute><SubPageLayout><HelpPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/partners" element={<ProtectedRoute><SubPageLayout><PartnersPage /></SubPageLayout></ProtectedRoute>} />
+            <Route path="/services/partner" element={<ProtectedRoute><SubPageLayout><MyPartnerPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/scam-protection" element={<ProtectedRoute><SubPageLayout><ScamProtectionPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/communication" element={<ProtectedRoute><SubPageLayout><CommunicationPage /></SubPageLayout></ProtectedRoute>} />
             <Route path="/services/oscar-academy" element={<ProtectedRoute><SubPageLayout><OscarAcademyPage /></SubPageLayout></ProtectedRoute>} />

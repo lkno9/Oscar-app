@@ -22,6 +22,7 @@ import { useEngagement } from "@/hooks/useEngagement";
 import { useRssArticles, ACTU_CATEGORIES, timeAgo } from "@/hooks/useRssArticles";
 import { OscarAvatar } from "@/components/OscarAvatar";
 import { useAdminTasks } from "@/hooks/useAdminTasks";
+import { PartnerWidget } from "@/components/partner/PartnerCard";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -446,6 +447,11 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
         );
       })()}
 
+
+      {/* MON ORGANISME PARTENAIRE */}
+      <div style={{ padding: "16px 16px 0" }}>
+        <PartnerWidget onNavigate={(path) => navigate(path)} />
+      </div>
 
       {/* ACTUALITÉS & INFOS */}
       <div style={{ padding: "24px 16px 0" }}>
