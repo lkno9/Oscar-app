@@ -226,24 +226,35 @@ function PartnerPicker({ partners, onSelect, onClose }: {
         </button>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {partners.map(p => {
-          const typeInfo = PARTNER_TYPE_LABELS[p.type];
-          return (
-            <button
-              key={p.id}
-              onClick={() => onSelect(p)}
-              className="w-full flex items-center gap-3 p-3.5 rounded-xl transition-all active:scale-[0.98]"
-              style={{ border: "1px solid #E2E8F0", background: "white", cursor: "pointer", textAlign: "left" }}
-            >
-              <span style={{ fontSize: 24 }}>{typeInfo.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1E35", margin: 0 }}>{p.name}</p>
-                <p style={{ fontSize: 12, color: "#94A3B8", margin: "2px 0 0" }}>{typeInfo.label} • {p.city || "France"}</p>
-              </div>
-              <ChevronRight className="w-4 h-4" style={{ color: "#CBD5E1" }} />
-            </button>
-          );
-        })}
+        {partners.length === 0 ? (
+          <div className="text-center py-6">
+            <p style={{ fontSize: 14, color: "#94A3B8" }}>
+              Aucun organisme disponible pour le moment.
+            </p>
+            <p style={{ fontSize: 13, color: "#CBD5E1", marginTop: 4 }}>
+              Cette fonctionnalité sera bientôt disponible.
+            </p>
+          </div>
+        ) : (
+          partners.map(p => {
+            const typeInfo = PARTNER_TYPE_LABELS[p.type];
+            return (
+              <button
+                key={p.id}
+                onClick={() => onSelect(p)}
+                className="w-full flex items-center gap-3 p-3.5 rounded-xl transition-all active:scale-[0.98]"
+                style={{ border: "1px solid #E2E8F0", background: "white", cursor: "pointer", textAlign: "left" }}
+              >
+                <span style={{ fontSize: 24 }}>{typeInfo.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1E35", margin: 0 }}>{p.name}</p>
+                  <p style={{ fontSize: 12, color: "#94A3B8", margin: "2px 0 0" }}>{typeInfo.label} • {p.city || "France"}</p>
+                </div>
+                <ChevronRight className="w-4 h-4" style={{ color: "#CBD5E1" }} />
+              </button>
+            );
+          })
+        )}
       </div>
     </div>
   );

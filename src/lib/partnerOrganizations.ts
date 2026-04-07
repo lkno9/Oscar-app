@@ -25,41 +25,8 @@ export const PARTNER_TYPE_LABELS: Record<PartnerOrganization["type"], { label: s
   autre: { label: "Organisme", emoji: "📋" },
 };
 
-// Demo partners — will be replaced by Supabase data
-export const DEMO_PARTNERS: PartnerOrganization[] = [
-  {
-    id: "emmaus-connect-paris",
-    name: "Emmaüs Connect Paris",
-    type: "association",
-    description: "Emmaüs Connect lutte contre l'exclusion numérique en proposant des ateliers d'initiation au numérique pour les seniors.",
-    address: "28 avenue Daumesnil",
-    city: "Paris 12e",
-    phone: "01 58 51 10 00",
-    website: "emmaus-connect.org",
-    activities: ["Ateliers numériques", "Aide aux démarches en ligne", "Prêt de tablettes", "Accompagnement individuel"],
-    schedule: "Mardi et jeudi, 14h-16h",
-  },
-  {
-    id: "ccas-lyon-3",
-    name: "CCAS Lyon 3e",
-    type: "ccas",
-    description: "Le Centre Communal d'Action Sociale du 3e arrondissement de Lyon accompagne les seniors dans leur quotidien numérique.",
-    address: "216 rue Duguesclin",
-    city: "Lyon 3e",
-    phone: "04 72 61 42 00",
-    activities: ["Ateliers informatique seniors", "Permanences numériques", "Aide administrative"],
-    schedule: "Lundi et mercredi, 10h-12h",
-  },
-  {
-    id: "petits-freres-pauvres",
-    name: "Petits Frères des Pauvres",
-    type: "association",
-    description: "Accompagnement des personnes âgées isolées, incluant des ateliers numériques pour maintenir le lien social.",
-    phone: "0 800 47 47 88",
-    website: "petitsfreresdespauvres.fr",
-    activities: ["Visites à domicile", "Ateliers numériques", "Sorties et activités collectives"],
-  },
-];
+// TODO: connecter à Supabase partner_organizations
+export const DEMO_PARTNERS: PartnerOrganization[] = [];
 
 // Local storage key for linking a senior to their partner org
 const PARTNER_STORAGE_KEY = "oscar_partner_org_id";

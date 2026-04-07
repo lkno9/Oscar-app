@@ -21,17 +21,11 @@ import {
 import { Button } from "@/components/ui/button";
 
 // TODO: connecter à Supabase partner_workshops
-const WORKSHOPS = [
-  { id: "1", orga: "Clic et Moi", title: "Débuter avec un smartphone", date: "Mardi 15 avril", time: "14h00 - 16h00", location: "Centre social Voltaire, Paris 11e", spots: 3, emoji: "📱", category: "Débutant" },
-  { id: "2", orga: "Clic et Moi", title: "Sécurité en ligne et arnaques", date: "Jeudi 17 avril", time: "10h00 - 12h00", location: "Médiathèque Marguerite Yourcenar, Paris 15e", spots: 5, emoji: "🛡️", category: "Sécurité" },
-  { id: "3", orga: "CCAS Paris", title: "Utiliser les démarches en ligne", date: "Lundi 22 avril", time: "09h30 - 11h30", location: "CCAS Paris 20e", spots: 2, emoji: "🏛️", category: "Démarches" },
-  { id: "4", orga: "Emmaüs Connect", title: "WhatsApp et photos avec la famille", date: "Mercredi 23 avril", time: "15h00 - 17h00", location: "Espace numérique Belleville, Paris 20e", spots: 8, emoji: "👨‍👩‍👧", category: "Famille" },
-];
+const WORKSHOPS: { id: string; orga: string; title: string; date: string; time: string; location: string; spots: number; emoji: string; category: string }[] = [];
 
 const PARTNER_ORGS = [
-  { name: "Clic et Moi", description: "Ateliers de médiation numérique partout en France.", emoji: "🖥️", url: "https://www.clicetmoi.org" },
   { name: "Emmaüs Connect", description: "Inclusion numérique pour les personnes en difficulté.", emoji: "🤝", url: "https://emmaus-connect.org" },
-  { name: "CCAS de Paris", description: "Ateliers numériques dans les centres d'action sociale.", emoji: "🏛️", url: "#" },
+  { name: "Les Petits Frères des Pauvres", description: "Accompagnement des personnes âgées isolées.", emoji: "❤️", url: "https://www.petitsfreresdespauvres.fr" },
 ];
 
 const STORAGE_KEY = "ateliers_linked_org";
@@ -46,17 +40,8 @@ export function AteliersPage() {
   const [registeredIds, setRegisteredIds] = useState<string[]>([]);
 
   const handleLinkOrg = () => {
-    if (codeInput.trim() === "123456") {
-      const orgName = "Clic et Moi Paris 11e";
-      localStorage.setItem(STORAGE_KEY, orgName);
-      setLinkedOrg(orgName);
-      setCodeInput("");
-      setCodeError("");
-      setDialogOpen(false);
-      toast.success(`Vous êtes maintenant lié à ${orgName} 🎉`);
-    } else {
-      setCodeError("Code incorrect. Vérifiez auprès de votre organisme.");
-    }
+    // TODO: valider le code via Supabase
+    setCodeError("Cette fonctionnalité sera bientôt disponible. Contactez votre organisme.");
   };
 
   const handleUnlink = () => {
@@ -163,65 +148,75 @@ export function AteliersPage() {
           <h2 className="font-bold text-foreground text-lg">Prochains ateliers</h2>
           <p className="text-sm text-muted-foreground mb-4">Près de chez vous</p>
 
-          <div className="space-y-3">
-            {WORKSHOPS.map(w => {
-              const spots = getSpotsColor(w.spots);
-              const isReminded = remindedIds.includes(w.id);
-              const isRegistered = registeredIds.includes(w.id);
+          {WORKSHOPS.length === 0 ? (
+            <div className="rounded-2xl p-6 bg-card border border-border text-center">
+              <Calendar className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+              <p className="font-medium text-foreground mb-1">Aucun atelier pour le moment</p>
+              <p className="text-sm text-muted-foreground">
+                Les prochains ateliers près de chez vous apparaîtront ici.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {WORKSHOPS.map(w => {
+                const spots = getSpotsColor(w.spots);
+                const isReminded = remindedIds.includes(w.id);
+                const isRegistered = registeredIds.includes(w.id);
 
-              return (
-                <div key={w.id} className="rounded-2xl p-4 bg-card border border-border">
-                  <div className="flex items-start gap-3 mb-3">
-                    <span className="text-2xl flex-shrink-0">{w.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-                          {w.orga}
-                        </span>
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: spots.bg, color: spots.text }}>
-                          {w.spots} place{w.spots > 1 ? "s" : ""} restante{w.spots > 1 ? "s" : ""}
-                        </span>
+                return (
+                  <div key={w.id} className="rounded-2xl p-4 bg-card border border-border">
+                    <div className="flex items-start gap-3 mb-3">
+                      <span className="text-2xl flex-shrink-0">{w.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                            {w.orga}
+                          </span>
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: spots.bg, color: spots.text }}>
+                            {w.spots} place{w.spots > 1 ? "s" : ""} restante{w.spots > 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        <h3 className="font-semibold text-foreground">{w.title}</h3>
                       </div>
-                      <h3 className="font-semibold text-foreground">{w.title}</h3>
                     </div>
-                  </div>
 
-                  <div className="space-y-1.5 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4 flex-shrink-0" /> {w.date}
+                    <div className="space-y-1.5 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4 flex-shrink-0" /> {w.date}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4 flex-shrink-0" /> {w.time}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4 flex-shrink-0" /> {w.location}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="w-4 h-4 flex-shrink-0" /> {w.time}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4 flex-shrink-0" /> {w.location}
-                    </div>
-                  </div>
 
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      disabled={isReminded}
-                      onClick={() => handleRemind(w.id)}
-                    >
-                      {isReminded ? "Rappel ajouté ✓" : "Me rappeler"}
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="flex-1"
-                      disabled={isRegistered}
-                      onClick={() => handleRegister(w.id)}
-                    >
-                      {isRegistered ? "Inscrit ✓" : "S'inscrire"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        disabled={isReminded}
+                        onClick={() => handleRemind(w.id)}
+                      >
+                        {isReminded ? "Rappel ajouté ✓" : "Me rappeler"}
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex-1"
+                        disabled={isRegistered}
+                        onClick={() => handleRegister(w.id)}
+                      >
+                        {isRegistered ? "Inscrit ✓" : "S'inscrire"}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Section 3 — Organismes partenaires */}
