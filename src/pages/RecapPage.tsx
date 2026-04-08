@@ -85,17 +85,19 @@ const WEATHER_LABELS: Record<number, string> = {
 interface QuickAction {
   label: string;
   icon: React.ReactNode;
+  color: string;
+  bgColor: string;
 }
 
 const ALL_ACTIONS: QuickAction[] = [
-  { label: "Mon agenda", icon: <CalendarDays className="w-5 h-5 text-[#2DD4BF]" /> },
-  { label: "Ma santé & bien-être", icon: <Heart className="w-5 h-5 text-[#2DD4BF]" /> },
-  { label: "Mes communications", icon: <MessageCircle className="w-5 h-5 text-[#2DD4BF]" /> },
-  { label: "Mes documents", icon: <Cloud className="w-5 h-5 text-[#2DD4BF]" /> },
-  { label: "Démarches admin", icon: <ClipboardList className="w-5 h-5 text-[#2DD4BF]" /> },
-  { label: "Mes jeux & mémoire", icon: <Gamepad2 className="w-5 h-5 text-[#2DD4BF]" /> },
-  { label: "Mes avantages", icon: <Gift className="w-5 h-5 text-[#2DD4BF]" /> },
-  { label: "Ma sécurité", icon: <ShieldAlert className="w-5 h-5 text-[#2DD4BF]" /> },
+  { label: "Mon agenda",          icon: <CalendarDays className="w-5 h-5" />, color: "#3B82F6", bgColor: "rgba(59,130,246,0.12)"  },
+  { label: "Ma santé & bien-être",icon: <Heart        className="w-5 h-5" />, color: "#EC4899", bgColor: "rgba(236,72,153,0.12)"  },
+  { label: "Mes communications",  icon: <MessageCircle className="w-5 h-5"/>, color: "#22C55E", bgColor: "rgba(34,197,94,0.12)"   },
+  { label: "Mes documents",       icon: <Cloud        className="w-5 h-5" />, color: "#14B8A6", bgColor: "rgba(20,184,166,0.12)"  },
+  { label: "Démarches admin",     icon: <ClipboardList className="w-5 h-5"/>, color: "#F59E0B", bgColor: "rgba(245,158,11,0.12)"  },
+  { label: "Mes jeux & mémoire",  icon: <Gamepad2     className="w-5 h-5" />, color: "#8B5CF6", bgColor: "rgba(139,92,246,0.12)"  },
+  { label: "Mes avantages",       icon: <Gift         className="w-5 h-5" />, color: "#EAB308", bgColor: "rgba(234,179,8,0.12)"   },
+  { label: "Ma sécurité",         icon: <ShieldAlert  className="w-5 h-5" />, color: "#EF4444", bgColor: "rgba(239,68,68,0.12)"   },
 ];
 
 
@@ -699,7 +701,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     width: 36,
                     height: 36,
                     borderRadius: 10,
-                    background: "rgba(45,212,191,0.08)",
+                    background: action.bgColor,
+                    color: action.color,
                   }}
                 >
                   {action.icon}
@@ -855,7 +858,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                     style={{
                       padding: "12px 14px",
                       borderRadius: 14,
-                      border: `1.5px solid ${isSelected ? "rgba(45,212,191,0.3)" : "hsl(var(--border))"}`,
+                      border: `1.5px solid ${isSelected ? `${action.color}4D` : "hsl(var(--border))"}`,
                       cursor: "pointer",
                       transition: "all 0.15s",
                     }}
@@ -866,7 +869,8 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                         width: 36,
                         height: 36,
                         borderRadius: 10,
-                        background: "rgba(45,212,191,0.08)",
+                        background: action.bgColor,
+                        color: action.color,
                       }}
                     >
                       {action.icon}
@@ -878,7 +882,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                         width: 24,
                         height: 24,
                         borderRadius: "50%",
-                        background: isSelected ? "#2DD4BF" : "#e2e8f0",
+                        background: isSelected ? action.color : "#e2e8f0",
                         transition: "all 0.15s",
                       }}
                     >

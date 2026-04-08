@@ -23,18 +23,18 @@ import { useFamilyMessages } from "@/hooks/useFamilyMessages";
 import { usePageAnnounce } from "@/hooks/usePageAnnounce";
 
 const PRIMARY_SERVICES = [
-  { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda", sublabel: "Rendez-vous, rappels", path: "/services/agenda" },
-  { icon: <Heart className="w-6 h-6" />, label: "Ma santé", sublabel: "Médicaments, médecin", path: "/services/health" },
-  { icon: <Image className="w-6 h-6" />, label: "Photos & souvenirs", sublabel: "Souvenirs, famille", path: "/services/photos" },
-  { icon: <MessageCircle className="w-6 h-6" />, label: "Appeler ou écrire", sublabel: "Messages, appels", path: "/services/communication" },
-  { icon: <Navigation className="w-6 h-6" />, label: "Me déplacer", sublabel: "Bus, train, itinéraire", path: "/services/transport" },
-  { icon: <Ticket className="w-6 h-6" />, label: "Sorties & loisirs", sublabel: "Idées de sorties", path: "/services/entertainment" },
-  { icon: <ClipboardList className="w-6 h-6" />, label: "Démarches admin", sublabel: "Courriers, droits, aides", path: "/services/demarches" },
-  { icon: <Cloud className="w-6 h-6" />, label: "Mes documents", sublabel: "Courriers, ordonnances", path: "/services/storage" },
-  { icon: <Gamepad2 className="w-6 h-6" />, label: "Jeux & mémoire", sublabel: "Mémoire, quiz, sudoku", path: "/services/games" },
-  { icon: <Gift className="w-6 h-6" />, label: "Mes avantages", sublabel: "Bons plans seniors", path: "/services/partners" },
-  { icon: <ShieldAlert className="w-6 h-6" />, label: "Ma sécurité", sublabel: "Arnaques, alertes", path: "/services/scam-protection" },
-  { icon: <Newspaper className="w-6 h-6" />, label: "Actualités & infos", sublabel: "L'info du jour", path: "/services/knowledge" },
+  { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda",       sublabel: "Rendez-vous, rappels",    path: "/services/agenda",         color: "#3B82F6", bgColor: "rgba(59,130,246,0.12)" },
+  { icon: <Heart className="w-6 h-6" />,        label: "Ma santé",          sublabel: "Médicaments, médecin",   path: "/services/health",         color: "#EC4899", bgColor: "rgba(236,72,153,0.12)" },
+  { icon: <Image className="w-6 h-6" />,         label: "Photos & souvenirs",sublabel: "Souvenirs, famille",    path: "/services/photos",         color: "#A855F7", bgColor: "rgba(168,85,247,0.12)" },
+  { icon: <MessageCircle className="w-6 h-6" />, label: "Appeler ou écrire", sublabel: "Messages, appels",      path: "/services/communication",  color: "#22C55E", bgColor: "rgba(34,197,94,0.12)"  },
+  { icon: <Navigation className="w-6 h-6" />,    label: "Me déplacer",       sublabel: "Bus, train, itinéraire",path: "/services/transport",      color: "#0EA5E9", bgColor: "rgba(14,165,233,0.12)" },
+  { icon: <Ticket className="w-6 h-6" />,        label: "Sorties & loisirs", sublabel: "Idées de sorties",      path: "/services/entertainment",  color: "#F97316", bgColor: "rgba(249,115,22,0.12)" },
+  { icon: <ClipboardList className="w-6 h-6" />, label: "Démarches admin",   sublabel: "Courriers, droits, aides",path: "/services/demarches",    color: "#F59E0B", bgColor: "rgba(245,158,11,0.12)" },
+  { icon: <Cloud className="w-6 h-6" />,         label: "Mes documents",     sublabel: "Courriers, ordonnances",path: "/services/storage",        color: "#14B8A6", bgColor: "rgba(20,184,166,0.12)" },
+  { icon: <Gamepad2 className="w-6 h-6" />,      label: "Jeux & mémoire",    sublabel: "Mémoire, quiz, sudoku", path: "/services/games",          color: "#8B5CF6", bgColor: "rgba(139,92,246,0.12)" },
+  { icon: <Gift className="w-6 h-6" />,          label: "Mes avantages",     sublabel: "Bons plans seniors",    path: "/services/partners",       color: "#EAB308", bgColor: "rgba(234,179,8,0.12)"  },
+  { icon: <ShieldAlert className="w-6 h-6" />,   label: "Ma sécurité",       sublabel: "Arnaques, alertes",     path: "/services/scam-protection",color: "#EF4444", bgColor: "rgba(239,68,68,0.12)"  },
+  { icon: <Newspaper className="w-6 h-6" />,     label: "Actualités & infos",sublabel: "L'info du jour",        path: "/services/knowledge",      color: "#64748B", bgColor: "rgba(100,116,139,0.12)"},
 ];
 
 const SUPPORT_ITEMS = [
@@ -89,6 +89,8 @@ export function ServicesPage() {
               icon={s.icon}
               label={s.label}
               sublabel={s.sublabel}
+              color={s.color}
+              bgColor={s.bgColor}
               badge={s.path === "/services/communication" ? unreadCount : undefined}
               onClick={() => navigate(s.path)}
             />

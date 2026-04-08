@@ -6,10 +6,17 @@ interface ServiceTileProps {
   sublabel?: string;
   intent?: "default" | "danger";
   badge?: number;
+  color?: string;
+  bgColor?: string;
   onClick?: () => void;
 }
 
-export function ServiceTile({ icon, label, sublabel, intent = "default", badge, onClick }: ServiceTileProps) {
+export function ServiceTile({ icon, label, sublabel, intent = "default", badge, color, bgColor, onClick }: ServiceTileProps) {
+  const iconColor = intent === "danger" ? "#ef4444" : (color || "#2DD4BF");
+  const iconBg = intent === "danger" ? "rgba(239,68,68,0.1)" : (bgColor || "rgba(45,212,191,0.12)");
+  const borderColor = intent === "danger" ? "rgba(239,68,68,0.2)" : (color ? `${color}26` : "rgba(45,212,191,0.15)");
+  const shadowColor = intent === "danger" ? "rgba(239,68,68,0.08)" : (color ? `${color}14` : "rgba(45,212,191,0.08)");
+
   return (
     <button
       onClick={onClick}
@@ -21,12 +28,8 @@ export function ServiceTile({ icon, label, sublabel, intent = "default", badge, 
       )}
       style={{
         borderRadius: 20,
-        border: intent === "danger"
-          ? "1px solid rgba(239,68,68,0.2)"
-          : "1px solid rgba(45,212,191,0.15)",
-        boxShadow: intent === "danger"
-          ? "0 4px 16px rgba(239,68,68,0.08)"
-          : "0 4px 20px rgba(45,212,191,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+        border: `1px solid ${borderColor}`,
+        boxShadow: `0 4px 20px ${shadowColor}, 0 2px 8px rgba(0,0,0,0.04)`,
       }}
     >
       {badge != null && badge > 0 && (
@@ -41,13 +44,11 @@ export function ServiceTile({ icon, label, sublabel, intent = "default", badge, 
           width: 44,
           height: 44,
           borderRadius: 12,
-          background: intent === "danger"
-            ? "rgba(239,68,68,0.1)"
-            : "rgba(45,212,191,0.12)",
+          background: iconBg,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: intent === "danger" ? "#ef4444" : "#2DD4BF",
+          color: iconColor,
         }}
       >
         {icon}
