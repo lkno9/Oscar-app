@@ -311,8 +311,8 @@ export function AuthPage() {
           <div className="flex gap-2">
             {[
               { label: 'Fouquet', phone: '+33669305283' },
-              { label: 'Porche', phone: '+33783594733' },
-            ].map(({ label, phone }) => (
+              { label: 'Jacqueline', email: 'thewatcher.2r@proton.me' },
+            ].map(({ label, phone, email: bypassEmail }) => (
               <Button
                 key={label}
                 variant="ghost"
@@ -323,14 +323,19 @@ export function AuthPage() {
                     const response = await fetch(`${SUPABASE_URL}/functions/v1/dev-bypass-login`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
-                      body: JSON.stringify({ phone_number: phone }),
+                      body: JSON.stringify(phone ? { phone_number: phone } : { email: bypassEmail }),
                     });
                     const data = await response.json();
                     if (!response.ok) { toast.error(data.error); return; }
                     const { error } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' });
                     if (error) { toast.error('Erreur session'); return; }
                     toast.success(`Connecté en tant que ${label}`);
-                    navigate('/');
+                    const { data: { user: sessionUser } } = await supabase.auth.getUser();
+                    if (sessionUser) {
+                      await redirectBasedOnRole(sessionUser.id);
+                    } else {
+                      navigate('/');
+                    }
                   } catch { toast.error('Erreur bypass'); }
                 }}
               >

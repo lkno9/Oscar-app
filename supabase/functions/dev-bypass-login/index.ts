@@ -12,19 +12,29 @@ serve(async (req) => {
   }
 
   try {
-    const { phone_number } = await req.json();
+    const { phone_number, email } = await req.json();
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const normalizePhone = (p: string) => p.replace(/[\s+\-().]/g, '');
-    const normalizedInput = normalizePhone(phone_number);
+    let existingUser: any = null;
 
-    const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-    const existingUser = listData?.users?.find(
-      (u) => u.phone && normalizePhone(u.phone) === normalizedInput
-    );
+    if (email) {
+      // Email-based lookup
+      const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      existingUser = listData?.users?.find(
+        (u) => u.email && u.email.toLowerCase() === email.toLowerCase()
+      );
+    } else if (phone_number) {
+      // Phone-based lookup
+      const normalizePhone = (p: string) => p.replace(/[\s+\-().]/g, '');
+      const normalizedInput = normalizePhone(phone_number);
+      const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      existingUser = listData?.users?.find(
+        (u) => u.phone && normalizePhone(u.phone) === normalizedInput
+      );
+    }
 
     if (!existingUser) {
       return new Response(JSON.stringify({ error: 'Utilisateur non trouvé' }), {

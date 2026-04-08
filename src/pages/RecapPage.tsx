@@ -17,6 +17,7 @@ import {
   PenLine,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useEngagement } from "@/hooks/useEngagement";
 import { useRssArticles, ACTU_CATEGORIES, timeAgo } from "@/hooks/useRssArticles";
@@ -188,7 +189,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   useEffect(() => {
     if (!user) return;
     const fetchProfile = async () => {
-      const { data } = await supabase.from("profiles").select("full_name, quick_actions").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
       if (data) {
         setProfile(data);
         // TODO: quick_actions column needs to be added to profiles table in Supabase
