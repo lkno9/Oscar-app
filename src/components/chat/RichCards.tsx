@@ -342,7 +342,7 @@ function WebViewCard({ data }: { data: WebViewData }) {
             width="100%"
             height="100%"
             style={{ border: 0 }}
-            sandbox="allow-scripts allow-same-origin allow-popups"
+            sandbox="allow-scripts allow-popups"
             loading="lazy"
             title={data.title}
             onLoad={handleIframeLoad}
@@ -382,7 +382,7 @@ function WebViewCard({ data }: { data: WebViewData }) {
               width="100%"
               height="100%"
               style={{ border: 0 }}
-              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              sandbox="allow-scripts allow-popups allow-forms"
               title={data.title}
             />
           </div>

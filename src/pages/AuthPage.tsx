@@ -307,12 +307,13 @@ export function AuthPage() {
             Continuer
           </Button>
 
-          {/* Dev bypass */}
+          {/* Dev bypass — visible UNIQUEMENT en développement local (import.meta.env.DEV) */}
+          {import.meta.env.DEV && (
           <div className="flex gap-2">
             {[
-              { label: 'Fouquet', phone: '+33669305283' },
-              { label: 'Jacqueline', email: 'thewatcher.2r@proton.me' },
-            ].map(({ label, phone, email: bypassEmail }) => (
+              { label: 'Fouquet', phone: import.meta.env.VITE_DEV_BYPASS_PHONE1 },
+              { label: 'Jacqueline', email: import.meta.env.VITE_DEV_BYPASS_EMAIL1 },
+            ].filter(b => b.phone || b.email).map(({ label, phone, email: bypassEmail }) => (
               <Button
                 key={label}
                 variant="ghost"
@@ -322,7 +323,11 @@ export function AuthPage() {
                     toast.info('Connexion en cours...');
                     const response = await fetch(`${SUPABASE_URL}/functions/v1/dev-bypass-login`, {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'x-bypass-secret': import.meta.env.VITE_DEV_BYPASS_SECRET ?? '',
+                      },
                       body: JSON.stringify(phone ? { phone_number: phone } : { email: bypassEmail }),
                     });
                     const data = await response.json();
@@ -343,6 +348,7 @@ export function AuthPage() {
               </Button>
             ))}
           </div>
+          )}
         </div>
       </div>
     );

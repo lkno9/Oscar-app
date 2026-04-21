@@ -36,14 +36,50 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const mistralKey = Deno.env.get("MISTRAL_API_KEY")!;
+
+    // ── GUARD : vérifie que l'appelant est bien lié aux seniors demandés ──
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Non autorisé" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Identifie l'utilisateur via son JWT
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Session invalide" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch senior data context
+    // Récupère les seniors autorisés pour cet utilisateur (family_links acceptés)
+    let allowedSeniorIds = new Set<string>();
+    if (seniorIds && seniorIds.length > 0) {
+      const { data: links } = await supabase
+        .from("family_links")
+        .select("senior_id")
+        .eq("family_member_id", user.id)
+        .eq("status", "accepted")
+        .in("senior_id", seniorIds);
+      allowedSeniorIds = new Set((links ?? []).map((l: any) => l.senior_id));
+    }
+
+    // Fetch senior data context — uniquement pour les seniors autorisés
     let seniorContext = "";
     if (seniorIds && seniorIds.length > 0) {
       for (const seniorId of seniorIds) {
+        // Ignore tout seniorId non autorisé
+        if (!allowedSeniorIds.has(seniorId)) continue;
         try {
           const now = new Date();
           const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();

@@ -672,8 +672,9 @@ serve(async (req) => {
 
     function executeShowMap(args: { address: string }) {
       const q = encodeURIComponent(args.address);
+      const MAPS_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
       return {
-        toolResult: { type: "map", data: { address: args.address, embedUrl: `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${q}&zoom=15`, mapsUrl: `https://www.google.com/maps/search/?api=1&query=${q}` } },
+        toolResult: { type: "map", data: { address: args.address, embedUrl: `https://www.google.com/maps/embed/v1/place?key=${MAPS_KEY}&q=${q}&zoom=15`, mapsUrl: `https://www.google.com/maps/search/?api=1&query=${q}` } },
         textForMistral: `Carte affichée pour : ${args.address}. L'utilisateur peut voir la carte dans le chat.`,
       };
     }

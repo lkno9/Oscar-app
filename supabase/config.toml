@@ -1,27 +1,23 @@
 project_id = "ehalcuqxjpdykpmjxxrn"
 
+# oscar-chat & mistral-chat appellent l'API avec le token anon ou user → JWT requis
 [functions.oscar-chat]
-verify_jwt = false
 
 [functions.send-family-notification]
-verify_jwt = false
 
 [functions.check-document-reminders]
-verify_jwt = false
 
 [functions.analyze-scam]
 
 [functions.fetch-scam-alerts]
-verify_jwt = false
 
 [functions.elevenlabs-tts]
-verify_jwt = false
 
 [functions.elevenlabs-stt]
-verify_jwt = false
 
 [functions.generate-image]
-verify_jwt = false
 
+# custom-sms-hook est appelé par Supabase Auth directement (pas de JWT utilisateur)
+# Il doit valider le SUPABASE_WEBHOOK_SECRET dans le body à la place
 [functions.custom-sms-hook]
 verify_jwt = false
