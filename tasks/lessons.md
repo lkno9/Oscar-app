@@ -10,3 +10,6 @@
 - [2026-04-22] Un fichier dans public/ (oscar-db-schema.sql) exposait le schéma complet de la base — ne jamais mettre de fichiers sensibles dans public/.
 - [2026-04-22] React.lazy() + Suspense réduit le bundle initial de façon drastique sur une app avec 40+ pages — toujours lazy-loader les routes dès le départ.
 - [2026-04-22] Les noms `elevenLabsTTS.ts` / `elevenLabsSTT.ts` sont trompeurs : ces fichiers utilisent la Web Speech API du navigateur, pas ElevenLabs — nommer les fichiers d'après ce qu'ils font vraiment.
+- [2026-04-22] `auth_pin` stocké en clair dans Supabase détecté par audit sécurité — toujours hasher les secrets avec bcrypt (pgcrypto) même pour des PINs courts, une fuite de la table profiles exposerait tout.
+- [2026-04-22] Les agents de test UI (browser) ne sont pas fiables pour distinguer "redirect" vs "page crash + retour" — vérifier le code source avant de conclure à un bug de navigation.
+- [2026-04-22] Lancer 6 agents haiku/sonnet en parallèle (2 browser, 2 code scan, 2 security) est le bon ratio — les agents haiku sont 6x moins chers pour le scan statique, réserver sonnet pour les interactions browser.

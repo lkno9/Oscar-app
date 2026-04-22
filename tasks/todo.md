@@ -5,9 +5,7 @@
 ## À faire
 
 ### Sécurité
-- [ ] Hasher le PIN dans `profiles.auth_pin` (bcrypt via Edge Function) — nécessite migration + rehash des PINs existants
 - [ ] Déplacer les appels Tavus vers une Edge Function (clé côté serveur uniquement)
-- [ ] Appliquer la migration `20260422100000_otp_security.sql` sur Supabase cloud
 
 ### Backend / Supabase
 - [ ] Créer la migration pour la table `conversations` (utilisée par useMistralChat.ts avec `as any`)
@@ -44,6 +42,11 @@
 - [ ] MemoryDuoGame.tsx, QuizDuoGame.tsx, TicTacToeDuoGame.tsx, WordDuelGame.tsx
 
 ## Terminé
+- [2026-04-22] ✅ auth_pin hashé bcrypt (pgcrypto) — migration + RPC check_user_pin + redéploiement verify-voice-otp
+- [2026-04-22] ✅ Migration otp_security appliquée sur Supabase cloud (mnkumsmqdmqlpczxabfo)
+- [2026-04-22] ✅ Déploiement Vercel réussi (https://oscar-ia-mvp.vercel.app) sous OscarIA-Admin
+- [2026-04-22] ✅ Bouton démo "Tester Oscar sans compte" fonctionnel (demo@oscar-ia.app)
+- [2026-04-22] ✅ Chat Oscar opérationnel (<2s, widget météo, streaming SSE)
 - [2026-04-22] ✅ Bypass auth DEV (ProtectedRoute + bouton Fouquet direct sans Supabase)
 - [2026-04-22] ✅ Supprimé oscar-db-schema.sql du dossier public/ (schéma exposé publiquement)
 - [2026-04-22] ✅ console.log du hashed_token conditionné à DEV uniquement

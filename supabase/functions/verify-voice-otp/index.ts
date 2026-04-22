@@ -56,13 +56,12 @@ serve(async (req) => {
     // Chercher directement par numéro dans auth.users via la table profiles
     const { data: profileByPhone, error: phoneError } = await supabase
       .from('profiles')
-      .select('id, auth_pin')
+      .select('id')
       .eq('phone_number', normalizedInput)
       .maybeSingle();
 
     // Fallback : scan limité si la colonne phone_number n'existe pas dans profiles
     let userId: string | null = profileByPhone?.id ?? null;
-    let authPin: string | null = profileByPhone?.auth_pin ?? null;
 
     if (phoneError || !profileByPhone) {
       // Fallback : listUsers avec filtre (max 1000, acceptable car seniors peu nombreux en MVP)
@@ -74,21 +73,17 @@ serve(async (req) => {
         return json({ valid: false, error: 'Aucun compte trouvé pour ce numéro.' }, 400);
       }
       userId = user.id;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('auth_pin')
-        .eq('id', userId)
-        .maybeSingle();
-      authPin = profile?.auth_pin ?? null;
     }
 
     if (!userId) {
       return json({ valid: false, error: 'Aucun compte trouvé pour ce numéro.' }, 400);
     }
 
-    // ── 4. Vérifier le PIN ────────────────────────────────────────────────────
-    if (!authPin || authPin !== pin_code) {
+    // ── 4. Vérifier le PIN (comparaison bcrypt via RPC pgcrypto) ─────────────
+    const { data: pinValid, error: pinError } = await supabase
+      .rpc('check_user_pin', { p_user_id: userId, p_pin: pin_code });
+
+    if (pinError || !pinValid) {
       // Incrémenter le compteur d'échecs
       await supabase
         .from('voice_otps')
