@@ -20,3 +20,7 @@
 - [2026-04-22] Toujours chercher toutes les occurrences de `fontSize: 1[34]` dans un fichier avant de valider les corrections de taille — les instructions de ligne exacte peuvent être décalées et des cas supplémentaires existent.
 - [2026-04-23] Pour un upsert Supabase sur contrainte composite, passer `onConflict: 'col1,col2'` (virgule sans espace, noms de colonnes) — pas le nom de la contrainte PostgreSQL.
 - [2026-04-23] Un trigger avec `EXCEPTION WHEN OTHERS` avale silencieusement les erreurs de noms de colonnes — vérifier les colonnes via information_schema avant toute correction de trigger.
+- [2026-04-23] Voxtral TTS (Mistral) bat ElevenLabs Flash v2.5 en qualité voix française selon benchmarks 2025 — pas besoin d'ajouter ElevenLabs, l'app a déjà le meilleur.
+- [2026-04-23] Le bouton téléphone d'Oscar ouvre CallScreen : voix ↔ voix + caméra utilisateur → pixtral (Oscar "voit"). L'avatar vidéo Oscar n'existe pas encore (Tavus/HeyGen à faire si voulu).
+- [2026-04-23] Vonage Verify fait de l'auth silencieuse (pas de SMS à lire) — meilleur pour seniors que Twilio OTP classique. 40% moins cher sur numéros FR.
+- [2026-04-23] Brevo (français, RGPD natif) est préférable à Resend pour une app avec données seniors — hébergement EU garanti.

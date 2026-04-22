@@ -4,23 +4,33 @@
 
 ## À faire
 
+### Comptes API à basculer (compte de ton pote → tes comptes)
+- [ ] **Twilio** → créer compte + remplacer TWILIO_* dans Supabase Secrets (OTP vocal + SMS famille)
+- [ ] **Resend** → créer compte Brevo (RGPD FR) + remplacer RESEND_API_KEY dans Supabase Secrets
+- [ ] **TMDB** → créer compte gratuit sur themoviedb.org + remplacer TMDB_API_KEY
+- [ ] **Sentry** → créer compte + mettre VITE_SENTRY_DSN dans .env Vercel
+- [ ] **Lovable/Gemini** (analyze-scam) → remplacer par appel Mistral direct (supprime dépendance externe)
+
 ### Sécurité
-- [ ] Déplacer les appels Tavus vers une Edge Function (clé côté serveur uniquement)
+- [ ] Tavus : variables VITE_TAVUS_* commentées dans .env — décider activer (HeyGen $29/mois) ou supprimer définitivement
+
+### Features à venir (décidé demain)
+- [ ] PWA : manifest.json + vite-plugin-pwa + cache offline EmergencyPage (utile pour seniors = icône sur écran d'accueil)
+- [ ] Avatar vidéo Oscar : HeyGen API pour visage qui parle pendant les appels (optionnel, $29/mois)
 
 ### Backend / Supabase
 - [ ] Régénérer types.ts via `supabase gen types typescript` (remote_preferences, quiz_history.category/completed_at manquants)
 
-### Performance / Qualité
+### Performance / Qualité (refactoring non urgent)
 - [ ] Centraliser la logique STT/TTS (dupliquée dans CallScreen.tsx, HomePage.tsx, hooks, lib)
 - [ ] Corriger les dépendances manquantes dans useCallback de useMistralChat.ts
 - [ ] Fusionner `verifyMFA` et `verifyMFAChallenge` dans useAuth.tsx (identiques)
+- [ ] Régénérer types.ts via `supabase gen types typescript` (remote_preferences, quiz_history.category/completed_at manquants)
 
-### Accessibilité (a11y)
+### Accessibilité (a11y — reste)
 - [ ] Ajouter `aria-pressed` sur les boutons de sélection (onboarding, jeux)
 - [ ] Ajouter `role="progressbar"` sur la barre de progression onboarding
 - [ ] Ajouter dialog de confirmation avant "Appeler le 15" (touch accidentel)
-- [2026-04-22] ✅ HealthPage : text-[10px] → text-xs leading-tight sur les 5 onglets ; fontSize 14→16 graphique humeur ; label jour text-[10px]→text-xs text-foreground/70 ; bouton supprimer p-2→p-3
-- [2026-04-22] ✅ EmergencyPage : 3 titres de section text-muted-foreground→text-foreground ; descriptions numéros text-muted-foreground→text-foreground/70 ; aria-label Voir plus/moins sur ChevronDown/Up
 
 ### Monitoring
 - [ ] Intégrer Sentry (VITE_SENTRY_DSN dans .env, init dans main.tsx)
