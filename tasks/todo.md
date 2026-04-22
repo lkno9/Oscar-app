@@ -8,9 +8,7 @@
 - [ ] Déplacer les appels Tavus vers une Edge Function (clé côté serveur uniquement)
 
 ### Backend / Supabase
-- [ ] Corriger le trigger `dispatch_notification_email_sms` : remplacer `NEW.related_senior_id` par `NEW.senior_id`
 - [ ] Régénérer types.ts via `supabase gen types typescript` (remote_preferences, quiz_history.category/completed_at manquants)
-- [ ] Garantir insertion du rôle `senior` lors du parcours voice OTP (actuellement non garanti)
 
 ### Performance / Qualité
 - [ ] Centraliser la logique STT/TTS (dupliquée dans CallScreen.tsx, HomePage.tsx, hooks, lib)
@@ -18,11 +16,11 @@
 - [ ] Fusionner `verifyMFA` et `verifyMFAChallenge` dans useAuth.tsx (identiques)
 
 ### Accessibilité (a11y)
-- [ ] Passer toutes les tailles de police en `rem` (plus de `fontSize: 13` hardcodé)
-- [ ] Ajouter `aria-live="polite"` sur le chat Oscar (réponses non annoncées aux screen readers)
 - [ ] Ajouter `aria-pressed` sur les boutons de sélection (onboarding, jeux)
 - [ ] Ajouter `role="progressbar"` sur la barre de progression onboarding
 - [ ] Ajouter dialog de confirmation avant "Appeler le 15" (touch accidentel)
+- [2026-04-22] ✅ HealthPage : text-[10px] → text-xs leading-tight sur les 5 onglets ; fontSize 14→16 graphique humeur ; label jour text-[10px]→text-xs text-foreground/70 ; bouton supprimer p-2→p-3
+- [2026-04-22] ✅ EmergencyPage : 3 titres de section text-muted-foreground→text-foreground ; descriptions numéros text-muted-foreground→text-foreground/70 ; aria-label Voir plus/moins sur ChevronDown/Up
 
 ### Monitoring
 - [ ] Intégrer Sentry (VITE_SENTRY_DSN dans .env, init dans main.tsx)
@@ -60,3 +58,6 @@
 - [2026-04-22] ✅ as any supprimés pour medications et events dans useSeniorContext.ts (tables présentes dans types.ts)
 - [2026-04-22] ✅ useDocuments et useAdminTasks migrés vers sonner (suppression useToast Radix)
 - [2026-04-22] ✅ Table `conversations` créée (migration + RLS + types.ts + suppression des `as any` dans useMistralChat.ts)
+- [2026-04-22] ✅ A11y : PhotosPage boutons p-2→p-3 + aria-label ; OnboardingPage fontSize 13/14→16 (8 occurrences) ; HomePage aria-live sur chat ; ChatMessage padding TTS 4→8
+- [2026-04-23] ✅ Trigger `dispatch_notification_email_sms` corrigé : NEW.related_senior_id → NEW.senior_id (migration 20260423010000 appliquée)
+- [2026-04-23] ✅ Rôle `senior` garanti après voice OTP : upsert sur user_roles (user_id,role) ajouté en step 5b de verify-voice-otp v4

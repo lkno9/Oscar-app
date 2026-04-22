@@ -492,13 +492,13 @@ export function PhotosPage() {
           <div className="flex items-center justify-between p-4" onClick={e => e.stopPropagation()}>
             <p className="text-white text-sm">{formatDate(previewPhoto.created_at)}</p>
             <div className="flex gap-2">
-              <button onClick={() => { setEditingCaption(previewPhoto.id); setCaptionValue(previewPhoto.title || ""); }} className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors">
+              <button onClick={() => { setEditingCaption(previewPhoto.id); setCaptionValue(previewPhoto.title || ""); }} className="p-3 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors" aria-label="Modifier la légende">
                 ✏️
               </button>
-              <button onClick={() => handleDelete(previewPhoto.id)} className="p-2 rounded-full bg-red-500/80 text-white hover:bg-red-500 transition-colors">
+              <button onClick={() => handleDelete(previewPhoto.id)} className="p-3 rounded-full bg-red-500/80 text-white hover:bg-red-500 transition-colors" aria-label="Supprimer la photo">
                 <Trash2 className="w-5 h-5" />
               </button>
-              <button onClick={() => setPreviewPhoto(null)} className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors">
+              <button onClick={() => setPreviewPhoto(null)} className="p-3 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors" aria-label="Fermer la photo">
                 <X className="w-5 h-5" />
               </button>
             </div>

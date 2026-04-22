@@ -727,7 +727,7 @@ style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "#
 
       {/* Messages */}
       {started && (
-        <div className="flex-1 overflow-y-auto px-4 py-5 thin-scrollbar oscar-page-bg" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="flex-1 overflow-y-auto px-4 py-5 thin-scrollbar oscar-page-bg" style={{ display: "flex", flexDirection: "column", gap: 14 }} aria-live="polite" aria-atomic="false" aria-label="Conversation avec Oscar">
           {messages.map((message) => (
             <ChatMessage
               key={message.id}

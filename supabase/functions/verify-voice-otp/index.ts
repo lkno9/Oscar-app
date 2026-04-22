@@ -102,6 +102,15 @@ serve(async (req) => {
     // ── 5. PIN correct — marquer l'OTP comme utilisé ─────────────────────────
     await supabase.from('voice_otps').update({ used: true }).eq('id', otpData.id);
 
+    // ── 5b. Garantir que le rôle senior est bien présent dans user_roles ─────
+    // La contrainte unique est sur (user_id, role) — on ignore si déjà présent.
+    await supabase
+      .from('user_roles')
+      .upsert(
+        { user_id: userId, role: 'senior' },
+        { onConflict: 'user_id,role' }
+      );
+
     // ── 6. Créer ou récupérer l'email interne et générer le magic link ────────
     const { data: userData } = await supabase.auth.admin.getUserById(userId);
     let userEmail = userData?.user?.email;

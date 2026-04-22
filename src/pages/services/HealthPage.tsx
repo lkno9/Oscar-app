@@ -326,23 +326,23 @@ export function HealthPage() {
         <Tabs defaultValue="medications" className="flex-1 flex flex-col overflow-hidden min-h-0">
           <div className="px-2 pt-3 pb-1 flex-shrink-0">
             <TabsList className="grid grid-cols-5 h-auto p-1 w-full gap-0">
-              <TabsTrigger value="medications" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+              <TabsTrigger value="medications" className="flex flex-col items-center gap-0.5 py-2 px-0 text-xs leading-tight rounded-md">
                 <Pill className="w-4 h-4" />
                 Médic.
               </TabsTrigger>
-              <TabsTrigger value="mood" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+              <TabsTrigger value="mood" className="flex flex-col items-center gap-0.5 py-2 px-0 text-xs leading-tight rounded-md">
                 <Heart className="w-4 h-4" />
                 Humeur
               </TabsTrigger>
-              <TabsTrigger value="platforms" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+              <TabsTrigger value="platforms" className="flex flex-col items-center gap-0.5 py-2 px-0 text-xs leading-tight rounded-md">
                 <CalendarDays className="w-4 h-4" />
                 Services
               </TabsTrigger>
-              <TabsTrigger value="activity" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+              <TabsTrigger value="activity" className="flex flex-col items-center gap-0.5 py-2 px-0 text-xs leading-tight rounded-md">
                 <Dumbbell className="w-4 h-4" />
                 Activité
               </TabsTrigger>
-              <TabsTrigger value="wellness" className="flex flex-col items-center gap-0.5 py-2 px-0 text-[10px] rounded-md">
+              <TabsTrigger value="wellness" className="flex flex-col items-center gap-0.5 py-2 px-0 text-xs leading-tight rounded-md">
                 <Lightbulb className="w-4 h-4" />
                 Conseils
               </TabsTrigger>
@@ -452,7 +452,7 @@ export function HealthPage() {
                           </span>
                         )}
                       </div>
-                      <button onClick={() => handleDelete(med.id)} className="p-2 hover:bg-destructive/10 rounded-full transition-colors">
+                      <button onClick={() => handleDelete(med.id)} className="p-3 hover:bg-destructive/10 rounded-full transition-colors">
                         <Trash2 className="w-5 h-5 text-destructive" />
                       </button>
                     </div>
@@ -530,9 +530,9 @@ export function HealthPage() {
                     const colors = ['#EF4444', '#F59E0B', '#EAB308', '#22C55E', '#16A34A'];
                     return (
                       <div key={entry.id || i} className="flex-1 flex flex-col items-center gap-1">
-                        <span style={{ fontSize: 14 }}>{mood?.emoji}</span>
+                        <span style={{ fontSize: 16 }}>{mood?.emoji}</span>
                         <div className="w-full rounded-t-md transition-all" style={{ height: `${height}%`, backgroundColor: colors[entry.mood_level - 1], opacity: 0.7, minHeight: 8 }} />
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-xs text-foreground/70">
                           {format(new Date(entry.entry_date), "EEE", { locale: fr }).slice(0, 3)}
                         </span>
                       </div>

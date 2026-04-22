@@ -115,7 +115,7 @@ export function OnboardingPage() {
             );
             navigate("/");
           }}
-          style={{ fontSize: 14, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
+          style={{ fontSize: 16, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
         >
           Je ferai ça plus tard
         </button>
@@ -145,7 +145,7 @@ export function OnboardingPage() {
             <h2 className="text-foreground" style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>
               Qu'est-ce qui vous intéresse ?
             </h2>
-            <p className="text-muted-foreground" style={{ fontSize: 14, marginBottom: 24 }}>
+            <p className="text-muted-foreground" style={{ fontSize: 16, marginBottom: 24 }}>
               Sélectionnez tout ce qui vous plaît
             </p>
             <div className="grid grid-cols-2 gap-3">
@@ -169,7 +169,7 @@ export function OnboardingPage() {
                     }}
                   >
                     <span style={{ fontSize: 24 }}>{opt.emoji}</span>
-                    <span className="text-foreground flex-1" style={{ fontSize: 13.5, fontWeight: 600 }}>{opt.label}</span>
+                    <span className="text-foreground flex-1" style={{ fontSize: 16, fontWeight: 600 }}>{opt.label}</span>
                     {selected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
                   </button>
                 );
@@ -185,7 +185,7 @@ export function OnboardingPage() {
             <h2 className="text-foreground" style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>
               Et la technologie ?
             </h2>
-            <p className="text-muted-foreground" style={{ fontSize: 14, marginBottom: 24 }}>
+            <p className="text-muted-foreground" style={{ fontSize: 16, marginBottom: 24 }}>
               Oscar s'adapte à votre niveau
             </p>
             <div className="flex flex-col gap-3">
@@ -211,7 +211,7 @@ export function OnboardingPage() {
                     <span style={{ fontSize: 32 }}>{opt.emoji}</span>
                     <div className="flex-1">
                       <p className="text-foreground" style={{ fontSize: 16, fontWeight: 700 }}>{opt.label}</p>
-                      <p className="text-muted-foreground" style={{ fontSize: 13 }}>{opt.desc}</p>
+                      <p className="text-muted-foreground" style={{ fontSize: 16 }}>{opt.desc}</p>
                     </div>
                     {selected && <Check className="w-5 h-5 text-primary flex-shrink-0" />}
                   </button>
@@ -228,7 +228,7 @@ export function OnboardingPage() {
             <h2 className="text-foreground" style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>
               Quand vous contacter ?
             </h2>
-            <p className="text-muted-foreground" style={{ fontSize: 14, marginBottom: 24 }}>
+            <p className="text-muted-foreground" style={{ fontSize: 16, marginBottom: 24 }}>
               Oscar vous enverra un petit message au moment idéal
             </p>
             <div className="grid grid-cols-2 gap-3">
@@ -253,7 +253,7 @@ export function OnboardingPage() {
                     }}
                   >
                     <span style={{ fontSize: 32 }}>{opt.emoji}</span>
-                    <span className="text-foreground" style={{ fontSize: 14, fontWeight: 600 }}>{opt.label}</span>
+                    <span className="text-foreground" style={{ fontSize: 16, fontWeight: 600 }}>{opt.label}</span>
                     {selected && <Check className="w-4 h-4 text-primary" />}
                   </button>
                 );
@@ -297,7 +297,7 @@ export function OnboardingPage() {
             className="w-full text-center text-muted-foreground"
             style={{
               marginTop: 12,
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: 500,
               background: "none",
               border: "none",

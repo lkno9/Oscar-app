@@ -187,7 +187,7 @@ export function EmergencyPage() {
 
         {/* Trouver un lieu d'urgence à proximité */}
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
             Trouver à proximité
           </h2>
           <div className="flex gap-2">
@@ -263,7 +263,7 @@ export function EmergencyPage() {
 
         {/* Emergency numbers grid */}
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
             Numéros d'urgence
           </h2>
           <div className="grid grid-cols-2 gap-3">
@@ -301,9 +301,9 @@ export function EmergencyPage() {
                   <span className="flex-1 font-semibold text-foreground">{cat.category}</span>
                   <span className="text-sm text-muted-foreground mr-1">{cat.numbers.length}</span>
                   {isOpen ? (
-                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                    <ChevronUp className="w-5 h-5 text-muted-foreground" aria-label="Voir moins" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" aria-label="Voir plus" />
                   )}
                 </button>
                 {isOpen && (
@@ -317,7 +317,7 @@ export function EmergencyPage() {
                       >
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-foreground text-sm">{num.name}</p>
-                          <p className="text-sm text-muted-foreground">{num.desc}</p>
+                          <p className="text-sm text-foreground/70">{num.desc}</p>
                         </div>
                         <button
                           onClick={() => handleCall(num.number)}
@@ -337,7 +337,7 @@ export function EmergencyPage() {
 
         {/* Personal contacts */}
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2">
             <Users className="w-4 h-4" />
             Mes contacts d'urgence
           </h2>

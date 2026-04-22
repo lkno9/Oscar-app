@@ -35,7 +35,15 @@
       "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__apply_migration",
       "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__list_tables",
       "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__list_edge_functions",
-      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__deploy_edge_function"
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__deploy_edge_function",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__computer",
+      "Bash(git config *)",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__execute_sql",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

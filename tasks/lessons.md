@@ -15,3 +15,8 @@
 - [2026-04-22] Lancer 6 agents haiku/sonnet en parallèle (2 browser, 2 code scan, 2 security) est le bon ratio — les agents haiku sont 6x moins chers pour le scan statique, réserver sonnet pour les interactions browser.
 - [2026-04-22] Quand on ajoute une colonne via migration, mettre à jour types.ts manuellement en attendant la régénération — sinon les `as any` se propagent dans tout le code.
 - [2026-04-22] Pour supprimer un `as any` sur `.from("table")`, vérifier d'abord que la table existe dans types.ts — souvent elle y est déjà et le cast est inutile.
+- [2026-04-22] Sur mobile seniors, 10px est totalement illisible — minimum absolu 12px (text-xs Tailwind), préférer 14-16px pour les labels d'onglets même si ça force des textes courts.
+- [2026-04-22] En situation d'urgence, text-muted-foreground sur les descriptions d'action est un bug d'accessibilité critique — utiliser text-foreground ou text-foreground/70 sur tout contenu actionnable.
+- [2026-04-22] Toujours chercher toutes les occurrences de `fontSize: 1[34]` dans un fichier avant de valider les corrections de taille — les instructions de ligne exacte peuvent être décalées et des cas supplémentaires existent.
+- [2026-04-23] Pour un upsert Supabase sur contrainte composite, passer `onConflict: 'col1,col2'` (virgule sans espace, noms de colonnes) — pas le nom de la contrainte PostgreSQL.
+- [2026-04-23] Un trigger avec `EXCEPTION WHEN OTHERS` avale silencieusement les erreurs de noms de colonnes — vérifier les colonnes via information_schema avant toute correction de trigger.

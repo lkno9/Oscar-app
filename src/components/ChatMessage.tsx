@@ -130,7 +130,7 @@ export function ChatMessage({
               onClick={handleSpeakClick}
               style={{
                 flexShrink: 0,
-                padding: 4,
+                padding: 8,
                 borderRadius: 99,
                 border: "none",
                 cursor: "pointer",
