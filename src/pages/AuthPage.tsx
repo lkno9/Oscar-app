@@ -152,7 +152,7 @@ export function AuthPage() {
       );
 
       const data = await response.json();
-      console.log('[Auth] verify-voice-otp response:', response.status, data);
+      if (import.meta.env.DEV) console.log('[Auth] verify-voice-otp response:', response.status);
 
       if (!response.ok || !data.valid) {
         const errMsg = data?.error || 'Vérification échouée';
@@ -307,44 +307,17 @@ export function AuthPage() {
             Continuer
           </Button>
 
-          {/* Dev bypass — visible UNIQUEMENT en développement local (import.meta.env.DEV) */}
+          {/* Dev bypass — visible UNIQUEMENT en développement local */}
           {import.meta.env.DEV && (
           <div className="flex gap-2">
-            {[
-              { label: 'Fouquet', phone: import.meta.env.VITE_DEV_BYPASS_PHONE1 },
-              { label: 'Jacqueline', email: import.meta.env.VITE_DEV_BYPASS_EMAIL1 },
-            ].filter(b => b.phone || b.email).map(({ label, phone, email: bypassEmail }) => (
+            {['🔓 Fouquet (senior)', '🔓 Jacqueline (famille)'].map((label, i) => (
               <Button
                 key={label}
                 variant="ghost"
                 className="flex-1 text-sm text-muted-foreground/50 hover:text-muted-foreground"
-                onClick={async () => {
-                  try {
-                    toast.info('Connexion en cours...');
-                    const response = await fetch(`${SUPABASE_URL}/functions/v1/dev-bypass-login`, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'x-bypass-secret': import.meta.env.VITE_DEV_BYPASS_SECRET ?? '',
-                      },
-                      body: JSON.stringify(phone ? { phone_number: phone } : { email: bypassEmail }),
-                    });
-                    const data = await response.json();
-                    if (!response.ok) { toast.error(data.error); return; }
-                    const { error } = await supabase.auth.verifyOtp({ token_hash: data.hashed_token, type: 'magiclink' });
-                    if (error) { toast.error('Erreur session'); return; }
-                    toast.success(`Connecté en tant que ${label}`);
-                    const { data: { user: sessionUser } } = await supabase.auth.getUser();
-                    if (sessionUser) {
-                      await redirectBasedOnRole(sessionUser.id);
-                    } else {
-                      navigate('/');
-                    }
-                  } catch { toast.error('Erreur bypass'); }
-                }}
+                onClick={() => navigate(i === 0 ? '/' : '/family')}
               >
-                🔓 {label}
+                {label}
               </Button>
             ))}
           </div>

@@ -6,6 +6,11 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
+  // 🔓 DEV SKIP — en mode développement, on bypasse toute l'auth
+  if (import.meta.env.DEV) {
+    return <>{children}</>;
+  }
+
   const { user, loading, mfaRequired } = useAuth();
 
   if (loading) {

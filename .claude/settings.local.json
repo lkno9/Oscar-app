@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone https://github.com/lkno9/oscars-gentle-guide.git C:/Users/hacha/Oscar_mvp)",
+      "Bash(git clone https://github.com/lkno9/oscars-gentle-guide.git C:/Users/hacha/Oscar_mvp/_temp_clone)",
+      "Bash(npm install)",
+      "Bash(ls -la C:/Users/hacha/Oscar_mvp/.env*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(where npm)",
+      "Bash(command -v npm)",
+      "Bash(ls C:/Users/hacha/Oscar_mvp/node_modules/.bin/vite*)",
+      "Bash(python -c \":*)",
+      "Bash(pip install pdfplumber pypdf -q)",
+      "Bash(npx vite build)",
+      "Read(//c/Users/hacha/**)",
+      "Bash(python -c \"import pypdfium2; print\\(''pypdfium2 available''\\)\")",
+      "Bash(python -c \"import fitz; print\\(''PyMuPDF available''\\)\")",
+      "Bash(ls -la /c/Users/hacha/Oscar_mvp/src/pages/*.tsx)",
+      "Bash(wc -l /c/Users/hacha/Oscar_mvp/src/pages/*.tsx)",
+      "Bash(npx vite:*)",
+      "Bash(ls -la \"C:\\\\Users\\\\hacha\\\\Oscar_mvp\\\\supabase\\\\functions\"\" | grep -E \"^d \")",
+      "Bash(npm install:*)",
+      "Bash(npm run *)",
+      "Bash(dir \"C:\\\\Users\\\\hacha\\\\oscar-ia-mvp\\\\tasks\")",
+      "Bash(xargs grep *)",
+      "Bash(sort -k6,7)",
+      "Bash(npm list *)",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__list_organizations",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__list_projects",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__get_project_url",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__get_publishable_keys",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__list_migrations",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__apply_migration",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__list_tables",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__list_edge_functions",
+      "mcp__a0219feb-741f-4d70-b215-5bec0e3e9163__deploy_edge_function"
+    ]
+  }
+}
