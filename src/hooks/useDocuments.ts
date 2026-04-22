@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface Document {
   id: string;
@@ -19,8 +19,6 @@ export const useDocuments = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { toast } = useToast();
-
   const fetchDocuments = async () => {
     if (!user) return;
     
@@ -35,11 +33,7 @@ export const useDocuments = () => {
       if (error) throw error;
       setDocuments(data || []);
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les documents",
-        variant: "destructive"
-      });
+      toast.error("Impossible de charger les documents");
     } finally {
       setLoading(false);
     }
@@ -92,19 +86,12 @@ export const useDocuments = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Document ajouté",
-        description: "Le document a été enregistré avec succès"
-      });
+      toast.success("Document ajouté avec succès");
 
       await fetchDocuments();
       return true;
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le document",
-        variant: "destructive"
-      });
+      toast.error("Impossible d'ajouter le document");
       return false;
     }
   };
@@ -127,18 +114,11 @@ export const useDocuments = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Document supprimé",
-        description: "Le document a été supprimé"
-      });
+      toast.success("Document supprimé");
 
       await fetchDocuments();
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le document",
-        variant: "destructive"
-      });
+      toast.error("Impossible de supprimer le document");
     }
   };
 

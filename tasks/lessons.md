@@ -13,3 +13,5 @@
 - [2026-04-22] `auth_pin` stocké en clair dans Supabase détecté par audit sécurité — toujours hasher les secrets avec bcrypt (pgcrypto) même pour des PINs courts, une fuite de la table profiles exposerait tout.
 - [2026-04-22] Les agents de test UI (browser) ne sont pas fiables pour distinguer "redirect" vs "page crash + retour" — vérifier le code source avant de conclure à un bug de navigation.
 - [2026-04-22] Lancer 6 agents haiku/sonnet en parallèle (2 browser, 2 code scan, 2 security) est le bon ratio — les agents haiku sont 6x moins chers pour le scan statique, réserver sonnet pour les interactions browser.
+- [2026-04-22] Quand on ajoute une colonne via migration, mettre à jour types.ts manuellement en attendant la régénération — sinon les `as any` se propagent dans tout le code.
+- [2026-04-22] Pour supprimer un `as any` sur `.from("table")`, vérifier d'abord que la table existe dans types.ts — souvent elle y est déjà et le cast est inutile.

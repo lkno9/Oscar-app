@@ -97,6 +97,38 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          id: string
+          user_id: string
+          messages: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          messages?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          messages?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_wellness: {
         Row: {
           activity_goal_minutes: number | null
@@ -678,6 +710,7 @@ export type Database = {
           id: string
           phone: string | null
           phone_number: string | null
+          quick_actions: string[] | null
           sms_notifications_enabled: boolean | null
           updated_at: string
         }
@@ -690,6 +723,7 @@ export type Database = {
           id: string
           phone?: string | null
           phone_number?: string | null
+          quick_actions?: string[] | null
           sms_notifications_enabled?: boolean | null
           updated_at?: string
         }
@@ -702,6 +736,7 @@ export type Database = {
           id?: string
           phone?: string | null
           phone_number?: string | null
+          quick_actions?: string[] | null
           sms_notifications_enabled?: boolean | null
           updated_at?: string
         }

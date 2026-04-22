@@ -191,11 +191,10 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
   useEffect(() => {
     if (!user) return;
     const fetchProfile = async () => {
-      const { data } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("full_name, quick_actions").eq("id", user.id).maybeSingle();
       if (data) {
         setProfile(data);
-        // TODO: quick_actions column needs to be added to profiles table in Supabase
-        const dbActions = (data as any).quick_actions;
+        const dbActions = data.quick_actions;
         if (Array.isArray(dbActions) && dbActions.length > 0) {
           setSelectedActions(dbActions);
           localStorage.setItem("quick_actions", JSON.stringify(dbActions));
@@ -899,7 +898,7 @@ export function RecapPage({ onGoToOscar }: RecapPageProps) {
                 // Persist to Supabase (non-blocking)
                 if (user) {
                   try {
-                    await supabase.from("profiles").update({ quick_actions: selectedActions } as any).eq("id", user.id);
+                    await supabase.from("profiles").update({ quick_actions: selectedActions }).eq("id", user.id);
                     toast.success("Préférences sauvegardées");
                   } catch {
                     // Fallback: localStorage is already set

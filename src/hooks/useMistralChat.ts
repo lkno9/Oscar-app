@@ -47,12 +47,12 @@ export function useMistralChat({
     (async () => {
       try {
         const { data } = await supabase
-          .from("conversations" as any)
+          .from("conversations")
           .select("messages")
           .eq("user_id", userId)
           .single();
-        if ((data as any)?.messages && Array.isArray((data as any).messages)) {
-          const loaded = ((data as any).messages as MistralMessage[]).slice(-MAX_PERSISTED_MESSAGES);
+        if (data?.messages && Array.isArray(data.messages)) {
+          const loaded = (data.messages as MistralMessage[]).slice(-MAX_PERSISTED_MESSAGES);
           historyRef.current = loaded;
           onHistoryLoaded?.(loaded);
         }
@@ -69,7 +69,7 @@ export function useMistralChat({
     persistTimeoutRef.current = setTimeout(async () => {
       try {
         const trimmed = historyRef.current.slice(-MAX_PERSISTED_MESSAGES);
-        await supabase.from("conversations" as any).upsert({
+        await supabase.from("conversations").upsert({
           user_id: userId,
           messages: trimmed,
           updated_at: new Date().toISOString(),

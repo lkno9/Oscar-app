@@ -24,20 +24,20 @@ export function useSeniorContext(userId?: string | null): string | null {
         // Fetch profile, meds, and upcoming events in parallel
         const [profileRes, medsRes, eventsRes] = await Promise.all([
           supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
-          supabase.from("medications" as any).select("name, frequency").eq("user_id", userId).eq("is_active", true).limit(10),
-          supabase.from("events" as any).select("title, event_date, event_time").eq("user_id", userId).gte("event_date", now.toISOString().split("T")[0]).order("event_date", { ascending: true }).limit(5),
+          supabase.from("medications").select("name, frequency").eq("user_id", userId).eq("is_active", true).limit(10),
+          supabase.from("events").select("title, event_date, event_time").eq("user_id", userId).gte("event_date", now.toISOString().split("T")[0]).order("event_date", { ascending: true }).limit(5),
         ]);
 
         const name = profileRes.data?.full_name || "l'utilisateur";
-        const meds = (medsRes.data as any[]) || [];
-        const events = (eventsRes.data as any[]) || [];
+        const meds = medsRes.data || [];
+        const events = eventsRes.data || [];
 
         const medsLine = meds.length > 0
-          ? meds.map((m: any) => `${m.name}${m.frequency ? ` (${m.frequency})` : ""}`).join(", ")
+          ? meds.map((m) => `${m.name}${m.frequency ? ` (${m.frequency})` : ""}`).join(", ")
           : "aucun renseigné";
 
         const eventsLine = events.length > 0
-          ? events.map((e: any) => `${e.title} le ${e.event_date}${e.event_time ? ` à ${e.event_time}` : ""}`).join(", ")
+          ? events.map((e) => `${e.title} le ${e.event_date}${e.event_time ? ` à ${e.event_time}` : ""}`).join(", ")
           : "aucun dans les 7 prochains jours";
 
         const contextStr = [

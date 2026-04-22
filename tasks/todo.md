@@ -8,7 +8,6 @@
 - [ ] Déplacer les appels Tavus vers une Edge Function (clé côté serveur uniquement)
 
 ### Backend / Supabase
-- [ ] Créer la migration pour la table `conversations` (utilisée par useMistralChat.ts avec `as any`)
 - [ ] Corriger le trigger `dispatch_notification_email_sms` : remplacer `NEW.related_senior_id` par `NEW.senior_id`
 - [ ] Régénérer types.ts via `supabase gen types typescript` (remote_preferences, quiz_history.category/completed_at manquants)
 - [ ] Garantir insertion du rôle `senior` lors du parcours voice OTP (actuellement non garanti)
@@ -17,8 +16,6 @@
 - [ ] Centraliser la logique STT/TTS (dupliquée dans CallScreen.tsx, HomePage.tsx, hooks, lib)
 - [ ] Corriger les dépendances manquantes dans useCallback de useMistralChat.ts
 - [ ] Fusionner `verifyMFA` et `verifyMFAChallenge` dans useAuth.tsx (identiques)
-- [ ] Unifier le système de toast : migrer useAdminTasks + useDocuments vers sonner, supprimer Toaster Radix
-- [ ] Typer les `as any` Supabase (medications, events, conversations)
 
 ### Accessibilité (a11y)
 - [ ] Passer toutes les tailles de police en `rem` (plus de `fontSize: 13` hardcodé)
@@ -59,3 +56,7 @@
 - [2026-04-22] ✅ Rate limiting send-voice-otp (max 3/10min, table otp_rate_limits)
 - [2026-04-22] ✅ Protection brute-force PIN dans verify-voice-otp (max 5 tentatives, puis OTP invalidé)
 - [2026-04-22] ✅ Migration 20260422100000_otp_security.sql créée (à appliquer sur Supabase cloud)
+- [2026-04-22] ✅ Colonne quick_actions ajoutée à profiles (migration + types.ts + RecapPage sans as any)
+- [2026-04-22] ✅ as any supprimés pour medications et events dans useSeniorContext.ts (tables présentes dans types.ts)
+- [2026-04-22] ✅ useDocuments et useAdminTasks migrés vers sonner (suppression useToast Radix)
+- [2026-04-22] ✅ Table `conversations` créée (migration + RLS + types.ts + suppression des `as any` dans useMistralChat.ts)

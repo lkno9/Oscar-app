@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { TASK_TEMPLATES, TaskStep } from "@/components/documents/TaskTemplates";
 import { Json } from "@/integrations/supabase/types";
 
@@ -38,8 +38,6 @@ export const useAdminTasks = () => {
   const [tasks, setTasks] = useState<AdminTask[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { toast } = useToast();
-
   const fetchTasks = async () => {
     if (!user) return;
     
@@ -61,11 +59,7 @@ export const useAdminTasks = () => {
       
       setTasks(parsedTasks);
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les démarches",
-        variant: "destructive"
-      });
+      toast.error("Impossible de charger les démarches");
     } finally {
       setLoading(false);
     }
@@ -76,11 +70,7 @@ export const useAdminTasks = () => {
 
     const template = TASK_TEMPLATES.find(t => t.id === templateId);
     if (!template) {
-      toast({
-        title: "Erreur",
-        description: "Modèle de démarche introuvable",
-        variant: "destructive"
-      });
+      toast.error("Modèle de démarche introuvable");
       return false;
     }
 
@@ -104,19 +94,12 @@ export const useAdminTasks = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Démarche créée",
-        description: `"${template.title}" a été ajoutée à vos démarches`
-      });
+      toast.success(`"${template.title}" a été ajoutée à vos démarches`);
 
       await fetchTasks();
       return true;
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de créer la démarche",
-        variant: "destructive"
-      });
+      toast.error("Impossible de créer la démarche");
       return false;
     }
   };
@@ -152,17 +135,10 @@ export const useAdminTasks = () => {
       ));
 
       if (allCompleted) {
-        toast({
-          title: "Félicitations ! 🎉",
-          description: "Vous avez terminé cette démarche"
-        });
+        toast.success("Félicitations ! Vous avez terminé cette démarche 🎉");
       }
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour l'étape",
-        variant: "destructive"
-      });
+      toast.error("Impossible de mettre à jour l'étape");
     }
   };
 
@@ -175,18 +151,11 @@ export const useAdminTasks = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Démarche supprimée",
-        description: "La démarche a été supprimée"
-      });
+      toast.success("Démarche supprimée");
 
       await fetchTasks();
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer la démarche",
-        variant: "destructive"
-      });
+      toast.error("Impossible de supprimer la démarche");
     }
   };
 
