@@ -307,6 +307,34 @@ export function AuthPage() {
             Continuer
           </Button>
 
+          {/* Accès démo — visible par tous */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">ou</span>
+            </div>
+          </div>
+
+          <Button
+            variant="outline"
+            className="w-full h-12 text-base gap-2 border-dashed"
+            onClick={async () => {
+              const { error } = await supabase.auth.signInWithPassword({
+                email: 'demo@oscar-ia.app',
+                password: 'DemoOscar2026!',
+              });
+              if (error) {
+                toast.error('Accès démo indisponible');
+              } else {
+                navigate('/');
+              }
+            }}
+          >
+            🚪 Tester Oscar sans compte
+          </Button>
+
           {/* Dev bypass — visible UNIQUEMENT en développement local */}
           {import.meta.env.DEV && (
           <div className="flex gap-2">
