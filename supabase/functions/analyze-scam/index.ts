@@ -43,7 +43,7 @@ serve(async (req) => {
 
   try {
     const { content } = await req.json();
-    
+
     if (!content || content.trim().length === 0) {
       return new Response(
         JSON.stringify({ error: "Veuillez fournir un message à analyser" }),
@@ -51,19 +51,19 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");
+    if (!MISTRAL_API_KEY) {
+      throw new Error("MISTRAL_API_KEY is not configured");
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${MISTRAL_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "mistral-large-latest",
         messages: [
           { role: "system", content: SCAM_ANALYSIS_PROMPT },
           { role: "user", content: `Analyse ce message et détermine s'il s'agit d'une arnaque :\n\n"${content}"` }
@@ -124,12 +124,12 @@ serve(async (req) => {
         );
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("Mistral API error:", response.status, errorText);
       throw new Error("Erreur lors de l'analyse");
     }
 
     const data = await response.json();
-    
+
     // Extract the function call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall || toolCall.function.name !== "analyze_message") {
@@ -137,7 +137,7 @@ serve(async (req) => {
     }
 
     const analysis = JSON.parse(toolCall.function.arguments);
-    
+
     console.log("Scam analysis completed:", {
       contentLength: content.length,
       riskLevel: analysis.riskLevel,

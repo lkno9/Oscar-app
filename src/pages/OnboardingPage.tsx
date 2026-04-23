@@ -92,7 +92,14 @@ export function OnboardingPage() {
   return (
     <div className="flex flex-col h-full bg-background" style={{ minHeight: "100dvh" }}>
       {/* Progress bar */}
-      <div className="flex gap-2 px-6 pt-6 flex-shrink-0">
+      <div
+        className="flex gap-2 px-6 pt-6 flex-shrink-0"
+        role="progressbar"
+        aria-valuenow={step + 1}
+        aria-valuemin={1}
+        aria-valuemax={TOTAL_STEPS}
+        aria-label="Progression de la configuration"
+      >
         {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
           <div
             key={i}
@@ -155,6 +162,7 @@ export function OnboardingPage() {
                   <button
                     key={opt.id}
                     onClick={() => toggleInterest(opt.id)}
+                    aria-pressed={interests.includes(opt.id)}
                     className="bg-card text-left"
                     style={{
                       background: selected ? "rgba(72,162,158,0.1)" : undefined,
@@ -195,6 +203,7 @@ export function OnboardingPage() {
                   <button
                     key={opt.id}
                     onClick={() => setTechLevel(opt.id)}
+                    aria-pressed={techLevel === opt.id}
                     className="bg-card text-left"
                     style={{
                       background: selected ? "rgba(72,162,158,0.1)" : undefined,
@@ -238,6 +247,7 @@ export function OnboardingPage() {
                   <button
                     key={opt.id}
                     onClick={() => setContactTime(opt.id)}
+                    aria-pressed={contactTime === opt.id}
                     className="bg-card"
                     style={{
                       background: selected ? "rgba(72,162,158,0.1)" : undefined,

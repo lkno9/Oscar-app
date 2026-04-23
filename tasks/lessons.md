@@ -24,3 +24,10 @@
 - [2026-04-23] Le bouton téléphone d'Oscar ouvre CallScreen : voix ↔ voix + caméra utilisateur → pixtral (Oscar "voit"). L'avatar vidéo Oscar n'existe pas encore (Tavus/HeyGen à faire si voulu).
 - [2026-04-23] Vonage Verify fait de l'auth silencieuse (pas de SMS à lire) — meilleur pour seniors que Twilio OTP classique. 40% moins cher sur numéros FR.
 - [2026-04-23] Brevo (français, RGPD natif) est préférable à Resend pour une app avec données seniors — hébergement EU garanti.
+- [2026-04-23] CORS `*` sur des Edge Functions qui traitent des données médicales = OWASP A05 critique — toujours restreindre à l'origine production dès le MVP.
+- [2026-04-23] mistral-chat sans vérification JWT = n'importe qui peut consommer le quota Mistral sans auth — toujours valider le bearer token avant tout traitement (pattern : family-chat est le bon exemple).
+- [2026-04-23] OTP 6 chiffres stocké en clair en base = risque A02 si la table est compromise — hasher avec SHA-256 avant stockage même pour des tokens courte durée.
+- [2026-04-23] Credentials de démo hardcodés dans le bundle JS = visibles via DevTools en prod — les injecter via env Vercel ou utiliser un compte Supabase sandbox isolé.
+- [2026-04-23] verifyMFA et verifyMFAChallenge dans useAuth ne sont PAS identiques : verifyMFA = enrollment TOTP (pas de setMfaRequired), verifyMFAChallenge = challenge login (set mfaRequired false). Renommer en verifyMFAEnrollment seulement.
+- [2026-04-23] vite-plugin-pwa : les icônes SVG fonctionnent en manifest mais les PNG sont préférés sur Android < 4.4 pour l'icône d'installation — remplacer les SVG placeholders par de vrais PNG avant prod.
+- [2026-04-23] Les pages family (FamilyChatPage, FamilyDashboard, FamilyMessagesPage) n'ont pas de route propre mais sont accessibles via FamilyIndex tabs — toujours vérifier l'architecture complète (shell + tabs) avant de conclure qu'un fichier est orphelin.

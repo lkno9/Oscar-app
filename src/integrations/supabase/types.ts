@@ -711,6 +711,7 @@ export type Database = {
           phone: string | null
           phone_number: string | null
           quick_actions: string[] | null
+          remote_preferences: Json | null
           sms_notifications_enabled: boolean | null
           updated_at: string
         }
@@ -724,6 +725,7 @@ export type Database = {
           phone?: string | null
           phone_number?: string | null
           quick_actions?: string[] | null
+          remote_preferences?: Json | null
           sms_notifications_enabled?: boolean | null
           updated_at?: string
         }
@@ -737,6 +739,7 @@ export type Database = {
           phone?: string | null
           phone_number?: string | null
           quick_actions?: string[] | null
+          remote_preferences?: Json | null
           sms_notifications_enabled?: boolean | null
           updated_at?: string
         }
@@ -744,6 +747,8 @@ export type Database = {
       }
       quiz_history: {
         Row: {
+          category: string | null
+          completed_at: string
           created_at: string
           id: string
           quiz_date: string
@@ -752,6 +757,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
+          completed_at?: string
           created_at?: string
           id?: string
           quiz_date?: string
@@ -760,6 +767,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string | null
+          completed_at?: string
           created_at?: string
           id?: string
           quiz_date?: string

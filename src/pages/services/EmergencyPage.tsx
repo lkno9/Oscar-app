@@ -1,6 +1,16 @@
 import { ArrowLeft, AlertTriangle, Phone, MapPin, Users, Plus, UserPlus, ChevronDown, ChevronUp, Loader2, Navigation } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,6 +98,7 @@ export function EmergencyPage() {
   const [emergencyContacts, setEmergencyContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCategories, setOpenCategories] = useState<string[]>(["Urgences vitales"]);
+  const [showSosConfirm, setShowSosConfirm] = useState(false);
 
   // Recherche à proximité
   const [nearbyPOIs, setNearbyPOIs] = useState<OverpassPOI[]>([]);
@@ -167,11 +178,32 @@ export function EmergencyPage() {
         <Button
           className="w-full h-24 text-xl font-bold gap-3 bg-destructive hover:bg-destructive/90"
           size="lg"
-          onClick={() => handleCall('15')}
+          onClick={() => setShowSosConfirm(true)}
         >
           <AlertTriangle className="w-8 h-8" />
           APPELER LES SECOURS (15)
         </Button>
+
+        {/* SOS confirmation dialog */}
+        <AlertDialog open={showSosConfirm} onOpenChange={setShowSosConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Appeler le 15 (SAMU) ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vous allez appeler le SAMU — les urgences médicales. Confirmez uniquement en cas de véritable urgence.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive hover:bg-destructive/90"
+                onClick={() => handleCall('15')}
+              >
+                Oui, appeler
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Location sharing */}
         <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 flex items-center gap-3 border border-orange-200 dark:border-orange-800">
