@@ -416,10 +416,10 @@ serve(async (req) => {
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
-    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
+    // Utiliser le service role pour vérifier le JWT — plus fiable que anon+global headers
+    const adminClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+    const { data: { user }, error: authError } = await adminClient.auth.getUser(token);
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
