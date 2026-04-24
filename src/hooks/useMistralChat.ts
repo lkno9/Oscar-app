@@ -120,6 +120,15 @@ export function useMistralChat({
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
+        // Récupérer un token frais avant chaque appel (évite les JWT périmés)
+        const { data: { session } } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+
+        if (!accessToken) {
+          onErrorRef.current("Votre session a expiré. Veuillez vous reconnecter.");
+          return;
+        }
+
         // Build messages: history (text only) + current message (with image if any)
         const messagesToSend = imageBase64
           ? [
@@ -132,7 +141,8 @@ export function useMistralChat({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({ messages: messagesToSend, seniorContext }),
           signal: controller.signal,

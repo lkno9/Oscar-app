@@ -247,7 +247,7 @@ export function SettingsPage() {
             <section>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Compte</h3>
               <div className="bg-card rounded-xl border border-border overflow-hidden">
-                <div className="flex items-center gap-4 p-4 border-b border-border">
+                <button onClick={startEditProfile} className="flex items-center gap-4 p-4 border-b border-border w-full text-left hover:bg-secondary/50 transition-colors active:bg-secondary">
                   <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                     <User className="w-5 h-5 text-foreground" />
                   </div>
@@ -255,10 +255,10 @@ export function SettingsPage() {
                     <p className="font-medium text-foreground">Profil</p>
                     <p className="text-sm text-muted-foreground">Modifier vos informations</p>
                   </div>
-                  <button onClick={startEditProfile} className="p-3 rounded-full hover:bg-secondary transition-colors">
+                  <span className="p-3 rounded-full">
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </button>
-                </div>
+                  </span>
+                </button>
                 <div className="flex items-center gap-4 p-4">
                   <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                     <Users className="w-5 h-5 text-foreground" />

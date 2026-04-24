@@ -9,13 +9,18 @@
 - [ ] **Resend** → créer compte Brevo (RGPD FR) + remplacer RESEND_API_KEY dans Supabase Secrets
 - [ ] **TMDB** → créer compte gratuit sur themoviedb.org + remplacer TMDB_API_KEY
 - [ ] **Sentry** → créer compte + mettre VITE_SENTRY_DSN dans .env Vercel
-- [ ] **analyze-scam MISTRAL_API_KEY** → ajouter dans Supabase Secrets du projet mnkumsmqdmqlpczxabfo (Dashboard > Edge Functions > Secrets)
+- [x] **analyze-scam MISTRAL_API_KEY** → déjà présente dans Supabase Secrets (partagée avec mistral-chat qui fonctionnait)
 
 ### Sécurité — OWASP HIGH (avant mise en prod réelle)
 - [x] **mistral-chat : vérification JWT** — getUser() en début de handler, 401 si token absent/invalide — déployé v3 (2026-04-24)
 - [x] **CORS `*` → domaine restreint** — toutes les Edge Functions : getCorsHeaders(req) whitelist 3 origines + Vary: Origin (2026-04-24)
 - [x] **Credentials démo hors code source** — import.meta.env.VITE_DEMO_EMAIL/PASSWORD avec fallback (2026-04-24)
 - [x] **OTP en clair en base** — SHA-256 stocké dans voice_otps.otp_code, comparaison hashée dans verify-voice-otp (2026-04-24)
+
+### TTS Voxtral — action requise avant déploiement
+- [ ] **Créer une voix Mistral** via `POST https://api.mistral.ai/v1/audio/voices` avec un échantillon audio Oscar → récupérer le `voice_id`
+- [ ] **Ajouter `MISTRAL_VOICE_ID`** dans Supabase Secrets (mnkumsmqdmqlpczxabfo)
+- [ ] **Redéployer `elevenlabs-tts`** après ajout du secret (code Voxtral prêt en local, version prod encore ancienne)
 
 ### Sécurité — divers
 - [ ] Tavus : variables VITE_TAVUS_* commentées dans .env — décider activer (HeyGen $29/mois) ou supprimer définitivement
@@ -42,6 +47,9 @@
 - ✅ FamilyMessagesPage.tsx — onglet "Messages" dans FamilyIndex (route /family)
 
 ## Terminé
+- [2026-04-24] ✅ Chat Oscar 401 JWT corrigé : useMistralChat.ts utilise désormais getSession() frais + Bearer user JWT (était la clé anon)
+- [2026-04-24] ✅ Settings profil bouton corrigé : div → button couvrant toute la rangée
+- [2026-04-24] ✅ /services/news 404 — faux positif : les actualités sont sur /services/knowledge (KnowledgePage)
 - [2026-04-24] ✅ OWASP HIGH — 4 fixes déployés : JWT mistral-chat v3, CORS whitelist toutes Edge Functions, creds démo via env, OTP SHA-256
 - [2026-04-23] ✅ PWA implémentée : vite-plugin-pwa + manifest.json + SW workbox + cache offline /services/emergency (7j CacheFirst) + icônes Oscar SVG 192/512
 - [2026-04-23] ✅ analyze-scam migré Lovable/Gemini → Mistral direct (mistral-large-latest) — déployé v3 (attendre MISTRAL_API_KEY dans Supabase Secrets)
