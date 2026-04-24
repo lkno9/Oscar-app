@@ -1,10 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = [
+  "https://oscar-ia-mvp.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") ?? "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 const OSCAR_SYSTEM_PROMPT = `# SYSTEM PROMPT — OSCAR
 
@@ -391,10 +403,30 @@ async function extractPdfText(pdfBase64: string, apiKey: string): Promise<string
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
+    // ─── Vérification JWT ─────
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await userClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     const { messages, seniorContext } = await req.json();
     const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");
 
@@ -408,7 +440,7 @@ serve(async (req) => {
         JSON.stringify({ error: "Messages manquants dans la requête." }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -670,11 +702,30 @@ serve(async (req) => {
       }
     }
 
-    function executeShowMap(args: { address: string }) {
+    async function executeShowMap(args: { address: string }) {
       const q = encodeURIComponent(args.address);
-      const MAPS_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
+      // Géocodage Nominatim (OpenStreetMap) — sans clé API, RGPD friendly
+      let embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=-5.5,41.0,10.0,51.5&layer=mapnik`;
+      let mapsUrl = `https://www.openstreetmap.org/search?query=${q}`;
+      try {
+        const nominatim = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=fr`,
+          { headers: { "User-Agent": "Oscar-SeniorApp/1.0", Accept: "application/json" } }
+        );
+        if (nominatim.ok) {
+          const results = await nominatim.json();
+          if (results.length > 0) {
+            const { lat, lon } = results[0];
+            const latN = parseFloat(lat);
+            const lonN = parseFloat(lon);
+            const delta = 0.008; // ~800m de zoom
+            embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lonN - delta},${latN - delta},${lonN + delta},${latN + delta}&layer=mapnik&marker=${latN},${lonN}`;
+            mapsUrl = `https://www.openstreetmap.org/?mlat=${latN}&mlon=${lonN}#map=16/${latN}/${lonN}`;
+          }
+        }
+      } catch { /* fallback sur la vue France entière */ }
       return {
-        toolResult: { type: "map", data: { address: args.address, embedUrl: `https://www.google.com/maps/embed/v1/place?key=${MAPS_KEY}&q=${q}&zoom=15`, mapsUrl: `https://www.google.com/maps/search/?api=1&query=${q}` } },
+        toolResult: { type: "map", data: { address: args.address, embedUrl, mapsUrl } },
         textForMistral: `Carte affichée pour : ${args.address}. L'utilisateur peut voir la carte dans le chat.`,
       };
     }
@@ -780,7 +831,7 @@ serve(async (req) => {
         max_tokens: 2048,
       });
       return new Response(response.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
       });
     }
 
@@ -814,7 +865,7 @@ serve(async (req) => {
         },
       });
       return new Response(body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
       });
     }
 
@@ -839,7 +890,7 @@ serve(async (req) => {
           execResult = await executeTranslate(args as { text: string; target_lang: string });
           break;
         case "show_map":
-          execResult = executeShowMap(args as { address: string });
+          execResult = await executeShowMap(args as { address: string });
           break;
         case "search_emergency":
           execResult = executeSearchEmergency(args as { query: string });
@@ -912,7 +963,7 @@ serve(async (req) => {
     });
 
     return new Response(body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
     });
   } catch (e) {
     console.error("Mistral chat error:", e);
@@ -922,7 +973,7 @@ serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
