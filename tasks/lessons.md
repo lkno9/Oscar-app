@@ -31,3 +31,4 @@
 - [2026-04-23] verifyMFA et verifyMFAChallenge dans useAuth ne sont PAS identiques : verifyMFA = enrollment TOTP (pas de setMfaRequired), verifyMFAChallenge = challenge login (set mfaRequired false). Renommer en verifyMFAEnrollment seulement.
 - [2026-04-23] vite-plugin-pwa : les icônes SVG fonctionnent en manifest mais les PNG sont préférés sur Android < 4.4 pour l'icône d'installation — remplacer les SVG placeholders par de vrais PNG avant prod.
 - [2026-04-23] Les pages family (FamilyChatPage, FamilyDashboard, FamilyMessagesPage) n'ont pas de route propre mais sont accessibles via FamilyIndex tabs — toujours vérifier l'architecture complète (shell + tabs) avant de conclure qu'un fichier est orphelin.
+- [2026-04-24] verify_jwt=false dans Supabase config n'est pas un problème si la vérification JWT est faite manuellement dans le handler — cela permet des erreurs JSON structurées au lieu des erreurs brutes gateway.

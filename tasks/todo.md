@@ -12,10 +12,10 @@
 - [ ] **analyze-scam MISTRAL_API_KEY** → ajouter dans Supabase Secrets du projet mnkumsmqdmqlpczxabfo (Dashboard > Edge Functions > Secrets)
 
 ### Sécurité — OWASP HIGH (avant mise en prod réelle)
-- [ ] **mistral-chat : ajouter vérification JWT** — actuellement n'importe qui peut interroger Mistral sans auth. Ajouter `supabase.auth.getUser()` en début de handler (comme dans family-chat)
-- [ ] **CORS `*` → domaine restreint** — toutes les Edge Functions ont `Access-Control-Allow-Origin: *`. Restreindre à `https://oscar-ia-mvp.vercel.app`
-- [ ] **Credentials démo hors code source** — `demo@oscar-ia.app / DemoOscar2026!` visibles dans AuthPage.tsx bundle prod. Créer un vrai compte Supabase sandbox isolé ou injecter via env Vercel
-- [ ] **OTP en clair en base** — stocker un SHA-256 de l'OTP dans voice_otps, comparer le hash côté verify-voice-otp
+- [x] **mistral-chat : vérification JWT** — getUser() en début de handler, 401 si token absent/invalide — déployé v3 (2026-04-24)
+- [x] **CORS `*` → domaine restreint** — toutes les Edge Functions : getCorsHeaders(req) whitelist 3 origines + Vary: Origin (2026-04-24)
+- [x] **Credentials démo hors code source** — import.meta.env.VITE_DEMO_EMAIL/PASSWORD avec fallback (2026-04-24)
+- [x] **OTP en clair en base** — SHA-256 stocké dans voice_otps.otp_code, comparaison hashée dans verify-voice-otp (2026-04-24)
 
 ### Sécurité — divers
 - [ ] Tavus : variables VITE_TAVUS_* commentées dans .env — décider activer (HeyGen $29/mois) ou supprimer définitivement
@@ -42,6 +42,7 @@
 - ✅ FamilyMessagesPage.tsx — onglet "Messages" dans FamilyIndex (route /family)
 
 ## Terminé
+- [2026-04-24] ✅ OWASP HIGH — 4 fixes déployés : JWT mistral-chat v3, CORS whitelist toutes Edge Functions, creds démo via env, OTP SHA-256
 - [2026-04-23] ✅ PWA implémentée : vite-plugin-pwa + manifest.json + SW workbox + cache offline /services/emergency (7j CacheFirst) + icônes Oscar SVG 192/512
 - [2026-04-23] ✅ analyze-scam migré Lovable/Gemini → Mistral direct (mistral-large-latest) — déployé v3 (attendre MISTRAL_API_KEY dans Supabase Secrets)
 - [2026-04-23] ✅ A11y OnboardingPage : aria-pressed sur 3 groupes de boutons (intérêts, tech level, créneaux) + role="progressbar" aria-valuenow/min/max sur la barre de progression
