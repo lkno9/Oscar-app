@@ -56,16 +56,6 @@ const WELLNESS_TIPS = [
   "Manger des fruits et légumes colorés chaque jour.",
 ];
 
-const DOCTOLIB_SPECIALTIES = [
-  { key: "medecin-generaliste", label: "Médecin généraliste", emoji: "🩺" },
-  { key: "dentiste", label: "Dentiste", emoji: "🦷" },
-  { key: "ophtalmologue", label: "Ophtalmologue", emoji: "👁️" },
-  { key: "dermatologue", label: "Dermatologue", emoji: "🧴" },
-  { key: "kinesitherapeute", label: "Kinésithérapeute", emoji: "💆" },
-  { key: "cardiologue", label: "Cardiologue", emoji: "❤️" },
-  { key: "orl", label: "ORL", emoji: "👂" },
-  { key: "radiologue", label: "Radiologue", emoji: "🔬" },
-];
 
 const HEALTH_PLATFORMS = [
   { name: "Mon Espace Santé", desc: "Dossier médical partagé (DMP), ordonnances, résultats", url: "https://www.monespacesante.fr", emoji: "🏥" },
@@ -111,44 +101,6 @@ export function HealthPage() {
   const [savingMood, setSavingMood] = useState(false);
   const dailyTip = WELLNESS_TIPS[new Date().getDay() % WELLNESS_TIPS.length];
 
-
-  // Doctolib recherche
-  const [doctoSpec, setDoctoSpec] = useState<string | null>(null);
-  const [doctoLocation, setDoctoLocation] = useState("");
-  const [doctoLocating, setDoctoLocating] = useState(false);
-
-  const handleDoctoGeolocate = async () => {
-    setDoctoLocating(true);
-    try {
-      const coords = await getCurrentPosition();
-      const geoResult = await reverseGeocode(coords);
-      // reverseGeocode retourne un GeoAddress avec .city
-      const city = geoResult.city || "";
-      if (city) {
-        setDoctoLocation(city);
-      } else {
-        toast.error("Impossible de déterminer votre ville. Veuillez la saisir manuellement.");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Impossible d'obtenir votre position.");
-    } finally {
-      setDoctoLocating(false);
-    }
-  };
-
-  const openDoctolib = () => {
-    if (!doctoSpec) { toast.error("Veuillez choisir un type de spécialiste."); return; }
-    // Construire le slug ville
-    const citySlug = doctoLocation.trim()
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
-    const url = citySlug
-      ? `https://www.doctolib.fr/${doctoSpec}/${citySlug}`
-      : `https://www.doctolib.fr/${doctoSpec}`;
-    window.open(url, "_blank");
-  };
 
   // Recherche à proximité
   const [nearbyPOIs, setNearbyPOIs] = useState<OverpassPOI[]>([]);
@@ -585,82 +537,6 @@ export function HealthPage() {
 
           {/* PLATFORMS TAB */}
           <TabsContent value="platforms" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
-            {/* Doctolib RDV Tool — avec localisation */}
-            <div className="bg-card rounded-xl border border-border p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: "rgba(0,127,243,0.1)" }}>
-                  📅
-                </div>
-                <div>
-                  <h3 className="font-bold text-foreground">Prendre rendez-vous</h3>
-                  <p className="text-sm text-muted-foreground">Via Doctolib — choisissez un spécialiste et votre ville</p>
-                </div>
-              </div>
-
-              {/* Étape 1 : Choisir la spécialité */}
-              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">1. Type de spécialiste</p>
-              <div className="grid grid-cols-2 gap-2">
-                {DOCTOLIB_SPECIALTIES.map(spec => (
-                  <button
-                    key={spec.key}
-                    onClick={() => setDoctoSpec(spec.key)}
-                    className="flex items-center gap-2 p-3 rounded-xl text-left transition-all"
-                    style={{
-                      border: `1.5px solid ${doctoSpec === spec.key ? "#007FF3" : "hsl(var(--border))"}`,
-                      background: doctoSpec === spec.key ? "rgba(0,127,243,0.06)" : "hsl(var(--background))",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <span className="text-lg">{spec.emoji}</span>
-                    <span className="text-sm font-medium text-foreground leading-tight">{spec.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Étape 2 : Localisation */}
-              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">2. Où ? (optionnel)</p>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Ville ou adresse (ex: Paris, Lyon...)"
-                  value={doctoLocation}
-                  onChange={e => setDoctoLocation(e.target.value)}
-                  className="flex-1"
-                />
-                <button
-                  onClick={handleDoctoGeolocate}
-                  disabled={doctoLocating}
-                  className="flex items-center justify-center gap-1.5 px-3 rounded-xl text-sm font-medium flex-shrink-0 transition-all"
-                  style={{
-                    border: "1.5px solid hsl(var(--border))",
-                    background: doctoLocating ? "hsl(var(--muted))" : "hsl(var(--background))",
-                    cursor: doctoLocating ? "wait" : "pointer",
-                    minHeight: 40,
-                  }}
-                >
-                  {doctoLocating ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  ) : (
-                    <><MapPin className="w-4 h-4 text-primary" /> <span className="hidden sm:inline">Ma position</span></>
-                  )}
-                </button>
-              </div>
-
-              {/* Bouton Rechercher */}
-              <button
-                onClick={openDoctolib}
-                disabled={!doctoSpec}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold transition-all"
-                style={{
-                  background: !doctoSpec ? "#94a3b8" : "linear-gradient(135deg, #007FF3 0%, #0066cc 100%)",
-                  border: "none",
-                  cursor: !doctoSpec ? "not-allowed" : "pointer",
-                  fontSize: 15,
-                }}
-              >
-                Rechercher sur Doctolib →
-              </button>
-            </div>
-
             {/* Oscar banner */}
             <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-start gap-3">
               <span className="text-lg mt-0.5">💡</span>
