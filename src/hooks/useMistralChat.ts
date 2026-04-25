@@ -21,6 +21,10 @@ interface UseMistralChatOptions {
   onError: (error: string) => void;
   onToolResult?: (card: RichCard) => void;
   userId?: string | null;
+  /** ID of the conversation to load/save. null = create new on first message */
+  conversationId?: string | null;
+  /** Called with the DB conversation id when a new conversation is created */
+  onConversationId?: (id: string) => void;
   /** Called with loaded messages from DB on mount */
   onHistoryLoaded?: (messages: MistralMessage[]) => void;
   /** Dynamic context about the senior (name, meds, events) injected into system prompt */
@@ -33,54 +37,18 @@ export function useMistralChat({
   onError,
   onToolResult,
   userId,
+  conversationId,
+  onConversationId,
   onHistoryLoaded,
   seniorContext,
 }: UseMistralChatOptions) {
   // Conversation history in ref (no re-renders on update)
   const historyRef = useRef<MistralMessage[]>([]);
+  const conversationIdRef = useRef<string | null>(conversationId ?? null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load conversation from Supabase on mount
-  useEffect(() => {
-    if (!userId) return;
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from("conversations")
-          .select("messages")
-          .eq("user_id", userId)
-          .single();
-        if (data?.messages && Array.isArray(data.messages)) {
-          const loaded = (data.messages as MistralMessage[]).slice(-MAX_PERSISTED_MESSAGES);
-          historyRef.current = loaded;
-          onHistoryLoaded?.(loaded);
-        }
-      } catch {
-        // No conversation yet — that's fine
-      }
-    })();
-  }, [userId]);
-
-  // Debounced persist to Supabase
-  const persistConversation = useCallback(() => {
-    if (!userId) return;
-    if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
-    persistTimeoutRef.current = setTimeout(async () => {
-      try {
-        const trimmed = historyRef.current.slice(-MAX_PERSISTED_MESSAGES);
-        await supabase.from("conversations").upsert({
-          user_id: userId,
-          messages: trimmed,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
-      } catch {
-        // Non-blocking
-      }
-    }, 1000);
-  }, [userId]);
-
-  // Stable callback refs to avoid stale closures
+  // Stable callback refs
   const onDeltaRef = useRef(onDelta);
   onDeltaRef.current = onDelta;
   const onDoneRef = useRef(onDone);
@@ -89,6 +57,95 @@ export function useMistralChat({
   onErrorRef.current = onError;
   const onToolResultRef = useRef(onToolResult);
   onToolResultRef.current = onToolResult;
+  const onConversationIdRef = useRef(onConversationId);
+  onConversationIdRef.current = onConversationId;
+
+  // Sync conversationId ref when prop changes (parent switches conversation)
+  useEffect(() => {
+    conversationIdRef.current = conversationId ?? null;
+  }, [conversationId]);
+
+  // Load conversation from Supabase on mount / when conversationId changes
+  useEffect(() => {
+    if (!userId) return;
+    historyRef.current = [];
+
+    (async () => {
+      try {
+        let data: { id: string; messages: unknown } | null = null;
+
+        if (conversationId) {
+          // Load specific conversation by ID
+          const res = await supabase
+            .from("conversations" as any)
+            .select("id, messages")
+            .eq("id", conversationId)
+            .single();
+          data = res.data as any;
+        } else {
+          // Load most recent conversation for this user
+          const res = await supabase
+            .from("conversations" as any)
+            .select("id, messages")
+            .eq("user_id", userId)
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .single();
+          data = res.data as any;
+        }
+
+        if (data?.messages && Array.isArray(data.messages)) {
+          const loaded = (data.messages as MistralMessage[]).slice(-MAX_PERSISTED_MESSAGES);
+          historyRef.current = loaded;
+          if (data.id) {
+            conversationIdRef.current = data.id;
+            onConversationIdRef.current?.(data.id);
+          }
+          onHistoryLoaded?.(loaded);
+        }
+      } catch {
+        // No conversation yet — that's fine
+      }
+    })();
+  }, [userId, conversationId]);
+
+  // Debounced persist to Supabase
+  const persistConversation = useCallback((firstUserMessage?: string) => {
+    if (!userId) return;
+    if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
+    persistTimeoutRef.current = setTimeout(async () => {
+      try {
+        const trimmed = historyRef.current.slice(-MAX_PERSISTED_MESSAGES);
+        const now = new Date().toISOString();
+
+        if (conversationIdRef.current) {
+          // Update existing conversation
+          await supabase
+            .from("conversations" as any)
+            .update({ messages: trimmed, updated_at: now })
+            .eq("id", conversationIdRef.current);
+        } else {
+          // Create new conversation — use first user message as title
+          const title = firstUserMessage
+            ? firstUserMessage.slice(0, 60) + (firstUserMessage.length > 60 ? "…" : "")
+            : "Nouvelle conversation";
+
+          const { data } = await (supabase
+            .from("conversations" as any)
+            .insert({ user_id: userId, messages: trimmed, updated_at: now, title })
+            .select("id")
+            .single() as any);
+
+          if (data?.id) {
+            conversationIdRef.current = data.id;
+            onConversationIdRef.current?.(data.id);
+          }
+        }
+      } catch {
+        // Non-blocking
+      }
+    }, 1000);
+  }, [userId]);
 
   const sendMessage = useCallback(
     async (text: string, imageBase64?: string) => {
@@ -104,11 +161,12 @@ export function useMistralChat({
       }
 
       // For history: store text only (no base64 blobs — they bloat subsequent requests)
+      const isFirstMessage = historyRef.current.length === 0;
       historyRef.current = [
         ...historyRef.current,
         { role: "user", content: imageBase64 ? `${text} [fichier joint analysé]` : text },
       ];
-      persistConversation();
+      persistConversation(isFirstMessage ? text : undefined);
 
       // Cancel any in-flight request
       abortControllerRef.current?.abort();
@@ -176,7 +234,7 @@ export function useMistralChat({
         const decoder = new TextDecoder();
         let fullText = "";
         let buffer = "";
-        let currentEventType = ""; // Track SSE event type
+        let currentEventType = "";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -184,20 +242,17 @@ export function useMistralChat({
 
           buffer += decoder.decode(value, { stream: true });
 
-          // Process complete SSE lines
           const lines = buffer.split("\n");
-          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
             const trimmed = line.trim();
 
-            // Empty line = end of SSE event block
             if (!trimmed) {
               currentEventType = "";
               continue;
             }
 
-            // Detect custom event type (e.g. "event: tool_result")
             if (trimmed.startsWith("event: ")) {
               currentEventType = trimmed.slice(7).trim();
               continue;
@@ -205,20 +260,18 @@ export function useMistralChat({
 
             if (!trimmed.startsWith("data: ")) continue;
 
-            const data = trimmed.slice(6); // Remove "data: " prefix
+            const data = trimmed.slice(6);
             if (data === "[DONE]") continue;
 
             try {
               const parsed = JSON.parse(data);
 
-              // Handle tool_result custom events
               if (currentEventType === "tool_result" && onToolResultRef.current) {
                 onToolResultRef.current(parsed as RichCard);
                 currentEventType = "";
                 continue;
               }
 
-              // Handle normal SSE delta (text streaming)
               const token = parsed.choices?.[0]?.delta?.content;
               if (token) {
                 fullText += token;
@@ -243,7 +296,6 @@ export function useMistralChat({
       } catch (err: unknown) {
         clearTimeout(timeoutId);
         if (err instanceof Error && err.name === "AbortError") {
-          // Check if it was our timeout or a user cancel
           if (!abortControllerRef.current || abortControllerRef.current === controller) {
             onErrorRef.current("La connexion a pris trop de temps. Vérifiez votre réseau et réessayez.");
           }
@@ -252,7 +304,7 @@ export function useMistralChat({
         onErrorRef.current("Erreur de connexion. Vérifiez votre réseau et réessayez.");
       }
     },
-    []
+    [persistConversation, seniorContext]
   );
 
   const clearHistory = useCallback(() => {

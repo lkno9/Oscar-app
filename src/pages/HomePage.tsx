@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Phone, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon } from "lucide-react";
+import { Phone, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextIcon, Clock, Plus, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { OscarAvatar } from "@/components/OscarAvatar";
@@ -147,6 +147,12 @@ interface PendingFile {
   type: "image" | "pdf" | "other";
 }
 
+interface ConversationSummary {
+  id: string;
+  title: string | null;
+  updated_at: string;
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   // 3 suggestions aléatoires choisies au montage
@@ -160,6 +166,9 @@ export function HomePage() {
   const [isRecording, setIsRecording] = useState(false);
   const [input, setInput] = useState("");
   const [pendingFile, setPendingFile] = useState<PendingFile | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastAssistantIdRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -168,6 +177,42 @@ export function HomePage() {
   const { user } = useAuth();
   const seniorContext = useSeniorContext(user?.id);
   const started = messages.length > 0;
+
+  // Load conversation list for history panel
+  const loadConversationList = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const { data } = await supabase
+        .from("conversations" as any)
+        .select("id, title, updated_at")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(20) as any;
+      if (data) setConversations(data as ConversationSummary[]);
+    } catch {
+      // Non-blocking
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadConversationList();
+  }, [loadConversationList]);
+
+  // Start a fresh new conversation
+  const handleNewConversation = useCallback(() => {
+    setMessages([]);
+    setCurrentConversationId(null);
+    setShowHistory(false);
+    lastAssistantIdRef.current = null;
+  }, []);
+
+  // Switch to a past conversation
+  const handleSelectConversation = useCallback((id: string) => {
+    setMessages([]);
+    lastAssistantIdRef.current = null;
+    setCurrentConversationId(id);
+    setShowHistory(false);
+  }, []);
 
   // Real SSE streaming: accumulate tokens into assistant message
   const handleStreamDelta = useCallback((token: string) => {
@@ -238,6 +283,12 @@ export function HomePage() {
     onError: handleStreamError,
     onToolResult: handleToolResult,
     userId: user?.id,
+    conversationId: currentConversationId,
+    onConversationId: (id) => {
+      setCurrentConversationId(id);
+      // Refresh list so new conversation appears in history
+      loadConversationList();
+    },
     onHistoryLoaded: handleHistoryLoaded,
     seniorContext,
   });
@@ -674,15 +725,25 @@ export function HomePage() {
         </div>
         <div className="flex items-center gap-1.5">
           <button
+            onClick={() => setShowHistory(true)}
+            style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "#F2F2F7", color: "#8E8E93", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", position: "relative" }}
+            aria-label="Historique des conversations"
+          >
+            <Clock className="w-5 h-5" />
+            {conversations.length > 0 && (
+              <span style={{ position: "absolute", top: 8, right: 8, width: 7, height: 7, borderRadius: "50%", background: "#2DD4BF", border: "1.5px solid white" }} />
+            )}
+          </button>
+          <button
             onClick={() => setIsCallOpen(true)}
-style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+            style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
             aria-label="Appeler Oscar"
           >
             <Phone className="w-5 h-5" />
           </button>
           <button
             onClick={() => navigate("/settings")}
-style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "#F2F2F7", color: "#8E8E93", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+            style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "#F2F2F7", color: "#8E8E93", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
             aria-label="Paramètres"
           >
             <Settings className="w-5 h-5" />
@@ -858,6 +919,105 @@ style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "#
         isOpen={isCallOpen}
         onClose={() => setIsCallOpen(false)}
       />
+
+      {/* History Panel — slides up from bottom */}
+      {showHistory && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 50,
+            background: "rgba(0,0,0,0.35)",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => setShowHistory(false)}
+        >
+          <div
+            style={{
+              position: "absolute", bottom: 0, left: 0, right: 0,
+              background: "#fff",
+              borderRadius: "20px 20px 0 0",
+              maxHeight: "75vh",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 -4px 40px rgba(0,0,0,0.15)",
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Handle bar */}
+            <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 0" }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: "#E0E0E0" }} />
+            </div>
+
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 8px" }}>
+              <span style={{ fontSize: 18, fontWeight: 600, color: "#1A1A2E" }}>Mes conversations</span>
+              <button
+                onClick={handleNewConversation}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "8px 14px", borderRadius: 99,
+                  border: "none",
+                  background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)",
+                  color: "#fff",
+                  fontSize: 14, fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                Nouvelle
+              </button>
+            </div>
+
+            {/* List */}
+            <div style={{ overflowY: "auto", flex: 1, padding: "4px 0 24px" }}>
+              {conversations.length === 0 ? (
+                <div style={{ padding: "32px 20px", textAlign: "center", color: "#8E8E93" }}>
+                  <MessageSquare style={{ width: 36, height: 36, margin: "0 auto 10px", opacity: 0.4 }} />
+                  <p style={{ fontSize: 15 }}>Aucune conversation enregistrée</p>
+                </div>
+              ) : (
+                conversations.map(conv => {
+                  const isActive = conv.id === currentConversationId;
+                  const date = new Date(conv.updated_at);
+                  const now = new Date();
+                  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86400000);
+                  const dateLabel = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Hier" : date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+
+                  return (
+                    <button
+                      key={conv.id}
+                      onClick={() => handleSelectConversation(conv.id)}
+                      style={{
+                        width: "100%",
+                        display: "flex", alignItems: "center", gap: 12,
+                        padding: "13px 20px",
+                        border: "none",
+                        background: isActive ? "rgba(45,212,191,0.08)" : "transparent",
+                        borderLeft: isActive ? "3px solid #2DD4BF" : "3px solid transparent",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        transition: "background 0.15s",
+                      }}
+                    >
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: isActive ? "rgba(45,212,191,0.15)" : "#F2F2F7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <MessageSquare style={{ width: 16, height: 16, color: isActive ? "#2DD4BF" : "#8E8E93" }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 15, fontWeight: isActive ? 600 : 400, color: "#1A1A2E", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {conv.title || "Conversation"}
+                        </p>
+                        <p style={{ fontSize: 12, color: "#8E8E93", margin: "2px 0 0", fontWeight: 400 }}>{dateLabel}</p>
+                      </div>
+                      {isActive && (
+                        <span style={{ fontSize: 11, color: "#2DD4BF", fontWeight: 600, flexShrink: 0 }}>En cours</span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
