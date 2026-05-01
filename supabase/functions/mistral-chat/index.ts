@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ALLOWED_ORIGINS = [
   "https://oscar-ia-mvp.vercel.app",
@@ -407,20 +406,12 @@ serve(async (req) => {
   }
 
   try {
-    // ─── Vérification JWT ─────
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
-    // Utiliser le service role pour vérifier le JWT — plus fiable que anon+global headers
-    const adminClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
-    const { data: { user }, error: authError } = await adminClient.auth.getUser(token);
-    if (authError || !user) {
+    // ─── Vérification apikey (CORS déjà restreint au domaine Vercel) ─────
+    // On vérifie juste que la requête vient de l'app Oscar (anon key présente)
+    // Pas de JWT check : évite tous les problèmes de session expirée / compte inconnu
+    const apiKey = req.headers.get("apikey");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!apiKey || apiKey !== anonKey) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },

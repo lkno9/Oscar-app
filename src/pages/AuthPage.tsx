@@ -322,8 +322,8 @@ export function AuthPage() {
             className="w-full h-12 text-base gap-2 border-dashed"
             onClick={async () => {
               const { error } = await supabase.auth.signInWithPassword({
-                email: 'demo@oscar-ia.app',
-                password: 'DemoOscar2026!',
+                email: import.meta.env.VITE_DEMO_EMAIL ?? 'demo@oscar-ia.app',
+                password: import.meta.env.VITE_DEMO_PASSWORD ?? 'DemoOscar2026!',
               });
               if (error) {
                 toast.error('Accès démo indisponible');

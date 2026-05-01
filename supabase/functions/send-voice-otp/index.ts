@@ -1,15 +1,26 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const ALLOWED_ORIGINS = [
+  'https://oscar-ia-mvp.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:8080',
+];
 
-const json = (data: unknown, status = 200) =>
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') ?? '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+}
+
+const json = (req: Request, data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
   });
 
 /** OTP cryptographiquement sécurisé à 6 chiffres */
@@ -19,19 +30,28 @@ function generateOtp(): string {
   return String(buf[0] % 900000 + 100000);
 }
 
+/** Hash SHA-256 d'une chaîne, retourne la représentation hex */
+async function sha256Hex(input: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') return new Response(null, { headers: getCorsHeaders(req) });
 
   try {
     const { phone_number } = await req.json();
 
     if (!phone_number || typeof phone_number !== 'string') {
-      return json({ error: 'phone_number requis' }, 400);
+      return json(req, { error: 'phone_number requis' }, 400);
     }
 
     // Validation format E.164 basique
     if (!/^\+\d{8,15}$/.test(phone_number.trim())) {
-      return json({ error: 'Format de numéro invalide (ex: +33612345678)' }, 400);
+      return json(req, { error: 'Format de numéro invalide (ex: +33612345678)' }, 400);
     }
 
     const phone = phone_number.trim();
@@ -43,7 +63,7 @@ serve(async (req) => {
     const TWILIO_PHONE_NUMBER      = Deno.env.get('TWILIO_PHONE_NUMBER');
 
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
-      return json({ error: 'Twilio non configuré' }, 500);
+      return json(req, { error: 'Twilio non configuré' }, 500);
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -58,7 +78,7 @@ serve(async (req) => {
       .gte('created_at', windowStart);
 
     if ((count ?? 0) >= 3) {
-      return json({ error: 'Trop de demandes. Réessayez dans 10 minutes.' }, 429);
+      return json(req, { error: 'Trop de demandes. Réessayez dans 10 minutes.' }, 429);
     }
 
     // Enregistrer cette tentative
@@ -70,22 +90,23 @@ serve(async (req) => {
       .delete()
       .lt('created_at', windowStart);
 
-    // ── Générer et stocker l'OTP ───────────────────────────────────────────────
+    // ── Générer l'OTP et stocker son hash SHA-256 ─────────────────────────────
     const otp = generateOtp();
+    const otpHash = await sha256Hex(otp);
 
     await supabase.from('voice_otps').delete().eq('phone_number', phone);
 
     const { error: insertError } = await supabase.from('voice_otps').insert({
       phone_number: phone,
-      otp_code: otp,
+      otp_code: otpHash,
     });
 
     if (insertError) {
       console.error('Insert error:', insertError);
-      return json({ error: 'Erreur base de données' }, 500);
+      return json(req, { error: 'Erreur base de données' }, 500);
     }
 
-    // ── Appel vocal Twilio ────────────────────────────────────────────────────
+    // ── Appel vocal Twilio (utilise l'OTP en clair, jamais le hash) ──────────
     const digits = otp.split('').join(', ');
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -122,12 +143,12 @@ serve(async (req) => {
     if (!twilioResponse.ok) {
       const err = await twilioResponse.text();
       console.error('Twilio error:', err);
-      return json({ error: "Impossible d'initier l'appel" }, 500);
+      return json(req, { error: "Impossible d'initier l'appel" }, 500);
     }
 
-    return json({ success: true });
+    return json(req, { success: true });
   } catch (error) {
     console.error('Error:', error);
-    return json({ error: 'Erreur interne' }, 500);
+    return json(req, { error: 'Erreur interne' }, 500);
   }
 });

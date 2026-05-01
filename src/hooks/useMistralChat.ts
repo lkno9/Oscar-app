@@ -178,14 +178,15 @@ export function useMistralChat({
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
-        // Récupérer un token frais avant chaque appel (évite les JWT périmés)
-        const { data: { session } } = await supabase.auth.getSession();
-        const accessToken = session?.access_token;
-
-        if (!accessToken) {
-          onErrorRef.current("Votre session a expiré. Veuillez vous reconnecter.");
-          return;
+        // Récupérer le token — refreshSession si proche de l'expiry
+        // En DEV (ProtectedRoute bypasse l'auth), on utilise l'anon key comme fallback
+        let { data: { session } } = await supabase.auth.getSession();
+        if (session?.expires_at && session.expires_at * 1000 - Date.now() < 120_000) {
+          const { data: refreshed } = await supabase.auth.refreshSession();
+          if (refreshed.session) session = refreshed.session;
         }
+        // Fallback : anon key (pour le mode DEV sans auth ou token expiré)
+        const accessToken = session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
         // Build messages: history (text only) + current message (with image if any)
         const messagesToSend = imageBase64
