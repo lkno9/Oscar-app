@@ -25,7 +25,10 @@ export function getCurrentPosition(): Promise<Coordinates> {
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
       (err) => {
-        if (err.code === 1) reject(new Error("Vous avez refusé l'accès à votre position."));
+        if (err.code === 1) {
+          const e = Object.assign(new Error("Vous avez refusé l'accès à votre position."), { isDenied: true });
+          reject(e);
+        }
         else if (err.code === 2) reject(new Error("Position indisponible."));
         else reject(new Error("Délai dépassé pour obtenir votre position."));
       },

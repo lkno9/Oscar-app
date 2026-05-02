@@ -43,10 +43,12 @@ export function TransportPage() {
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [nearbySearched, setNearbySearched] = useState(false);
   const [stopFilter, setStopFilter] = useState<"all" | "bus" | "metro">("all");
+  const [locationDenied, setLocationDenied] = useState(false);
 
   const searchNearby = async () => {
     setNearbyLoading(true);
     setNearbyStops([]);
+    setLocationDenied(false);
     try {
       const coords = await getCurrentPosition();
       const types = stopFilter === "bus" ? ["bus_stop" as const]
@@ -57,7 +59,11 @@ export function TransportPage() {
       setNearbySearched(true);
       if (results.length === 0) toast("Aucun arrêt trouvé à proximité. Essayez un rayon plus large.");
     } catch (err: any) {
-      toast.error(err.message || "Impossible d'obtenir votre position.");
+      if ((err as any).isDenied) {
+        setLocationDenied(true);
+      } else {
+        toast.error(err.message || "Impossible d'obtenir votre position.");
+      }
     } finally {
       setNearbyLoading(false);
     }
@@ -161,6 +167,21 @@ export function TransportPage() {
                 </button>
               ))}
             </div>
+
+            {/* Localisation refusée */}
+            {locationDenied && (
+              <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-4 space-y-3">
+                <p className="text-sm text-orange-800 dark:text-orange-200 leading-relaxed">
+                  Vous avez initialement refusé l'accès à votre localisation. Souhaitez-vous l'activer maintenant pour trouver les arrêts proches ?
+                </p>
+                <button
+                  onClick={() => { setLocationDenied(false); searchNearby(); }}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold border border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                >
+                  Réessayer
+                </button>
+              </div>
+            )}
 
             {/* Bouton recherche */}
             <button

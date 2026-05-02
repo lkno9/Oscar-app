@@ -1,16 +1,17 @@
-import { ArrowLeft, MessageCircle, Phone, Video, Users, Send, PhoneIncoming, PhoneOutgoing, PhoneMissed, Image as ImageIcon, Check, CheckCheck } from "lucide-react";
+import { ArrowLeft, MessageCircle, Phone, Video, Users, Send, PhoneIncoming, PhoneOutgoing, PhoneMissed, Image as ImageIcon, Check, CheckCheck, Camera } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useFamilyMessages } from "@/hooks/useFamilyMessages";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { CallScreen } from "@/components/CallScreen";
+import { compressForUpload, validateStorageSize } from "@/lib/fileUtils";
 
 interface FamilyContact {
   id: string;
@@ -48,7 +49,9 @@ export function CommunicationPage() {
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [callType, setCallType] = useState<"audio" | "video">("audio");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Use the shared messaging hook for the selected contact
   const { messages, loading: messagesLoading, unreadCount, sendMessage, markAsRead } = useFamilyMessages(selectedContact?.id);
@@ -112,6 +115,46 @@ export function CommunicationPage() {
       toast.success("Message envoyé !");
     }
   };
+
+  const handleSendPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedContact || !user) return;
+    const sizeErr = validateStorageSize(file);
+    if (sizeErr) { toast.error(sizeErr); e.target.value = ""; return; }
+    setUploadingPhoto(true);
+    try {
+      const compressed = await compressForUpload(file);
+      const ext = compressed.name.split(".").pop() || "jpg";
+      const fileName = `family-photos/${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("user-files").upload(fileName, compressed, { contentType: compressed.type });
+      if (uploadError) { toast.error("Erreur lors de l'upload"); return; }
+      const { data: { publicUrl } } = supabase.storage.from("user-files").getPublicUrl(fileName);
+      const { error } = await sendMessage(selectedContact.id, `[photo:${publicUrl}]`);
+      if (error) toast.error("Erreur lors de l'envoi");
+      else toast.success("Photo envoyée !");
+    } catch {
+      toast.error("Impossible d'envoyer cette photo.");
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = "";
+    }
+  };
+
+  // Conversations groupées par contact (dernière activité)
+  const conversations = useMemo(() => {
+    if (!user) return [];
+    const map = new Map<string, { contactId: string; lastMsg: typeof messages[0] }>();
+    for (const msg of messages) {
+      const contactId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+      const existing = map.get(contactId);
+      if (!existing || new Date(msg.created_at) > new Date(existing.lastMsg.created_at)) {
+        map.set(contactId, { contactId, lastMsg: msg });
+      }
+    }
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.lastMsg.created_at).getTime() - new Date(a.lastMsg.created_at).getTime()
+    );
+  }, [messages, user]);
 
   const getContactById = (id: string) => contacts.find(c => c.id === id);
 
@@ -229,6 +272,48 @@ export function CommunicationPage() {
               )}
             </div>
 
+            {/* Liste des conversations (aucun contact sélectionné) */}
+            {!selectedContact && conversations.length > 0 && (
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  Conversations
+                </p>
+                <div className="space-y-2">
+                  {conversations.map(({ contactId, lastMsg }) => {
+                    const contact = getContactById(contactId);
+                    if (!contact) return null;
+                    const isMe = lastMsg.sender_id === user?.id;
+                    const photoUrl = parsePhotoUrl(lastMsg.content);
+                    const unread = messages.filter(m => m.sender_id === contactId && m.receiver_id === user?.id && !m.is_read).length;
+                    return (
+                      <button
+                        key={contactId}
+                        onClick={() => setSelectedContact(contact)}
+                        className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-3 hover:border-primary/40 transition-all text-left"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center flex-shrink-0 relative">
+                          <span className="text-primary-foreground font-bold">{getInitials(contact.name)}</span>
+                          {unread > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{unread}</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="font-semibold text-foreground text-sm">{contact.name}</span>
+                            <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">{format(new Date(lastMsg.created_at), 'HH:mm')}</span>
+                          </div>
+                          <p className={`text-sm truncate ${unread > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                            {isMe ? "Vous : " : ""}
+                            {photoUrl ? "📷 Photo" : lastMsg.content}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Conversation with selected contact */}
             {selectedContact ? (
               <div className="flex flex-col gap-3">
@@ -301,6 +386,19 @@ export function CommunicationPage() {
 
                   {/* Message input */}
                   <div className="border-t border-border p-3 flex gap-2 items-end">
+                    <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handleSendPhoto} />
+                    <button
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={uploadingPhoto}
+                      className="h-11 w-11 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 hover:bg-secondary/80 transition-colors disabled:opacity-50"
+                      aria-label="Envoyer une photo"
+                    >
+                      {uploadingPhoto ? (
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Camera className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </button>
                     <textarea
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
@@ -321,67 +419,13 @@ export function CommunicationPage() {
                 </div>
               </div>
             ) : (
-              /* Recent messages overview (no contact selected) */
-              <div>
-                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                  Messages récents
-                </p>
-                {loading ? (
-                  <p className="text-center py-6 text-muted-foreground">Chargement...</p>
-                ) : messages.length === 0 ? (
-                  <div className="bg-card rounded-xl p-6 text-center border border-border">
-                    <MessageCircle className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">Aucun message pour l'instant</p>
-                    <p className="text-xs text-muted-foreground mt-1">Sélectionnez un contact ci-dessus pour envoyer un message</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {messages.slice(-20).reverse().map(msg => {
-                      const sender = getSenderInfo(msg.sender_id);
-                      const photoUrl = parsePhotoUrl(msg.content);
-                      return (
-                        <div key={msg.id} className={`rounded-xl p-4 border flex gap-3 items-start ${
-                          sender.isMe ? 'bg-primary/5 border-primary/15 ml-2' : 'bg-card border-border mr-2'
-                        }`}>
-                          {!sender.isMe && (
-                            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                              <span className="text-primary font-bold text-xs">{getInitials(sender.name)}</span>
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-semibold text-foreground">
-                                {sender.isMe ? 'Vous' : sender.name}
-                              </span>
-                              {!sender.isMe && sender.relationship && (
-                                <span className="text-[11px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-full">
-                                  {sender.relationship}
-                                </span>
-                              )}
-                            </div>
-                            {photoUrl ? (
-                              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                <ImageIcon className="w-4 h-4" />
-                                <span>Photo</span>
-                              </div>
-                            ) : (
-                              <p className="text-sm text-foreground line-clamp-2">{msg.content}</p>
-                            )}
-                            <div className="flex items-center gap-1 mt-1">
-                              <span className="text-xs text-muted-foreground">{formatDate(msg.created_at)}</span>
-                              {sender.isMe && (
-                                msg.is_read
-                                  ? <CheckCheck className="w-3 h-3 text-primary" />
-                                  : <Check className="w-3 h-3 text-muted-foreground" />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+              !loading && messages.length === 0 && (
+                <div className="bg-card rounded-xl p-6 text-center border border-border">
+                  <MessageCircle className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">Aucun message pour l'instant</p>
+                  <p className="text-xs text-muted-foreground mt-1">Sélectionnez un contact ci-dessus pour démarrer une conversation</p>
+                </div>
+              )
             )}
           </TabsContent>
 

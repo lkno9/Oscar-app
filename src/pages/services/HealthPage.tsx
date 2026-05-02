@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, CalendarDays, Lightbulb, ExternalLink, Dumbbell, MapPin, Loader2, Phone, Navigation, Bell, BellOff } from "lucide-react";
+import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, CalendarDays, ExternalLink, Dumbbell, MapPin, Loader2, Phone, Navigation, Bell, BellOff } from "lucide-react";
 import { getCurrentPosition, reverseGeocode, formatDistance, googleMapsDirectionsUrl, type Coordinates } from "@/lib/geo";
 import { searchNearbyPOIs, getPOIEmoji, type OverpassPOI, type POIType } from "@/lib/overpass";
 import { Button } from "@/components/ui/button";
@@ -47,15 +47,6 @@ const MOODS = [
   { level: 5, emoji: "😊", label: "Très bien" },
 ];
 
-const WELLNESS_TIPS = [
-  "Boire 1,5L d'eau par jour aide à maintenir votre énergie.",
-  "Une marche de 30 minutes améliore l'humeur et la circulation.",
-  "Dormir 7 à 8 heures renforce votre système immunitaire.",
-  "Prendre l'air chaque jour réduit le stress et améliore le moral.",
-  "Les activités sociales contribuent à une bonne santé mentale.",
-  "Manger des fruits et légumes colorés chaque jour.",
-];
-
 
 const HEALTH_PLATFORMS = [
   { name: "Mon Espace Santé", desc: "Dossier médical partagé (DMP), ordonnances, résultats", url: "https://www.monespacesante.fr", emoji: "🏥" },
@@ -68,7 +59,6 @@ const HEALTH_PLATFORMS = [
 const NEARBY_HEALTH = [
   { name: "Pharmacie de garde", desc: "Trouver une pharmacie ouverte près de chez vous", url: "https://www.3237.fr", emoji: "💊" },
   { name: "Maisons de santé", desc: "Trouver un centre ou maison médicale", url: "https://annuaire.sante.fr", emoji: "🏥" },
-  { name: "Médecin près de chez moi", desc: "Annuaire des professionnels de santé", url: "https://annuaire.sante.fr/web/site-pro/recherche-avancee", emoji: "👨‍⚕️" },
 ];
 
 
@@ -99,7 +89,6 @@ export function HealthPage() {
   const [medReminders, setMedReminders] = useState<Record<string, { eventId: string; time: string | null }>>({});
   const [todayMood, setTodayMood] = useState<number | null>(null);
   const [savingMood, setSavingMood] = useState(false);
-  const dailyTip = WELLNESS_TIPS[new Date().getDay() % WELLNESS_TIPS.length];
 
 
   // Recherche à proximité
@@ -107,11 +96,13 @@ export function HealthPage() {
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [nearbySearched, setNearbySearched] = useState(false);
   const [nearbyType, setNearbyType] = useState<POIType>("pharmacy");
+  const [locationDenied, setLocationDenied] = useState(false);
 
   const searchNearbyHealth = async (type?: POIType) => {
     const searchType = type || nearbyType;
     setNearbyLoading(true);
     setNearbyPOIs([]);
+    setLocationDenied(false);
     try {
       const coords = await getCurrentPosition();
       const radius = searchType === "hospital" ? 5000 : 2000;
@@ -120,7 +111,11 @@ export function HealthPage() {
       setNearbySearched(true);
       if (results.length === 0) toast("Aucun résultat dans un rayon de " + (radius / 1000) + " km.");
     } catch (err: any) {
-      toast.error(err.message || "Impossible d'obtenir votre position.");
+      if ((err as any).isDenied) {
+        setLocationDenied(true);
+      } else {
+        toast.error(err.message || "Impossible d'obtenir votre position.");
+      }
     } finally {
       setNearbyLoading(false);
     }
@@ -277,7 +272,7 @@ export function HealthPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs defaultValue="medications" className="flex-1 flex flex-col overflow-hidden min-h-0">
           <div className="px-2 pt-3 pb-1 flex-shrink-0">
-            <TabsList className="grid grid-cols-5 h-auto p-1 w-full gap-0">
+            <TabsList className="grid grid-cols-4 h-auto p-1 w-full gap-0">
               <TabsTrigger value="medications" className="flex flex-col items-center gap-0.5 py-2 px-0 text-xs leading-tight rounded-md">
                 <Pill className="w-4 h-4" />
                 Médic.
@@ -293,10 +288,6 @@ export function HealthPage() {
               <TabsTrigger value="activity" className="flex flex-col items-center gap-0.5 py-2 px-0 text-xs leading-tight rounded-md">
                 <Dumbbell className="w-4 h-4" />
                 Activité
-              </TabsTrigger>
-              <TabsTrigger value="wellness" className="flex flex-col items-center gap-0.5 py-2 px-0 text-xs leading-tight rounded-md">
-                <Lightbulb className="w-4 h-4" />
-                Conseils
               </TabsTrigger>
             </TabsList>
           </div>
@@ -557,7 +548,6 @@ export function HealthPage() {
             <div className="flex gap-2">
               {([
                 { type: "pharmacy" as POIType, label: "Pharmacies", emoji: "💊" },
-                { type: "doctor" as POIType, label: "Médecins", emoji: "👨‍⚕️" },
                 { type: "hospital" as POIType, label: "Hôpitaux", emoji: "🏥" },
               ]).map(f => (
                 <button
@@ -593,6 +583,21 @@ export function HealthPage() {
                 <><MapPin className="w-5 h-5" /> Chercher près de moi</>
               )}
             </button>
+
+            {/* Localisation refusée */}
+            {locationDenied && (
+              <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-4 space-y-3">
+                <p className="text-sm text-orange-800 dark:text-orange-200 leading-relaxed">
+                  Vous avez initialement refusé l'accès à votre localisation. Souhaitez-vous l'activer maintenant pour trouver des établissements près de chez vous ?
+                </p>
+                <button
+                  onClick={() => searchNearbyHealth()}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold border border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                >
+                  Réessayer
+                </button>
+              </div>
+            )}
 
             {/* Résultats */}
             {nearbySearched && !nearbyLoading && (
@@ -643,7 +648,6 @@ export function HealthPage() {
             {/* Liens en ligne (fallback) */}
             {(!nearbySearched || nearbyPOIs.length === 0) && (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground text-center uppercase tracking-wide">Ou recherchez en ligne</p>
                 {NEARBY_HEALTH.map((p, i) => (
                   <button
                     key={i}
@@ -798,30 +802,6 @@ export function HealthPage() {
 
           </TabsContent>
 
-          {/* WELLNESS TIPS TAB */}
-          <TabsContent value="wellness" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
-            {/* Daily tip */}
-            <div className="bg-accent rounded-2xl p-5 border border-border">
-              <div className="flex items-center gap-3 mb-3">
-                <Lightbulb className="w-6 h-6 text-accent-foreground" />
-                <p className="font-bold text-accent-foreground">Conseil du jour</p>
-              </div>
-              <p className="text-base text-foreground leading-relaxed">{dailyTip}</p>
-            </div>
-
-            {/* All tips */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Tous les conseils</h2>
-              {WELLNESS_TIPS.map((tip, i) => (
-                <div key={i} className="bg-card rounded-xl p-4 border border-border flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-4 h-4 text-primary" />
-                  </div>
-                  <p className="text-base text-foreground leading-relaxed">{tip}</p>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { ArrowLeft, Image, Camera, X, Trash2, Heart, Users, ZoomIn, BookOpen, Plus, Save, ImagePlus, Play, Bookmark } from "lucide-react";
+import { ArrowLeft, Image, Camera, X, Trash2, Heart, Users, ZoomIn, BookOpen, Plus, Save, ImagePlus, Play, Bookmark, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -131,6 +131,16 @@ export function PhotosPage() {
     fetchPhotos();
   };
 
+  const handleToggleShare = async (photo: Photo) => {
+    const isShared = photo.album === "shared_with_family";
+    await supabase.from("photos").update({ album: isShared ? null : "shared_with_family" }).eq("id", photo.id);
+    toast.success(isShared ? "Photo retirée du partage famille" : "Photo partagée avec votre famille !");
+    fetchPhotos();
+    if (previewPhoto?.id === photo.id) {
+      setPreviewPhoto({ ...photo, album: isShared ? null : "shared_with_family" });
+    }
+  };
+
   const formatDate = (d: string) => {
     try { return new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }); }
     catch { return d; }
@@ -187,7 +197,7 @@ export function PhotosPage() {
   };
 
   // ─── Photo grid component ──────────────────────────────────
-  const PhotoGrid = ({ items, showSender = false }: { items: Photo[]; showSender?: boolean }) => (
+  const PhotoGrid = ({ items, showSender = false, showShareBadge = false }: { items: Photo[]; showSender?: boolean; showShareBadge?: boolean }) => (
     <div className="grid grid-cols-3 gap-2">
       {items.map(photo => (
         <button key={photo.id} onClick={() => setPreviewPhoto(photo)} className="aspect-square rounded-xl overflow-hidden bg-secondary relative group">
@@ -214,6 +224,14 @@ export function PhotosPage() {
               <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow">
                 Nouveau
               </span>
+            </div>
+          )}
+          {/* Shared badge */}
+          {showShareBadge && photo.album === "shared_with_family" && (
+            <div className="absolute top-1.5 right-1.5">
+              <div className="bg-primary/90 rounded-full p-1 shadow">
+                <Users className="w-3 h-3 text-white" />
+              </div>
             </div>
           )}
           {/* Sender name or caption */}
@@ -386,7 +404,15 @@ export function PhotosPage() {
                 <p className="text-sm text-muted-foreground">Appuyez sur le bouton ci-dessus pour ajouter des photos ou vidéos</p>
               </div>
             ) : (
-              <PhotoGrid items={photos} />
+              <>
+                <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-start gap-3">
+                  <Users className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-foreground leading-relaxed">
+                    Appuyez sur une photo puis sur <span className="font-semibold">Partager</span> pour la rendre visible à votre famille.
+                  </p>
+                </div>
+                <PhotoGrid items={photos} showShareBadge />
+              </>
             )}
           </TabsContent>
 
@@ -492,6 +518,16 @@ export function PhotosPage() {
           <div className="flex items-center justify-between p-4" onClick={e => e.stopPropagation()}>
             <p className="text-white text-sm">{formatDate(previewPhoto.created_at)}</p>
             <div className="flex gap-2">
+              {/* Bouton partage famille — uniquement pour les photos perso (non reçues de la famille) */}
+              {previewPhoto.album !== "family_received" && (
+                <button
+                  onClick={() => handleToggleShare(previewPhoto)}
+                  className={`p-3 rounded-full transition-colors ${previewPhoto.album === "shared_with_family" ? "bg-primary text-white" : "bg-white/20 text-white hover:bg-white/30"}`}
+                  aria-label={previewPhoto.album === "shared_with_family" ? "Retirer du partage famille" : "Partager avec la famille"}
+                >
+                  <Share2 className="w-5 h-5" />
+                </button>
+              )}
               <button onClick={() => { setEditingCaption(previewPhoto.id); setCaptionValue(previewPhoto.title || ""); }} className="p-3 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors" aria-label="Modifier la légende">
                 ✏️
               </button>

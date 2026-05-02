@@ -10,7 +10,6 @@ import {
   MessageCircle,
   Heart,
   Phone,
-  GraduationCap,
   HelpCircle,
   Settings,
   ChevronRight,
@@ -39,7 +38,6 @@ const PRIMARY_SERVICES = [
 
 const SUPPORT_ITEMS = [
   { icon: <Phone className="w-5 h-5" />, label: "SOS / Urgence", sublabel: "Appeler les secours ou ma famille", path: "/services/emergency", accent: true },
-  { icon: <GraduationCap className="w-5 h-5" />, label: "Oscar Academy", sublabel: "Apprendre à utiliser Oscar", path: "/services/oscar-academy", accent: false },
   { icon: <HelpCircle className="w-5 h-5" />, label: "Aide & FAQ", sublabel: "Questions fréquentes, contacter le support", path: "/services/help", accent: false },
   { icon: <Settings className="w-5 h-5" />, label: "Réglages", sublabel: "Compte, préférences, notifications", path: "/settings", accent: false },
 ];

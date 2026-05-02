@@ -39,7 +39,6 @@ const PartnersPage        = lazy(() => import("./pages/services/PartnersPage").t
 const MyPartnerPage       = lazy(() => import("./pages/services/MyPartnerPage").then(m => ({ default: m.MyPartnerPage })));
 const ScamProtectionPage  = lazy(() => import("./pages/services/ScamProtectionPage").then(m => ({ default: m.ScamProtectionPage })));
 const CommunicationPage   = lazy(() => import("./pages/services/CommunicationPage").then(m => ({ default: m.CommunicationPage })));
-const OscarAcademyPage    = lazy(() => import("./pages/services/OscarAcademyPage").then(m => ({ default: m.OscarAcademyPage })));
 const AteliersPage        = lazy(() => import("./pages/services/AteliersPage").then(m => ({ default: m.AteliersPage })));
 const TransportPage       = lazy(() => import("./pages/services/TransportPage").then(m => ({ default: m.TransportPage })));
 const EntertainmentPage   = lazy(() => import("./pages/services/EntertainmentPage").then(m => ({ default: m.EntertainmentPage })));
@@ -168,7 +167,6 @@ const App = () => (
                 <Route path="/services/partner"        element={<ProtectedSub><MyPartnerPage /></ProtectedSub>} />
                 <Route path="/services/scam-protection" element={<ProtectedSub><ScamProtectionPage /></ProtectedSub>} />
                 <Route path="/services/communication"  element={<ProtectedSub><CommunicationPage /></ProtectedSub>} />
-                <Route path="/services/oscar-academy"  element={<ProtectedSub><OscarAcademyPage /></ProtectedSub>} />
                 <Route path="/services/ateliers"       element={<ProtectedSub><AteliersPage /></ProtectedSub>} />
                 <Route path="/services/transport"      element={<ProtectedSub><TransportPage /></ProtectedSub>} />
                 <Route path="/services/entertainment"  element={<ProtectedSub><EntertainmentPage /></ProtectedSub>} />

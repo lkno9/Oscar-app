@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Heart, Activity, Pill, MessageCircle, Calendar, Volume2, Bell, Moon, Type, Clock, Smile, Dumbbell, Settings2 } from 'lucide-react';
+import { ArrowLeft, Heart, Activity, Pill, MessageCircle, Calendar, Volume2, Bell, Moon, Type, Clock, Smile, Dumbbell, Settings2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -72,6 +72,8 @@ export default function SeniorDetailPage() {
   const [prefs, setPrefs] = useState<RemotePreferences>(DEFAULT_PREFS);
   const [prefsLoading, setPrefsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [sharedPhotos, setSharedPhotos] = useState<Array<{ id: string; url: string; title: string | null; created_at: string }>>([]);
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSeniorData = async () => {
@@ -113,6 +115,15 @@ export default function SeniorDetailPage() {
           .order('event_date', { ascending: true })
           .limit(5);
 
+        const { data: photos } = await supabase
+          .from('photos')
+          .select('id, url, title, created_at')
+          .eq('user_id', seniorId)
+          .eq('album', 'shared_with_family')
+          .order('created_at', { ascending: false })
+          .limit(12);
+
+        setSharedPhotos(photos || []);
         setData({
           profile: profile || { full_name: null, avatar_url: null },
           recentMoods: moods || [],
@@ -483,7 +494,47 @@ export default function SeniorDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Photos partagées */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-pink-500" />
+              Photos partagées
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Photos que {data.profile.full_name?.split(' ')[0] || 'votre proche'} a choisi de partager avec vous
+            </p>
+          </CardHeader>
+          <CardContent>
+            {sharedPhotos.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {sharedPhotos.map(photo => (
+                  <button
+                    key={photo.id}
+                    onClick={() => setPreviewPhoto(photo.url)}
+                    className="aspect-square rounded-xl overflow-hidden bg-secondary"
+                  >
+                    <img src={photo.url} alt={photo.title || ""} className="w-full h-full object-cover" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">Aucune photo partagée pour l'instant</p>
+            )}
+          </CardContent>
+        </Card>
       </main>
+
+      {/* Fullscreen photo preview */}
+      {previewPhoto && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4" onClick={() => setPreviewPhoto(null)}>
+          <img src={previewPhoto} alt="" className="max-w-full max-h-full object-contain rounded-xl" />
+          <button onClick={() => setPreviewPhoto(null)} className="absolute top-4 right-4 p-3 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors">
+            <ArrowLeft className="w-5 h-5 rotate-180" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
