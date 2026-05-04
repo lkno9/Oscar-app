@@ -51,14 +51,6 @@ const MOODS = [
 const HEALTH_PLATFORMS = [
   { name: "Mon Espace Santé", desc: "Dossier médical partagé (DMP), ordonnances, résultats", url: "https://www.monespacesante.fr", emoji: "🏥" },
   { name: "Ameli.fr", desc: "Assurance maladie, remboursements, attestations", url: "https://www.ameli.fr", emoji: "💳" },
-  { name: "Pharmacie en ligne", desc: "Commander vos médicaments (1001Pharmacies)", url: "https://www.1001pharmacies.com", emoji: "💊" },
-  { name: "Service-Public Santé", desc: "Vos droits santé, aides et démarches", url: "https://www.service-public.fr/particuliers/vosdroits/N17", emoji: "📋" },
-  { name: "Pour les personnes âgées", desc: "Guide officiel des aides et droits seniors", url: "https://www.pour-les-personnes-agees.gouv.fr", emoji: "🤝" },
-];
-
-const NEARBY_HEALTH = [
-  { name: "Pharmacie de garde", desc: "Trouver une pharmacie ouverte près de chez vous", url: "https://www.3237.fr", emoji: "💊" },
-  { name: "Maisons de santé", desc: "Trouver un centre ou maison médicale", url: "https://annuaire.sante.fr", emoji: "🏥" },
 ];
 
 
@@ -645,27 +637,6 @@ export function HealthPage() {
               </div>
             )}
 
-            {/* Liens en ligne (fallback) */}
-            {(!nearbySearched || nearbyPOIs.length === 0) && (
-              <div className="space-y-3">
-                {NEARBY_HEALTH.map((p, i) => (
-                  <button
-                    key={i}
-                    onClick={() => window.open(p.url, "_blank")}
-                    className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:border-primary transition-all text-left"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-2xl flex-shrink-0">
-                      {p.emoji}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground">{p.name}</h3>
-                      <p className="text-sm text-muted-foreground">{p.desc}</p>
-                    </div>
-                    <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                  </button>
-                ))}
-              </div>
-            )}
             {/* Plateformes de santé */}
             <div className="flex items-center gap-3 pt-2">
               <div className="flex-1 h-px bg-border" />
