@@ -250,6 +250,21 @@ export function HelpPage() {
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </a>
+            <a
+              href="https://chat.whatsapp.com/oscaria"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors border-b border-border"
+            >
+              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Communauté WhatsApp</p>
+                <p className="text-sm text-muted-foreground">Rejoignez le groupe d'aide au numérique</p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            </a>
             <div className="w-full flex items-center gap-3 px-4 py-3.5">
               <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
                 <MessageCircle className="w-5 h-5 text-orange-500" />
