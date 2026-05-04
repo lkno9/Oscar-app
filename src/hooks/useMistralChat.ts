@@ -65,34 +65,21 @@ export function useMistralChat({
     conversationIdRef.current = conversationId ?? null;
   }, [conversationId]);
 
-  // Load conversation from Supabase on mount / when conversationId changes
+  // Load conversation from Supabase when conversationId is explicitly set
   useEffect(() => {
     if (!userId) return;
     historyRef.current = [];
 
+    if (!conversationId) return; // Start fresh — don't auto-load last conversation
+
     (async () => {
       try {
-        let data: { id: string; messages: unknown } | null = null;
-
-        if (conversationId) {
-          // Load specific conversation by ID
-          const res = await supabase
-            .from("conversations" as any)
-            .select("id, messages")
-            .eq("id", conversationId)
-            .single();
-          data = res.data as any;
-        } else {
-          // Load most recent conversation for this user
-          const res = await supabase
-            .from("conversations" as any)
-            .select("id, messages")
-            .eq("user_id", userId)
-            .order("updated_at", { ascending: false })
-            .limit(1)
-            .single();
-          data = res.data as any;
-        }
+        const res = await supabase
+          .from("conversations" as any)
+          .select("id, messages")
+          .eq("id", conversationId)
+          .single();
+        const data = res.data as { id: string; messages: unknown } | null;
 
         if (data?.messages && Array.isArray(data.messages)) {
           const loaded = (data.messages as MistralMessage[]).slice(-MAX_PERSISTED_MESSAGES);
