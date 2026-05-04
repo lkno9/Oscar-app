@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ArrowLeft, MapPin, ExternalLink, Bus, Car, Navigation, Train, Loader2, ChevronRight } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
-import { getCurrentPosition, reverseGeocode, formatDistance, googleMapsDirectionsUrl, type Coordinates } from "@/lib/geo";
-import { searchMultiplePOIs, getPOIEmoji, type OverpassPOI } from "@/lib/overpass";
+import { getCurrentPosition, reverseGeocode, formatDistance, googleMapsDirectionsUrl } from "@/lib/geo";
+import { searchMultiplePOIs, getPOIEmoji, type OverpassPOI, type POIType } from "@/lib/overpass";
 import { toast } from "sonner";
 
 const TRANSPORT_SERVICES = [
@@ -31,32 +31,47 @@ const TRANSPORT_SERVICES = [
   },
 ];
 
+interface PoiCategory {
+  key: string;
+  label: string;
+  emoji: string;
+  types: POIType[];
+  radius: number;
+}
+
+const POI_CATEGORIES: PoiCategory[] = [
+  { key: "transport", label: "Transport", emoji: "🚌", types: ["bus_stop", "subway"], radius: 1000 },
+  { key: "sante", label: "Santé", emoji: "💊", types: ["pharmacy", "hospital"], radius: 3000 },
+  { key: "urgences", label: "Urgences", emoji: "🚨", types: ["hospital", "police"], radius: 5000 },
+  { key: "loisirs", label: "Loisirs", emoji: "🎬", types: ["cinema", "park", "library", "restaurant"], radius: 5000 },
+  { key: "sport", label: "Sport", emoji: "🏋️", types: ["sports_centre", "park"], radius: 3000 },
+];
+
 type TabKey = "trajets" | "services";
 
 export function TransportPage() {
   const goBack = useBackNavigation();
   const [activeTab, setActiveTab] = useState<TabKey>("trajets");
 
-  // Nearby stops
-  const [nearbyStops, setNearbyStops] = useState<OverpassPOI[]>([]);
+  // Universal nearby search
+  const [selectedCategory, setSelectedCategory] = useState<string>("transport");
+  const [nearbyResults, setNearbyResults] = useState<OverpassPOI[]>([]);
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [nearbySearched, setNearbySearched] = useState(false);
-  const [stopFilter, setStopFilter] = useState<"all" | "bus" | "metro">("all");
   const [locationDenied, setLocationDenied] = useState(false);
 
-  const searchNearby = async () => {
+  const searchNearby = async (categoryKey?: string) => {
+    const key = categoryKey ?? selectedCategory;
+    const category = POI_CATEGORIES.find(c => c.key === key)!;
     setNearbyLoading(true);
-    setNearbyStops([]);
+    setNearbyResults([]);
     setLocationDenied(false);
     try {
       const coords = await getCurrentPosition();
-      const types = stopFilter === "bus" ? ["bus_stop" as const]
-                  : stopFilter === "metro" ? ["subway" as const]
-                  : ["bus_stop" as const, "subway" as const];
-      const results = await searchMultiplePOIs(coords, types, stopFilter === "metro" ? 2000 : 1000);
-      setNearbyStops(results);
+      const results = await searchMultiplePOIs(coords, category.types, category.radius);
+      setNearbyResults(results);
       setNearbySearched(true);
-      if (results.length === 0) toast("Aucun arrêt trouvé à proximité. Essayez un rayon plus large.");
+      if (results.length === 0) toast("Aucun résultat trouvé dans ce rayon.");
     } catch (err: any) {
       if ((err as any).isDenied) {
         setLocationDenied(true);
@@ -110,7 +125,7 @@ export function TransportPage() {
         </button>
         <div className="flex-1">
           <h1 className="text-lg font-bold text-foreground">Déplacements & transport</h1>
-          <p className="text-sm text-muted-foreground">Vos trajets simplifiés</p>
+          <p className="text-sm text-muted-foreground">Trouvez, planifiez, déplacez-vous</p>
         </div>
         <Navigation className="w-6 h-6 text-primary" />
       </header>
@@ -135,30 +150,30 @@ export function TransportPage() {
         {/* ========== ONGLET : MES TRAJETS ========== */}
         {activeTab === "trajets" && (
           <>
-            {/* Section Autour de moi */}
+            {/* Section : Trouver autour de moi */}
             <div>
               <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-primary" />
-                Arrêts proches
+                Trouver autour de moi
               </p>
 
-              <div className="flex gap-2 mb-3">
-                {([
-                  { key: "all" as const, label: "Tous", emoji: "📍" },
-                  { key: "bus" as const, label: "Bus", emoji: "🚌" },
-                  { key: "metro" as const, label: "Métro", emoji: "🚇" },
-                ]).map(f => (
+              {/* Catégories */}
+              <div className="flex gap-2 flex-wrap mb-3">
+                {POI_CATEGORIES.map(cat => (
                   <button
-                    key={f.key}
-                    onClick={() => setStopFilter(f.key)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-all"
+                    key={cat.key}
+                    onClick={() => {
+                      setSelectedCategory(cat.key);
+                      if (nearbySearched) searchNearby(cat.key);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all"
                     style={{
-                      background: stopFilter === f.key ? "rgba(72,162,158,0.12)" : undefined,
-                      border: `1.5px solid ${stopFilter === f.key ? "#48A29E" : "hsl(var(--border))"}`,
-                      color: stopFilter === f.key ? "#48A29E" : undefined,
+                      background: selectedCategory === cat.key ? "rgba(72,162,158,0.12)" : undefined,
+                      border: `1.5px solid ${selectedCategory === cat.key ? "#48A29E" : "hsl(var(--border))"}`,
+                      color: selectedCategory === cat.key ? "#48A29E" : undefined,
                     }}
                   >
-                    <span>{f.emoji}</span> {f.label}
+                    <span>{cat.emoji}</span> {cat.label}
                   </button>
                 ))}
               </div>
@@ -166,7 +181,7 @@ export function TransportPage() {
               {locationDenied && (
                 <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-4 space-y-3 mb-3">
                   <p className="text-sm text-orange-800 dark:text-orange-200 leading-relaxed">
-                    Vous avez initialement refusé l'accès à votre localisation. Souhaitez-vous l'activer maintenant pour trouver les arrêts proches ?
+                    Vous avez initialement refusé l'accès à votre localisation. Souhaitez-vous l'activer maintenant ?
                   </p>
                   <button
                     onClick={() => { setLocationDenied(false); searchNearby(); }}
@@ -178,7 +193,7 @@ export function TransportPage() {
               )}
 
               <button
-                onClick={searchNearby}
+                onClick={() => searchNearby()}
                 disabled={nearbyLoading}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold transition-all mb-3"
                 style={{
@@ -191,13 +206,13 @@ export function TransportPage() {
                 {nearbyLoading ? (
                   <><Loader2 className="w-5 h-5 animate-spin" /> Recherche en cours...</>
                 ) : (
-                  <><MapPin className="w-5 h-5" /> Trouver les arrêts proches</>
+                  <><MapPin className="w-5 h-5" /> {nearbySearched ? "Relancer" : "Chercher autour de moi"}</>
                 )}
               </button>
 
               {nearbySearched && !nearbyLoading && (
                 <div className="space-y-3 mb-2">
-                  {nearbyStops.length > 0 ? nearbyStops.map(poi => (
+                  {nearbyResults.length > 0 ? nearbyResults.map(poi => (
                     <div key={poi.id} className="bg-card rounded-xl p-4 border border-border flex items-center gap-3">
                       <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
                         {getPOIEmoji(poi.type)}
@@ -205,6 +220,7 @@ export function TransportPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-foreground">{poi.name}</p>
                         {poi.address && <p className="text-sm text-muted-foreground">{poi.address}</p>}
+                        {poi.openingHours && <p className="text-sm text-muted-foreground">🕐 {poi.openingHours}</p>}
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <span className="text-sm font-medium text-primary">{formatDistance(poi.distance)}</span>
@@ -221,7 +237,7 @@ export function TransportPage() {
                   )) : (
                     <div className="text-center py-4">
                       <span className="text-3xl block mb-2">🔍</span>
-                      <p className="text-muted-foreground">Aucun arrêt trouvé à proximité</p>
+                      <p className="text-muted-foreground">Aucun résultat trouvé à proximité</p>
                     </div>
                   )}
                 </div>

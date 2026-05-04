@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, CalendarDays, ExternalLink, Dumbbell, MapPin, Loader2, Phone, Navigation, Bell, BellOff } from "lucide-react";
-import { getCurrentPosition, reverseGeocode, formatDistance, googleMapsDirectionsUrl, type Coordinates } from "@/lib/geo";
-import { searchNearbyPOIs, getPOIEmoji, type OverpassPOI, type POIType } from "@/lib/overpass";
+import { ArrowLeft, Pill, Clock, Plus, Check, Trash2, X, Heart, CalendarDays, ExternalLink, Dumbbell, Navigation as NavIcon, Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,36 +80,6 @@ export function HealthPage() {
   const [todayMood, setTodayMood] = useState<number | null>(null);
   const [savingMood, setSavingMood] = useState(false);
 
-
-  // Recherche à proximité
-  const [nearbyPOIs, setNearbyPOIs] = useState<OverpassPOI[]>([]);
-  const [nearbyLoading, setNearbyLoading] = useState(false);
-  const [nearbySearched, setNearbySearched] = useState(false);
-  const [nearbyType, setNearbyType] = useState<POIType>("pharmacy");
-  const [locationDenied, setLocationDenied] = useState(false);
-
-  const searchNearbyHealth = async (type?: POIType) => {
-    const searchType = type || nearbyType;
-    setNearbyLoading(true);
-    setNearbyPOIs([]);
-    setLocationDenied(false);
-    try {
-      const coords = await getCurrentPosition();
-      const radius = searchType === "hospital" ? 5000 : 2000;
-      const results = await searchNearbyPOIs(coords, searchType, radius);
-      setNearbyPOIs(results);
-      setNearbySearched(true);
-      if (results.length === 0) toast("Aucun résultat dans un rayon de " + (radius / 1000) + " km.");
-    } catch (err: any) {
-      if ((err as any).isDenied) {
-        setLocationDenied(true);
-      } else {
-        toast.error(err.message || "Impossible d'obtenir votre position.");
-      }
-    } finally {
-      setNearbyLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (user) fetchAll();
@@ -520,113 +488,18 @@ export function HealthPage() {
 
           {/* PLATFORMS TAB */}
           <TabsContent value="platforms" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
-            {/* Trouver autour de moi — recherche intégrée */}
-            <div className="flex items-center gap-3 pt-2">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Trouver autour de moi</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-
-            {/* Filtres type */}
-            <div className="flex gap-2">
-              {([
-                { type: "pharmacy" as POIType, label: "Pharmacies", emoji: "💊" },
-                { type: "hospital" as POIType, label: "Hôpitaux", emoji: "🏥" },
-              ]).map(f => (
-                <button
-                  key={f.type}
-                  onClick={() => { setNearbyType(f.type); if (nearbySearched) searchNearbyHealth(f.type); }}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-all"
-                  style={{
-                    background: nearbyType === f.type ? "rgba(72,162,158,0.12)" : undefined,
-                    border: `1.5px solid ${nearbyType === f.type ? "#48A29E" : "hsl(var(--border))"}`,
-                    color: nearbyType === f.type ? "#48A29E" : undefined,
-                  }}
-                >
-                  <span>{f.emoji}</span> {f.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Bouton recherche */}
+            {/* Redirect nudge → Transport */}
             <button
-              onClick={() => searchNearbyHealth()}
-              disabled={nearbyLoading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold transition-all"
-              style={{
-                background: nearbyLoading ? "#94a3b8" : "linear-gradient(135deg, #48A29E 0%, #2d9e99 100%)",
-                border: "none",
-                cursor: nearbyLoading ? "wait" : "pointer",
-                fontSize: 15,
-              }}
+              onClick={() => navigate("/services/transport")}
+              className="w-full flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl p-4 text-left hover:bg-primary/10 transition-colors"
             >
-              {nearbyLoading ? (
-                <><Loader2 className="w-5 h-5 animate-spin" /> Recherche en cours...</>
-              ) : (
-                <><MapPin className="w-5 h-5" /> Chercher près de moi</>
-              )}
+              <span className="text-2xl">💊</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-foreground text-sm">Trouver une pharmacie ou un hôpital ?</p>
+                <p className="text-sm text-muted-foreground">Utilisez l'onglet Déplacements pour trouver les établissements les plus proches de vous.</p>
+              </div>
+              <NavIcon className="w-5 h-5 text-primary flex-shrink-0" />
             </button>
-
-            {/* Localisation refusée */}
-            {locationDenied && (
-              <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-4 space-y-3">
-                <p className="text-sm text-orange-800 dark:text-orange-200 leading-relaxed">
-                  Vous avez initialement refusé l'accès à votre localisation. Souhaitez-vous l'activer maintenant pour trouver des établissements près de chez vous ?
-                </p>
-                <button
-                  onClick={() => searchNearbyHealth()}
-                  className="w-full py-2.5 rounded-xl text-sm font-semibold border border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-                >
-                  Réessayer
-                </button>
-              </div>
-            )}
-
-            {/* Résultats */}
-            {nearbySearched && !nearbyLoading && (
-              <div className="space-y-3">
-                {nearbyPOIs.length > 0 ? nearbyPOIs.map(poi => (
-                  <div key={poi.id} className="bg-card rounded-xl p-4 border border-border">
-                    <div className="flex items-start gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-green-500/10 flex items-center justify-center text-xl flex-shrink-0">
-                        {getPOIEmoji(poi.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className="font-semibold text-foreground text-base">{poi.name}</h3>
-                          <span className="text-sm font-medium text-primary flex-shrink-0">{formatDistance(poi.distance)}</span>
-                        </div>
-                        {poi.address && <p className="text-sm text-muted-foreground mt-0.5">{poi.address}</p>}
-                        {poi.openingHours && <p className="text-sm text-muted-foreground mt-1">🕐 {poi.openingHours}</p>}
-                        <div className="flex items-center gap-2 mt-2">
-                          {poi.phone && (
-                            <a
-                              href={`tel:${poi.phone}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium"
-                            >
-                              <Phone className="w-3.5 h-3.5" /> Appeler
-                            </a>
-                          )}
-                          <a
-                            href={googleMapsDirectionsUrl({ lat: poi.lat, lon: poi.lon })}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 text-sm font-medium"
-                          >
-                            <Navigation className="w-3.5 h-3.5" /> Y aller
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="text-center py-6">
-                    <span className="text-3xl block mb-2">🔍</span>
-                    <p className="text-muted-foreground">Aucun résultat trouvé à proximité</p>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Plateformes de santé */}
             <div className="flex items-center gap-3 pt-2">
@@ -657,85 +530,18 @@ export function HealthPage() {
           {/* ACTIVITY TAB */}
           <TabsContent value="activity" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
 
-            {/* Recherche lieux sport/parcs proches — EN PREMIER */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Près de chez moi</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-
-            <div className="flex gap-2">
-              {([
-                { type: "park" as POIType, label: "Parcs", emoji: "🌳" },
-                { type: "sports_centre" as POIType, label: "Sport", emoji: "🏋️" },
-              ]).map(f => (
-                <button
-                  key={f.type}
-                  onClick={() => {
-                    setNearbyType(f.type);
-                    searchNearbyHealth(f.type);
-                  }}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-all"
-                  style={{
-                    background: nearbyType === f.type ? "rgba(72,162,158,0.12)" : undefined,
-                    border: `1.5px solid ${nearbyType === f.type ? "#48A29E" : "hsl(var(--border))"}`,
-                    color: nearbyType === f.type ? "#48A29E" : undefined,
-                  }}
-                >
-                  <span>{f.emoji}</span> {f.label}
-                </button>
-              ))}
-            </div>
-
+            {/* Redirect nudge → Transport */}
             <button
-              onClick={() => searchNearbyHealth(nearbyType === "park" || nearbyType === "sports_centre" ? nearbyType : "park")}
-              disabled={nearbyLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold transition-all"
-              style={{
-                background: nearbyLoading ? "#94a3b8" : "linear-gradient(135deg, #48A29E 0%, #2d9e99 100%)",
-                border: "none",
-                cursor: nearbyLoading ? "wait" : "pointer",
-                fontSize: 14,
-              }}
+              onClick={() => navigate("/services/transport")}
+              className="w-full flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl p-4 text-left hover:bg-primary/10 transition-colors"
             >
-              {nearbyLoading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Recherche...</>
-              ) : (
-                <><MapPin className="w-4 h-4" /> Trouver près de moi</>
-              )}
-            </button>
-
-            {nearbySearched && !nearbyLoading && (nearbyType === "park" || nearbyType === "sports_centre") && (
-              <div className="space-y-3">
-                {nearbyPOIs.length > 0 ? nearbyPOIs.map(poi => (
-                  <div key={poi.id} className="bg-card rounded-xl p-4 border border-border flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
-                      {getPOIEmoji(poi.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground">{poi.name}</p>
-                      {poi.address && <p className="text-sm text-muted-foreground">{poi.address}</p>}
-                    </div>
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <span className="text-sm font-medium text-primary">{formatDistance(poi.distance)}</span>
-                      <a
-                        href={googleMapsDirectionsUrl({ lat: poi.lat, lon: poi.lon })}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 font-medium"
-                      >
-                        Y aller →
-                      </a>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="text-center py-6">
-                    <span className="text-3xl block mb-2">🔍</span>
-                    <p className="text-muted-foreground">Aucun lieu trouvé à proximité</p>
-                  </div>
-                )}
+              <span className="text-2xl">🌳</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-foreground text-sm">Trouver un parc ou une salle de sport ?</p>
+                <p className="text-sm text-muted-foreground">Utilisez l'onglet Déplacements pour trouver les lieux les plus proches de vous.</p>
               </div>
-            )}
+              <NavIcon className="w-5 h-5 text-primary flex-shrink-0" />
+            </button>
 
             {/* Suggestions pour rester actif */}
             <div className="flex items-center gap-3 pt-2">
