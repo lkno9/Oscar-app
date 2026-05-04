@@ -95,47 +95,6 @@ export function ServicesPage() {
           ))}
         </div>
 
-        {/* Bannière Ateliers */}
-        <button
-          onClick={() => navigate("/services/ateliers")}
-          style={{
-            width: "100%",
-            background: "linear-gradient(135deg, rgba(26,158,126,0.12) 0%, rgba(77,191,165,0.18) 100%)",
-            border: "1px solid rgba(26,158,126,0.25)",
-            borderRadius: 20,
-            padding: "16px 18px",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            cursor: "pointer",
-            textAlign: "left",
-          }}
-        >
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              background: "rgba(26,158,126,0.15)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              fontSize: 22,
-            }}
-          >
-            🤝
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A2E", marginBottom: 3 }}>
-              Vous accompagner en personne
-            </p>
-            <p style={{ fontSize: 13, color: "#64748B", fontWeight: 400, lineHeight: 1.4 }}>
-              Trouvez un atelier numérique près de chez vous et liez votre organisme à Oscar.
-            </p>
-          </div>
-          <ChevronRight style={{ width: 18, height: 18, color: "#1A9E7E", flexShrink: 0 }} />
-        </button>
 
         {/* Aide & Support */}
         <div>

@@ -1,4 +1,4 @@
-import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Award, Zap, Users, Wifi } from "lucide-react";
+import { ArrowLeft, Gamepad2, Brain, Trophy, Star, Award, Users, Wifi } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -201,16 +201,6 @@ export function GamesPage() {
           </div>
         </div>
 
-        {/* Tips */}
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <p className="text-foreground font-medium mb-2 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-primary" />
-            Conseil du jour
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Invitez vos proches à jouer avec vous ! Les jeux à plusieurs sont parfaits pour partager un moment ensemble.
-          </p>
-        </div>
       </div>
     </div>
   );
