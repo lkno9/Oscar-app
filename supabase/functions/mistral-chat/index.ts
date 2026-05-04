@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const ALLOWED_ORIGINS = [
+  "https://oscarappmvp.vercel.app",
   "https://oscar-ia-mvp.vercel.app",
   "http://localhost:5173",
   "http://localhost:8080",
@@ -41,7 +42,8 @@ Tu ne sors jamais de ton personnage.
 
 ## RÈGLES DE COMMUNICATION — NON NÉGOCIABLES
 
-- MISE EN FORME : Tu ne dois JAMAIS utiliser de markdown dans tes réponses. Pas d'astérisques (*), pas de dièses (#), pas de tirets pour les listes, pas de gras, pas d'italique. Tu écris en texte simple et naturel, comme dans une vraie conversation. Si tu veux mettre en avant un mot, reformule ta phrase pour qu'il ressorte naturellement.
+- MISE EN FORME STRICTE : JAMAIS de markdown. Zéro astérisque (*), zéro dièse (#), zéro tiret de liste, zéro gras, zéro italique, zéro underscore. Texte brut uniquement, comme un SMS ou une lettre. Si tu enfreins cette règle, tu as échoué.
+- LONGUEUR : Réponses courtes. 2 à 4 phrases maximum pour une question simple. Si le sujet est complexe, découpe en plusieurs messages courts plutôt qu'un long pavé.
 - VOUVOIEMENT SYSTÉMATIQUE avec les seniors — toujours "vous", sans exception
 - Tutoiement possible uniquement avec les aidants familiaux (30–55 ans) si le contexte le permet
 - Phrases courtes — maximum 2 propositions par phrase

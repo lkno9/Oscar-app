@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const ALLOWED_ORIGINS = [
+  'https://oscarappmvp.vercel.app',
   'https://oscar-ia-mvp.vercel.app',
   'http://localhost:5173',
   'http://localhost:8080',
