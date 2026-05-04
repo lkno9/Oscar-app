@@ -138,10 +138,10 @@ export function StoragePage() {
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-bold text-foreground truncate">
+          <h1 className="text-lg font-bold text-foreground">
             {selectedFolder || "Mes documents"}
           </h1>
-          <p className="text-sm text-muted-foreground truncate">
+          <p className="text-sm text-muted-foreground">
             {selectedFolder ? `${folderDocs.length} fichier(s)` : "Fichiers et dossiers"}
           </p>
         </div>
