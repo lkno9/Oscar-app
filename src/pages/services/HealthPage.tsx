@@ -520,15 +520,6 @@ export function HealthPage() {
 
           {/* PLATFORMS TAB */}
           <TabsContent value="platforms" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
-            {/* Oscar banner */}
-            <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-start gap-3">
-              <span className="text-lg mt-0.5">💡</span>
-              <p className="text-sm text-foreground leading-relaxed">
-                <span className="font-semibold text-primary">Oscar peut aussi vous aider !</span>{" "}
-                Dites-lui : « Oscar, explique-moi mon relevé Ameli »
-              </p>
-            </div>
-
             {/* Trouver autour de moi — recherche intégrée */}
             <div className="flex items-center gap-3 pt-2">
               <div className="flex-1 h-px bg-border" />
@@ -665,34 +656,9 @@ export function HealthPage() {
 
           {/* ACTIVITY TAB */}
           <TabsContent value="activity" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
-            <div className="bg-accent rounded-2xl p-4 border border-border">
-              <div className="flex items-center gap-3 mb-2">
-                <Dumbbell className="w-6 h-6 text-accent-foreground" />
-                <p className="font-bold text-accent-foreground">Restez actif, à votre rythme</p>
-              </div>
-              <p className="text-sm text-foreground">L'activité physique adaptée améliore l'équilibre, le moral et la santé. Choisissez ce qui vous convient.</p>
-            </div>
-            <div className="space-y-3">
-              {EXERCISES.map((ex, i) => (
-                <div key={i} className="bg-card rounded-xl p-4 border border-border flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
-                    {ex.emoji}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground">{ex.name}</h3>
-                      <span className={`text-sm px-2 py-0.5 rounded-full ${ex.level === "Facile" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}>
-                        {ex.level}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">{ex.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
 
-            {/* Recherche lieux sport/parcs proches */}
-            <div className="flex items-center gap-3 pt-2">
+            {/* Recherche lieux sport/parcs proches — EN PREMIER */}
+            <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-border" />
               <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Près de chez moi</span>
               <div className="flex-1 h-px bg-border" />
@@ -770,6 +736,39 @@ export function HealthPage() {
                 )}
               </div>
             )}
+
+            {/* Suggestions pour rester actif */}
+            <div className="flex items-center gap-3 pt-2">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest px-2">Suggestions</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            <div className="bg-accent rounded-2xl p-4 border border-border">
+              <div className="flex items-center gap-3 mb-2">
+                <Dumbbell className="w-6 h-6 text-accent-foreground" />
+                <p className="font-bold text-accent-foreground">Restez actif, à votre rythme</p>
+              </div>
+              <p className="text-sm text-foreground">L'activité physique adaptée améliore l'équilibre, le moral et la santé. Choisissez ce qui vous convient.</p>
+            </div>
+            <div className="space-y-3">
+              {EXERCISES.map((ex, i) => (
+                <div key={i} className="bg-card rounded-xl p-4 border border-border flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
+                    {ex.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground">{ex.name}</h3>
+                      <span className={`text-sm px-2 py-0.5 rounded-full ${ex.level === "Facile" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}>
+                        {ex.level}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">{ex.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
 
           </TabsContent>
 
