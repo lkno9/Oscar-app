@@ -4,7 +4,6 @@ import {
   Cloud,
   Image,
   Gamepad2,
-  Gift,
   ShieldAlert,
   MessageCircle,
   Heart,
@@ -29,7 +28,6 @@ const PRIMARY_SERVICES = [
   { icon: <ClipboardList className="w-6 h-6" />, label: "Démarches admin",   sublabel: "Courriers, droits, aides",path: "/services/demarches",    color: "#F59E0B", bgColor: "rgba(245,158,11,0.12)" },
   { icon: <Cloud className="w-6 h-6" />,         label: "Mes documents",     sublabel: "Courriers, ordonnances",path: "/services/storage",        color: "#14B8A6", bgColor: "rgba(20,184,166,0.12)" },
   { icon: <Gamepad2 className="w-6 h-6" />,      label: "Jeux & mémoire",    sublabel: "Mémoire, quiz, sudoku", path: "/services/games",          color: "#8B5CF6", bgColor: "rgba(139,92,246,0.12)" },
-  { icon: <Gift className="w-6 h-6" />,          label: "Mes avantages",     sublabel: "Bons plans seniors",    path: "/services/partners",       color: "#EAB308", bgColor: "rgba(234,179,8,0.12)"  },
   { icon: <ShieldAlert className="w-6 h-6" />,   label: "Ma sécurité",       sublabel: "Arnaques, alertes",     path: "/services/scam-protection",color: "#EF4444", bgColor: "rgba(239,68,68,0.12)"  },
   { icon: <Newspaper className="w-6 h-6" />,     label: "Actualités & infos",sublabel: "L'info du jour",        path: "/services/knowledge",      color: "#64748B", bgColor: "rgba(100,116,139,0.12)"},
 ];

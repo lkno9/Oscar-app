@@ -35,7 +35,6 @@ const GamesPage           = lazy(() => import("./pages/services/GamesPage").then
 const VaultPage           = lazy(() => import("./pages/services/VaultPage").then(m => ({ default: m.VaultPage })));
 const EmergencyPage       = lazy(() => import("./pages/services/EmergencyPage").then(m => ({ default: m.EmergencyPage })));
 const HelpPage            = lazy(() => import("./pages/services/HelpPage").then(m => ({ default: m.HelpPage })));
-const PartnersPage        = lazy(() => import("./pages/services/PartnersPage").then(m => ({ default: m.PartnersPage })));
 const MyPartnerPage       = lazy(() => import("./pages/services/MyPartnerPage").then(m => ({ default: m.MyPartnerPage })));
 const ScamProtectionPage  = lazy(() => import("./pages/services/ScamProtectionPage").then(m => ({ default: m.ScamProtectionPage })));
 const CommunicationPage   = lazy(() => import("./pages/services/CommunicationPage").then(m => ({ default: m.CommunicationPage })));
@@ -161,7 +160,6 @@ const App = () => (
                 <Route path="/services/vault"          element={<ProtectedSub><VaultPage /></ProtectedSub>} />
                 <Route path="/services/emergency"      element={<ProtectedSub><EmergencyPage /></ProtectedSub>} />
                 <Route path="/services/help"           element={<ProtectedSub><HelpPage /></ProtectedSub>} />
-                <Route path="/services/partners"       element={<ProtectedSub><PartnersPage /></ProtectedSub>} />
                 <Route path="/services/partner"        element={<ProtectedSub><MyPartnerPage /></ProtectedSub>} />
                 <Route path="/services/scam-protection" element={<ProtectedSub><ScamProtectionPage /></ProtectedSub>} />
                 <Route path="/services/communication"  element={<ProtectedSub><CommunicationPage /></ProtectedSub>} />
