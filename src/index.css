@@ -343,6 +343,31 @@
   background: hsl(222 47% 12%) !important;
 }
 
+/* ── Dark mode: hardcoded inline style overrides ── */
+/* Border colors */
+.dark [style*="border: 1px solid rgba(45,212,191"],
+.dark [style*="border: 1px solid rgba(45, 212, 191"] {
+  border-color: rgba(45,212,191,0.2) !important;
+}
+/* Box shadows — neutralize light-mode tinted shadows */
+.dark [style*="box-shadow"] {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+/* Hardcoded dark text colors used in ServicesPage SUPPORT items */
+.dark [style*="color: #1A1A2E"] {
+  color: hsl(0 0% 93%) !important;
+}
+.dark [style*="color: #64748B"] {
+  color: hsl(215 20% 60%) !important;
+}
+.dark [style*="background: linear-gradient(135deg, rgba(26,158,126"] {
+  background: linear-gradient(135deg, rgba(26,158,126,0.2) 0%, rgba(77,191,165,0.25) 100%) !important;
+}
+/* Fix bg-white on service tiles already handled by bg-card, but keep override for legacy */
+.dark .bg-white {
+  background-color: hsl(222 47% 12%) !important;
+}
+
 /* Text size preferences — applied on <html> */
 .text-size-normal { font-size: 16px; }
 .text-size-large { font-size: 18px; }

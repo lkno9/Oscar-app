@@ -311,7 +311,6 @@ export function SettingsPage() {
                 {[
                   { icon: Volume2, label: "Mode vocal", desc: "Oscar lit les réponses à haute voix", value: voiceEnabled, onChange: handleVoiceChange },
                   { icon: Bell, label: "Notifications", desc: "Rappels et alertes importantes", value: notificationsEnabled, onChange: handleNotificationsChange },
-                  { icon: MessageSquare, label: "Notifications SMS", desc: profile?.phone_number ? "Recevoir les alertes par SMS" : "Ajoutez un numéro dans votre profil", value: smsNotificationsEnabled, onChange: handleSmsNotificationsChange, disabled: !profile?.phone_number },
                   { icon: Moon, label: "Mode sombre", desc: "Adapter l'affichage", value: darkMode, onChange: handleDarkModeChange },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-4 p-4">

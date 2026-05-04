@@ -24,7 +24,7 @@ export function ServiceTile({ icon, label, sublabel, intent = "default", badge, 
         "p-5 flex flex-col items-center gap-3 text-sm font-normal text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] relative",
         intent === "danger"
           ? "bg-danger text-danger-foreground"
-          : "bg-white text-foreground"
+          : "bg-card text-foreground"
       )}
       style={{
         borderRadius: 20,

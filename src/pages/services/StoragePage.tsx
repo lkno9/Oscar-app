@@ -137,12 +137,12 @@ export function StoragePage() {
         <button onClick={selectedFolder ? () => setSelectedFolder(null) : goBack} className="p-2.5 -ml-2 rounded-full hover:bg-secondary transition-colors">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold text-foreground">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg font-bold text-foreground truncate">
             {selectedFolder || "Mes documents"}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {selectedFolder ? `${folderDocs.length} fichier(s)` : "Rangez vos fichiers comme vous voulez"}
+          <p className="text-sm text-muted-foreground truncate">
+            {selectedFolder ? `${folderDocs.length} fichier(s)` : "Fichiers et dossiers"}
           </p>
         </div>
         <Cloud className="w-6 h-6 text-primary" />
