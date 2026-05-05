@@ -1,4 +1,4 @@
-import { ArrowLeft, HelpCircle, MessageCircle, BookOpen, ChevronRight, Search, Mail, Phone as PhoneIcon, ExternalLink } from "lucide-react";
+import { ArrowLeft, HelpCircle, MessageCircle, BookOpen, ChevronRight, Search, Mail, Phone as PhoneIcon, ExternalLink, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
@@ -221,7 +221,7 @@ export function HelpPage() {
                 Besoin d'aide supplémentaire ?
               </p>
               <p className="text-sm text-muted-foreground">
-                Appelez Oscar ou contactez notre équipe humaine.
+                Appelez Oscar ou trouvez un accompagnateur près de chez vous.
               </p>
             </div>
             <a
@@ -265,15 +265,21 @@ export function HelpPage() {
               </div>
               <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </a>
-            <div className="w-full flex items-center gap-3 px-4 py-3.5">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="w-5 h-5 text-orange-500" />
+            <a
+              href="https://www.solidarite-numerique.fr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <GraduationCap className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Support humain</p>
-                <p className="text-sm text-muted-foreground">Du lundi au vendredi, 9h-18h — un conseiller vous rappelle sous 24h.</p>
+                <p className="text-sm font-semibold text-foreground">Trouver un atelier numérique</p>
+                <p className="text-sm text-muted-foreground">Aidants et ateliers gratuits près de chez vous</p>
               </div>
-            </div>
+              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            </a>
           </div>
         </div>
       </div>
