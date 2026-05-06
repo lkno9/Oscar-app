@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, MapPin, ExternalLink, Bus, Car, Navigation, Train, Loader2, ChevronRight } from "lucide-react";
+import { ArrowLeft, MapPin, ExternalLink, Bus, Car, Navigation, Train, Loader2, ChevronRight, X, MoreHorizontal, RotateCcw } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { getCurrentPosition, reverseGeocode, formatDistance, googleMapsDirectionsUrl } from "@/lib/geo";
 import { searchMultiplePOIs, getPOIEmoji, type OverpassPOI, type POIType } from "@/lib/overpass";
@@ -31,20 +31,71 @@ const TRANSPORT_SERVICES = [
   },
 ];
 
-interface PoiCategory {
+interface ChipDef {
   key: string;
   label: string;
   emoji: string;
   types: POIType[];
-  radius: number;
+  radius?: number;
 }
 
-const POI_CATEGORIES: PoiCategory[] = [
-  { key: "transport", label: "Transport", emoji: "🚌", types: ["bus_stop", "subway"], radius: 1000 },
-  { key: "sante", label: "Santé", emoji: "💊", types: ["pharmacy", "hospital"], radius: 3000 },
-  { key: "urgences", label: "Urgences", emoji: "🚨", types: ["hospital", "police"], radius: 5000 },
-  { key: "loisirs", label: "Loisirs", emoji: "🎬", types: ["cinema", "park", "library", "restaurant"], radius: 5000 },
-  { key: "sport", label: "Sport", emoji: "🏋️", types: ["sports_centre", "park"], radius: 3000 },
+const QUICK_CHIPS: ChipDef[] = [
+  { key: "restaurant", label: "Restaurants", emoji: "🍽️", types: ["restaurant"], radius: 1000 },
+  { key: "pharmacy",   label: "Pharmacie",   emoji: "💊", types: ["pharmacy"],   radius: 1500 },
+  { key: "bakery",     label: "Boulangerie", emoji: "🥖", types: ["bakery"],     radius: 1000 },
+  { key: "cafe",       label: "Café",        emoji: "☕", types: ["cafe"],       radius: 1000 },
+  { key: "transport",  label: "Transport",   emoji: "🚌", types: ["bus_stop", "subway"], radius: 1000 },
+  { key: "park",       label: "Parcs",       emoji: "🌳", types: ["park"],       radius: 2000 },
+  { key: "supermarket",label: "Courses",     emoji: "🛒", types: ["supermarket"],radius: 1500 },
+  { key: "bank",       label: "Banque",      emoji: "🏦", types: ["bank"],       radius: 1500 },
+];
+
+const ALL_CATEGORIES: { group: string; emoji: string; items: ChipDef[] }[] = [
+  {
+    group: "Alimentation",
+    emoji: "🍴",
+    items: [
+      { key: "restaurant",  label: "Restaurants",   emoji: "🍽️", types: ["restaurant"],  radius: 1000 },
+      { key: "bakery",      label: "Boulangeries",  emoji: "🥖", types: ["bakery"],      radius: 1000 },
+      { key: "cafe",        label: "Cafés",         emoji: "☕", types: ["cafe"],        radius: 1000 },
+      { key: "supermarket", label: "Supermarchés",  emoji: "🛒", types: ["supermarket"], radius: 1500 },
+    ],
+  },
+  {
+    group: "Santé",
+    emoji: "💊",
+    items: [
+      { key: "pharmacy", label: "Pharmacies", emoji: "💊", types: ["pharmacy"], radius: 1500 },
+      { key: "doctor",   label: "Médecins",   emoji: "👨‍⚕️", types: ["doctor"],   radius: 2000 },
+      { key: "hospital", label: "Hôpitaux",   emoji: "🏥", types: ["hospital"], radius: 5000 },
+    ],
+  },
+  {
+    group: "Transport",
+    emoji: "🚌",
+    items: [
+      { key: "transport", label: "Bus & Métro", emoji: "🚌", types: ["bus_stop", "subway"], radius: 1000 },
+    ],
+  },
+  {
+    group: "Services",
+    emoji: "🏛️",
+    items: [
+      { key: "bank",        label: "Banques",           emoji: "🏦", types: ["bank"],        radius: 1500 },
+      { key: "post_office", label: "Bureaux de poste",  emoji: "🏤", types: ["post_office"], radius: 2000 },
+      { key: "police",      label: "Commissariats",     emoji: "🚔", types: ["police"],      radius: 5000 },
+    ],
+  },
+  {
+    group: "Loisirs",
+    emoji: "🌳",
+    items: [
+      { key: "park",          label: "Parcs",           emoji: "🌳", types: ["park"],          radius: 2000 },
+      { key: "library",       label: "Bibliothèques",   emoji: "📚", types: ["library"],       radius: 3000 },
+      { key: "cinema",        label: "Cinémas",         emoji: "🎬", types: ["cinema"],        radius: 5000 },
+      { key: "sports_centre", label: "Salles de sport", emoji: "🏋️", types: ["sports_centre"], radius: 3000 },
+    ],
+  },
 ];
 
 type TabKey = "trajets" | "services";
@@ -53,27 +104,26 @@ export function TransportPage() {
   const goBack = useBackNavigation();
   const [activeTab, setActiveTab] = useState<TabKey>("trajets");
 
-  // Universal nearby search
-  const [selectedCategory, setSelectedCategory] = useState<string>("transport");
+  // Nearby search
+  const [activeChip, setActiveChip] = useState<string | null>(null);
   const [nearbyResults, setNearbyResults] = useState<OverpassPOI[]>([]);
   const [nearbyLoading, setNearbyLoading] = useState(false);
-  const [nearbySearched, setNearbySearched] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
+  const [showCategoriesPanel, setShowCategoriesPanel] = useState(false);
 
-  const searchNearby = async (categoryKey?: string) => {
-    const key = categoryKey ?? selectedCategory;
-    const category = POI_CATEGORIES.find(c => c.key === key)!;
+  const searchNearby = async (chip: ChipDef) => {
+    setActiveChip(chip.key);
     setNearbyLoading(true);
     setNearbyResults([]);
     setLocationDenied(false);
+    setShowCategoriesPanel(false);
     try {
       const coords = await getCurrentPosition();
-      const results = await searchMultiplePOIs(coords, category.types, category.radius);
+      const results = await searchMultiplePOIs(coords, chip.types, chip.radius);
       setNearbyResults(results);
-      setNearbySearched(true);
       if (results.length === 0) toast("Aucun résultat trouvé dans ce rayon.");
     } catch (err: any) {
-      if ((err as any).isDenied) {
+      if (err?.isDenied) {
         setLocationDenied(true);
       } else {
         toast.error(err.message || "Impossible d'obtenir votre position.");
@@ -82,6 +132,10 @@ export function TransportPage() {
       setNearbyLoading(false);
     }
   };
+
+  const activeChipDef =
+    QUICK_CHIPS.find(c => c.key === activeChip) ??
+    ALL_CATEGORIES.flatMap(g => g.items).find(c => c.key === activeChip);
 
   // Journey planner
   const [origin, setOrigin] = useState("");
@@ -104,12 +158,7 @@ export function TransportPage() {
 
   const launchDirections = () => {
     if (!destination.trim()) { toast.error("Entrez une destination."); return; }
-    const url = googleMapsDirectionsUrl(
-      destination.trim(),
-      origin.trim() || undefined,
-      travelMode
-    );
-    window.open(url, "_blank");
+    window.open(googleMapsDirectionsUrl(destination.trim(), origin.trim() || undefined, travelMode), "_blank");
   };
 
   const TABS = [
@@ -145,194 +194,219 @@ export function TransportPage() {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-8">
+      <div className="flex-1 overflow-y-auto pb-8">
 
         {/* ========== ONGLET : MES TRAJETS ========== */}
         {activeTab === "trajets" && (
           <>
-            {/* Section : Trouver autour de moi */}
-            <div>
-              <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-primary" />
-                Trouver autour de moi
-              </p>
+            {/* ── Chips horizontales (style Google Maps) ── */}
+            <div className="px-4 pt-4 pb-2">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                {QUICK_CHIPS.map(chip => {
+                  const isActive = activeChip === chip.key;
+                  return (
+                    <button
+                      key={chip.key}
+                      onClick={() => searchNearby(chip)}
+                      disabled={nearbyLoading}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all"
+                      style={{
+                        background: isActive ? "#2DD4BF" : "hsl(var(--card))",
+                        border: `1.5px solid ${isActive ? "#2DD4BF" : "hsl(var(--border))"}`,
+                        color: isActive ? "white" : "hsl(var(--foreground))",
+                        boxShadow: isActive ? "0 2px 8px rgba(45,212,191,0.3)" : "0 1px 4px rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <span>{chip.emoji}</span>
+                      {chip.label}
+                    </button>
+                  );
+                })}
 
-              {/* Catégories */}
-              <div className="flex gap-2 flex-wrap mb-3">
-                {POI_CATEGORIES.map(cat => (
-                  <button
-                    key={cat.key}
-                    onClick={() => {
-                      setSelectedCategory(cat.key);
-                      if (nearbySearched) searchNearby(cat.key);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all"
-                    style={{
-                      background: selectedCategory === cat.key ? "rgba(72,162,158,0.12)" : undefined,
-                      border: `1.5px solid ${selectedCategory === cat.key ? "#48A29E" : "hsl(var(--border))"}`,
-                      color: selectedCategory === cat.key ? "#48A29E" : undefined,
-                    }}
-                  >
-                    <span>{cat.emoji}</span> {cat.label}
-                  </button>
-                ))}
+                {/* Bouton "Plus" */}
+                <button
+                  onClick={() => setShowCategoriesPanel(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all"
+                  style={{
+                    background: "hsl(var(--card))",
+                    border: "1.5px solid hsl(var(--border))",
+                    color: "hsl(var(--muted-foreground))",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                  Plus
+                </button>
               </div>
+            </div>
 
-              {locationDenied && (
-                <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-4 space-y-3 mb-3">
-                  <p className="text-sm text-orange-800 dark:text-orange-200 leading-relaxed">
-                    Vous avez initialement refusé l'accès à votre localisation. Souhaitez-vous l'activer maintenant ?
-                  </p>
-                  <button
-                    onClick={() => { setLocationDenied(false); searchNearby(); }}
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold border border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-                  >
-                    Réessayer
-                  </button>
+            {/* ── Localisation refusée ── */}
+            {locationDenied && (
+              <div className="mx-4 mb-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-4 flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-orange-800 dark:text-orange-200">Localisation requise</p>
+                  <p className="text-sm text-orange-700 dark:text-orange-300 mt-0.5">Autorisez l'accès à votre position pour chercher autour de vous.</p>
+                </div>
+                <button
+                  onClick={() => { setLocationDenied(false); if (activeChipDef) searchNearby(activeChipDef); }}
+                  className="text-sm font-semibold text-orange-600 dark:text-orange-400 flex-shrink-0"
+                >
+                  Réessayer
+                </button>
+              </div>
+            )}
+
+            {/* ── Résultats ── */}
+            <div className="px-4 space-y-3">
+              {nearbyLoading && (
+                <div className="flex flex-col items-center justify-center py-10 gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Recherche en cours…</p>
                 </div>
               )}
 
-              <button
-                onClick={() => searchNearby()}
-                disabled={nearbyLoading}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold transition-all mb-3"
-                style={{
-                  background: nearbyLoading ? "#94a3b8" : "linear-gradient(135deg, #48A29E 0%, #2d9e99 100%)",
-                  border: "none",
-                  cursor: nearbyLoading ? "wait" : "pointer",
-                  fontSize: 15,
-                }}
-              >
-                {nearbyLoading ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Recherche en cours...</>
-                ) : (
-                  <><MapPin className="w-5 h-5" /> {nearbySearched ? "Relancer" : "Chercher autour de moi"}</>
-                )}
-              </button>
-
-              {nearbySearched && !nearbyLoading && (
-                <div className="space-y-3 mb-2">
-                  {nearbyResults.length > 0 ? nearbyResults.map(poi => (
+              {!nearbyLoading && activeChip && nearbyResults.length > 0 && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-foreground">
+                      {nearbyResults.length} résultat{nearbyResults.length > 1 ? "s" : ""} autour de vous
+                    </p>
+                    <button
+                      onClick={() => { if (activeChipDef) searchNearby(activeChipDef); }}
+                      className="flex items-center gap-1 text-sm text-primary font-medium"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Actualiser
+                    </button>
+                  </div>
+                  {nearbyResults.map(poi => (
                     <div key={poi.id} className="bg-card rounded-xl p-4 border border-border flex items-center gap-3">
                       <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
                         {getPOIEmoji(poi.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground">{poi.name}</p>
-                        {poi.address && <p className="text-sm text-muted-foreground">{poi.address}</p>}
-                        {poi.openingHours && <p className="text-sm text-muted-foreground">🕐 {poi.openingHours}</p>}
+                        <p className="font-semibold text-foreground truncate">{poi.name}</p>
+                        {poi.address && <p className="text-sm text-muted-foreground truncate">{poi.address}</p>}
+                        {poi.openingHours && <p className="text-xs text-muted-foreground">🕐 {poi.openingHours}</p>}
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <span className="text-sm font-medium text-primary">{formatDistance(poi.distance)}</span>
+                        <span className="text-sm font-semibold text-primary">{formatDistance(poi.distance)}</span>
                         <a
                           href={googleMapsDirectionsUrl({ lat: poi.lat, lon: poi.lon })}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-blue-600 font-medium"
+                          className="text-xs text-blue-600 dark:text-blue-400 font-medium"
                         >
                           Y aller →
                         </a>
                       </div>
                     </div>
-                  )) : (
-                    <div className="text-center py-4">
-                      <span className="text-3xl block mb-2">🔍</span>
-                      <p className="text-muted-foreground">Aucun résultat trouvé à proximité</p>
-                    </div>
-                  )}
+                  ))}
+                </>
+              )}
+
+              {!nearbyLoading && activeChip && nearbyResults.length === 0 && !locationDenied && (
+                <div className="text-center py-8">
+                  <span className="text-4xl block mb-3">🔍</span>
+                  <p className="text-foreground font-medium">Aucun résultat à proximité</p>
+                  <p className="text-sm text-muted-foreground mt-1">Essayez une autre catégorie</p>
+                </div>
+              )}
+
+              {!activeChip && (
+                <div className="text-center py-8">
+                  <span className="text-4xl block mb-3">📍</span>
+                  <p className="text-foreground font-medium">Choisissez une catégorie</p>
+                  <p className="text-sm text-muted-foreground mt-1">Sélectionnez un filtre ci-dessus pour trouver des lieux autour de vous</p>
                 </div>
               )}
             </div>
 
-            {/* Séparateur */}
-            <div className="flex items-center gap-3">
+            {/* ── Séparateur Itinéraire ── */}
+            <div className="flex items-center gap-3 px-4 mt-4">
               <div className="flex-1 h-px bg-border" />
               <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Itinéraire</span>
               <div className="flex-1 h-px bg-border" />
             </div>
 
-            {/* Section Itinéraire */}
-            <div className="bg-card rounded-xl p-4 border border-border space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-1.5">Départ</label>
-                <div className="flex gap-2">
+            {/* ── Planificateur d'itinéraire ── */}
+            <div className="px-4 mt-4 space-y-3">
+              <div className="bg-card rounded-xl p-4 border border-border space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-1.5">Départ</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={origin}
+                      onChange={e => setOrigin(e.target.value)}
+                      placeholder="Votre adresse de départ"
+                      className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-base"
+                    />
+                    <button
+                      onClick={fillMyPosition}
+                      disabled={locatingOrigin}
+                      className="px-3 py-2.5 rounded-lg bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 flex-shrink-0"
+                    >
+                      {locatingOrigin ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                      Ma position
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-1.5">Destination</label>
                   <input
                     type="text"
-                    value={origin}
-                    onChange={e => setOrigin(e.target.value)}
-                    placeholder="Votre adresse de départ"
-                    className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-base"
+                    value={destination}
+                    onChange={e => setDestination(e.target.value)}
+                    placeholder="Où souhaitez-vous aller ?"
+                    className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-base"
                   />
-                  <button
-                    onClick={fillMyPosition}
-                    disabled={locatingOrigin}
-                    className="px-3 py-2.5 rounded-lg bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 flex-shrink-0"
-                  >
-                    {locatingOrigin ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
-                    Ma position
-                  </button>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground block mb-1.5">Comment ?</label>
+                  <div className="flex gap-2">
+                    {([
+                      { key: "transit" as const, label: "Transport", emoji: "🚌" },
+                      { key: "driving" as const, label: "Voiture", emoji: "🚗" },
+                      { key: "walking" as const, label: "À pied", emoji: "🚶" },
+                    ]).map(m => (
+                      <button
+                        key={m.key}
+                        onClick={() => setTravelMode(m.key)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-all"
+                        style={{
+                          background: travelMode === m.key ? "rgba(45,212,191,0.12)" : undefined,
+                          border: `1.5px solid ${travelMode === m.key ? "#2DD4BF" : "hsl(var(--border))"}`,
+                          color: travelMode === m.key ? "#2DD4BF" : undefined,
+                        }}
+                      >
+                        <span>{m.emoji}</span> {m.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-1.5">Destination</label>
-                <input
-                  type="text"
-                  value={destination}
-                  onChange={e => setDestination(e.target.value)}
-                  placeholder="Où souhaitez-vous aller ?"
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-base"
-                />
-              </div>
+              <button
+                onClick={launchDirections}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold"
+                style={{ background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)", border: "none", fontSize: 15 }}
+              >
+                <Navigation className="w-5 h-5" /> Voir l'itinéraire
+                <ChevronRight className="w-4 h-4" />
+              </button>
 
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-1.5">Comment ?</label>
-                <div className="flex gap-2">
-                  {([
-                    { key: "transit" as const, label: "Transport", emoji: "🚌" },
-                    { key: "driving" as const, label: "Voiture", emoji: "🚗" },
-                    { key: "walking" as const, label: "À pied", emoji: "🚶" },
-                  ]).map(m => (
-                    <button
-                      key={m.key}
-                      onClick={() => setTravelMode(m.key)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-all"
-                      style={{
-                        background: travelMode === m.key ? "rgba(72,162,158,0.12)" : undefined,
-                        border: `1.5px solid ${travelMode === m.key ? "#48A29E" : "hsl(var(--border))"}`,
-                        color: travelMode === m.key ? "#48A29E" : undefined,
-                      }}
-                    >
-                      <span>{m.emoji}</span> {m.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <p className="text-sm text-muted-foreground text-center">L'itinéraire s'ouvrira dans Google Maps</p>
             </div>
-
-            <button
-              onClick={launchDirections}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold"
-              style={{
-                background: "linear-gradient(135deg, #48A29E 0%, #2d9e99 100%)",
-                border: "none",
-                cursor: "pointer",
-                fontSize: 15,
-              }}
-            >
-              <Navigation className="w-5 h-5" /> Voir l'itinéraire
-              <ChevronRight className="w-4 h-4" />
-            </button>
-
-            <p className="text-sm text-muted-foreground text-center">
-              L'itinéraire s'ouvrira dans Google Maps
-            </p>
           </>
         )}
 
         {/* ========== ONGLET : SERVICES ========== */}
         {activeTab === "services" && (
-          <>
+          <div className="p-4 space-y-4">
             {TRANSPORT_SERVICES.map((cat, ci) => (
               <section key={ci}>
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
@@ -361,9 +435,60 @@ export function TransportPage() {
                 </div>
               </section>
             ))}
-          </>
+          </div>
         )}
       </div>
+
+      {/* ========== PANNEAU TOUTES LES CATÉGORIES ========== */}
+      {showCategoriesPanel && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowCategoriesPanel(false)} />
+
+          {/* Sheet */}
+          <div className="relative bg-background rounded-t-3xl overflow-hidden" style={{ maxHeight: "80vh" }}>
+            {/* Handle + header */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border">
+              <h2 className="text-base font-bold text-foreground">Catégories</h2>
+              <button
+                onClick={() => setShowCategoriesPanel(false)}
+                className="p-2 rounded-full hover:bg-secondary transition-colors"
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto" style={{ maxHeight: "calc(80vh - 64px)" }}>
+              {ALL_CATEGORIES.map(group => (
+                <div key={group.group}>
+                  {/* Group header */}
+                  <div className="flex items-center gap-2 px-4 py-3 bg-secondary/40">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm">
+                      {group.emoji}
+                    </div>
+                    <span className="font-bold text-foreground">{group.group}</span>
+                  </div>
+
+                  {/* Items */}
+                  {group.items.map((item, i) => (
+                    <button
+                      key={item.key}
+                      onClick={() => searchNearby(item)}
+                      className={`w-full flex items-center gap-4 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors ${
+                        i < group.items.length - 1 ? "border-b border-border" : ""
+                      }`}
+                    >
+                      <span className="text-xl w-8 text-center">{item.emoji}</span>
+                      <span className="flex-1 text-base text-foreground">{item.label}</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
