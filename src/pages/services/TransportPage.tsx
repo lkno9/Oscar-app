@@ -236,13 +236,16 @@ export function TransportPage() {
                 </div>
 
                 {locationDenied && (
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-orange-50 dark:bg-orange-950/30 border-b border-orange-200 dark:border-orange-800">
-                    <p className="text-sm text-orange-700 dark:text-orange-300">Localisation refusée par votre appareil</p>
+                  <div className="px-4 py-3 bg-orange-50 dark:bg-orange-950/30 border-b border-orange-200 dark:border-orange-800 space-y-2">
+                    <p className="text-sm font-medium text-orange-800 dark:text-orange-200">Localisation bloquée</p>
+                    <p className="text-sm text-orange-700 dark:text-orange-300 leading-snug">
+                      Allez dans les <strong>Réglages</strong> de votre téléphone → <strong>Safari</strong> (ou votre navigateur) → <strong>Localisation</strong> → Autoriser.
+                    </p>
                     <button
                       onClick={fillMyPosition}
-                      className="text-sm font-semibold text-orange-600 dark:text-orange-400 ml-3 flex-shrink-0"
+                      className="text-sm font-semibold text-orange-600 dark:text-orange-400"
                     >
-                      Activer →
+                      J'ai activé → Réessayer
                     </button>
                   </div>
                 )}
