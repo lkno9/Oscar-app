@@ -115,15 +115,21 @@ export function TransportPage() {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [locatingOrigin, setLocatingOrigin] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
 
   const fillMyPosition = async () => {
     setLocatingOrigin(true);
+    setLocationDenied(false);
     try {
       const coords = await getCurrentPosition();
       const geo = await reverseGeocode(coords);
       setOrigin(geo.displayName);
-    } catch {
-      toast.error("Impossible d'obtenir votre position.");
+    } catch (err: any) {
+      if (err?.isDenied) {
+        setLocationDenied(true);
+      } else {
+        toast.error("Impossible d'obtenir votre position.");
+      }
     } finally {
       setLocatingOrigin(false);
     }
@@ -215,7 +221,7 @@ export function TransportPage() {
                   <input
                     type="text"
                     value={origin}
-                    onChange={e => setOrigin(e.target.value)}
+                    onChange={e => { setOrigin(e.target.value); setLocationDenied(false); }}
                     placeholder="Départ (adresse ou lieu)"
                     className="flex-1 bg-transparent text-foreground text-base outline-none placeholder:text-muted-foreground"
                   />
@@ -228,6 +234,19 @@ export function TransportPage() {
                     Ma position
                   </button>
                 </div>
+
+                {locationDenied && (
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-orange-50 dark:bg-orange-950/30 border-b border-orange-200 dark:border-orange-800">
+                    <p className="text-sm text-orange-700 dark:text-orange-300">Localisation refusée par votre appareil</p>
+                    <button
+                      onClick={fillMyPosition}
+                      className="text-sm font-semibold text-orange-600 dark:text-orange-400 ml-3 flex-shrink-0"
+                    >
+                      Activer →
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 px-4 py-3">
                   <MapPin className="w-4 h-4 text-destructive flex-shrink-0" />
                   <input

@@ -126,6 +126,8 @@ export function ToolsPage() {
   const [locationCoords, setLocationCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [locationCopied, setLocationCopied] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [weatherLocationDenied, setWeatherLocationDenied] = useState(false);
 
   // Converter state
   const [convCategory, setConvCategory] = useState<"temperature" | "weight" | "distance">("temperature");
@@ -311,9 +313,13 @@ export function ToolsPage() {
           toast.error("Impossible de détecter votre position.");
         }
       },
-      () => {
+      (err) => {
         setWeatherLoading(false);
-        toast.error("Position non disponible. Entrez votre ville.");
+        if (err.code === 1) {
+          setWeatherLocationDenied(true);
+        } else {
+          setWeatherError("Position non disponible. Entrez votre ville manuellement.");
+        }
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -403,6 +409,7 @@ export function ToolsPage() {
     }
     setLoadingLocation(true);
     setLocationText(null);
+    setLocationDenied(false);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -419,8 +426,12 @@ export function ToolsPage() {
         }
         setLoadingLocation(false);
       },
-      () => {
-        setLocationText("Impossible d'obtenir votre position. Vérifiez les permissions.");
+      (err) => {
+        if (err.code === 1) {
+          setLocationDenied(true);
+        } else {
+          setLocationText("Impossible d'obtenir votre position.");
+        }
         setLoadingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -550,7 +561,15 @@ export function ToolsPage() {
               </Button>
             </div>
 
-            {weatherError && <p className="text-sm text-destructive">{weatherError}</p>}
+            {weatherLocationDenied && (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-orange-700 dark:text-orange-300">Localisation refusée par votre appareil</p>
+                <button onClick={() => { setWeatherLocationDenied(false); handleWeatherAutoDetect(); }} className="text-sm font-semibold text-primary flex-shrink-0">
+                  Activer →
+                </button>
+              </div>
+            )}
+            {weatherError && !weatherLocationDenied && <p className="text-sm text-destructive">{weatherError}</p>}
 
             {weatherData && (
               <div className="space-y-3">
@@ -746,10 +765,17 @@ export function ToolsPage() {
         );
 
       case "location":
-        return locationText || loadingLocation ? (
+        return locationText || loadingLocation || locationDenied ? (
           <div className="bg-card rounded-xl p-4 border border-border mt-2 space-y-3">
             {loadingLocation ? (
               <p className="text-sm text-muted-foreground">Recherche de votre position...</p>
+            ) : locationDenied ? (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-orange-700 dark:text-orange-300">Localisation refusée par votre appareil</p>
+                <button onClick={handleLocation} className="text-sm font-semibold text-primary flex-shrink-0">
+                  Activer →
+                </button>
+              </div>
             ) : (
               <>
                 <p className="text-sm text-foreground leading-relaxed">{locationText}</p>
