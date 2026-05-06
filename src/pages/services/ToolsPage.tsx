@@ -562,13 +562,10 @@ export function ToolsPage() {
             </div>
 
             {weatherLocationDenied && (
-              <div className="space-y-1.5">
-                <p className="text-sm font-medium text-orange-800 dark:text-orange-200">Localisation bloquée</p>
-                <p className="text-sm text-orange-700 dark:text-orange-300 leading-snug">
-                  Allez dans les <strong>Réglages</strong> → <strong>Safari</strong> → <strong>Localisation</strong> → Autoriser, puis revenez ici.
-                </p>
-                <button onClick={() => { setWeatherLocationDenied(false); handleWeatherAutoDetect(); }} className="text-sm font-semibold text-primary">
-                  J'ai activé → Réessayer
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-orange-700 dark:text-orange-300">Localisation non autorisée</p>
+                <button onClick={() => { setWeatherLocationDenied(false); handleWeatherAutoDetect(); }} className="text-sm font-semibold text-primary flex-shrink-0">
+                  Réessayer
                 </button>
               </div>
             )}
@@ -773,13 +770,10 @@ export function ToolsPage() {
             {loadingLocation ? (
               <p className="text-sm text-muted-foreground">Recherche de votre position...</p>
             ) : locationDenied ? (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-orange-800 dark:text-orange-200">Localisation bloquée</p>
-                <p className="text-sm text-orange-700 dark:text-orange-300 leading-snug">
-                  Allez dans les <strong>Réglages</strong> de votre téléphone → <strong>Safari</strong> (ou votre navigateur) → <strong>Localisation</strong> → Autoriser.
-                </p>
-                <button onClick={handleLocation} className="text-sm font-semibold text-primary">
-                  J'ai activé → Réessayer
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-orange-700 dark:text-orange-300">Localisation non autorisée</p>
+                <button onClick={handleLocation} className="text-sm font-semibold text-primary flex-shrink-0">
+                  Réessayer
                 </button>
               </div>
             ) : (
