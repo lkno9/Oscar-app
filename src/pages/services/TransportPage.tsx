@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, MapPin, ExternalLink, Bus, Car, Navigation, Train, Loader2, ChevronRight, X, MoreHorizontal, RotateCcw } from "lucide-react";
 import { useBackNavigation } from "@/hooks/useBackNavigation";
-import { getCurrentPosition, formatDistance, googleMapsDirectionsUrl } from "@/lib/geo";
+import { getCurrentPosition, reverseGeocode, formatDistance, googleMapsDirectionsUrl } from "@/lib/geo";
 import { searchMultiplePOIs, getPOIEmoji, type OverpassPOI, type POIType } from "@/lib/overpass";
 import { toast } from "sonner";
 
@@ -138,11 +138,26 @@ export function TransportPage() {
     ALL_CATEGORIES.flatMap(g => g.items).find(c => c.key === activeChip);
 
   // Journey planner
+  const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
+  const [locatingOrigin, setLocatingOrigin] = useState(false);
+
+  const fillMyPosition = async () => {
+    setLocatingOrigin(true);
+    try {
+      const coords = await getCurrentPosition();
+      const geo = await reverseGeocode(coords);
+      setOrigin(geo.displayName);
+    } catch {
+      toast.error("Impossible d'obtenir votre position.");
+    } finally {
+      setLocatingOrigin(false);
+    }
+  };
 
   const launchDirections = () => {
     if (!destination.trim()) { toast.error("Entrez une destination."); return; }
-    window.open(googleMapsDirectionsUrl(destination.trim(), undefined, "transit"), "_blank");
+    window.open(googleMapsDirectionsUrl(destination.trim(), origin.trim() || undefined, "transit"), "_blank");
   };
 
   const TABS = [
@@ -315,25 +330,50 @@ export function TransportPage() {
                 <div className="flex-1 h-px bg-border" />
               </div>
 
-              <div className="bg-card rounded-xl p-4 border border-border space-y-3">
-                <p className="text-sm font-medium text-foreground">Où voulez-vous aller ?</p>
-                <input
-                  type="text"
-                  value={destination}
-                  onChange={e => setDestination(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") launchDirections(); }}
-                  placeholder="Adresse, lieu, ville…"
-                  className="w-full px-3 py-3 rounded-lg border border-border bg-background text-foreground text-base"
-                />
-                <button
-                  onClick={launchDirections}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold"
-                  style={{ background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)", border: "none", fontSize: 15 }}
-                >
-                  <Navigation className="w-5 h-5" /> Ouvrir dans Google Maps
-                </button>
-                <p className="text-xs text-muted-foreground text-center">Le départ sera votre position actuelle</p>
+              <div className="bg-card rounded-xl border border-border overflow-hidden">
+                {/* Départ */}
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={origin}
+                    onChange={e => setOrigin(e.target.value)}
+                    placeholder="Départ (adresse ou lieu)"
+                    className="flex-1 bg-transparent text-foreground text-base outline-none placeholder:text-muted-foreground"
+                  />
+                  <button
+                    onClick={fillMyPosition}
+                    disabled={locatingOrigin}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium flex-shrink-0"
+                  >
+                    {locatingOrigin
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <MapPin className="w-3.5 h-3.5" />}
+                    Ma position
+                  </button>
+                </div>
+
+                {/* Destination */}
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <MapPin className="w-4 h-4 text-destructive flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={destination}
+                    onChange={e => setDestination(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") launchDirections(); }}
+                    placeholder="Destination (adresse, lieu…)"
+                    className="flex-1 bg-transparent text-foreground text-base outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
               </div>
+
+              <button
+                onClick={launchDirections}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white font-semibold"
+                style={{ background: "linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%)", border: "none", fontSize: 15 }}
+              >
+                <Navigation className="w-5 h-5" /> Ouvrir dans Google Maps
+              </button>
             </div>
           </>
         )}
