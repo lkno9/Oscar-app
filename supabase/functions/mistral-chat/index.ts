@@ -586,6 +586,21 @@ serve(async (req) => {
       {
         type: "function",
         function: {
+          name: "get_directions",
+          description: "Proposer un itinéraire entre deux lieux. Utilise TOUJOURS cet outil quand l'utilisateur demande comment aller d'un point A à un point B, un trajet, un itinéraire, ou comment se rendre quelque part. L'outil génère un bouton Google Maps avec le trajet pré-rempli.",
+          parameters: {
+            type: "object",
+            properties: {
+              origin: { type: "string", description: "Lieu de départ (ex: Porte de Pantin, Paris)" },
+              destination: { type: "string", description: "Lieu d'arrivée (ex: Tour Eiffel, Paris)" },
+            },
+            required: ["origin", "destination"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
           name: "search_doctolib",
           description: "PRIORITAIRE pour tout ce qui concerne Doctolib et les RDV médicaux. Cherche un professionnel de santé sur Doctolib et affiche directement la page de résultats avec les praticiens disponibles. Utilise cet outil quand l'utilisateur veut prendre rendez-vous, chercher un médecin, dentiste, ophtalmo, ou tout spécialiste. Tu DOIS demander la spécialité ET la ville si l'utilisateur ne les a pas précisées avant d'appeler cet outil.",
           parameters: {
@@ -697,9 +712,10 @@ serve(async (req) => {
 
     async function executeShowMap(args: { address: string }) {
       const q = encodeURIComponent(args.address);
-      // Géocodage Nominatim (OpenStreetMap) — sans clé API, RGPD friendly
+      // Géocodage Nominatim (OpenStreetMap) pour l'embed — sans clé API
       let embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=-5.5,41.0,10.0,51.5&layer=mapnik`;
-      let mapsUrl = `https://www.openstreetmap.org/search?query=${q}`;
+      // Le bouton "Ouvrir" redirige vers Google Maps
+      let mapsUrl = `https://www.google.com/maps/search/${q}`;
       try {
         const nominatim = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=fr`,
@@ -713,13 +729,23 @@ serve(async (req) => {
             const lonN = parseFloat(lon);
             const delta = 0.008; // ~800m de zoom
             embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lonN - delta},${latN - delta},${lonN + delta},${latN + delta}&layer=mapnik&marker=${latN},${lonN}`;
-            mapsUrl = `https://www.openstreetmap.org/?mlat=${latN}&mlon=${lonN}#map=16/${latN}/${lonN}`;
+            mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latN},${lonN}`;
           }
         }
       } catch { /* fallback sur la vue France entière */ }
       return {
         toolResult: { type: "map", data: { address: args.address, embedUrl, mapsUrl } },
-        textForMistral: `Carte affichée pour : ${args.address}. L'utilisateur peut voir la carte dans le chat.`,
+        textForMistral: `Carte affichée pour : ${args.address}. L'utilisateur peut voir la carte et l'ouvrir dans Google Maps.`,
+      };
+    }
+
+    function executeGetDirections(args: { origin: string; destination: string }) {
+      const origin = encodeURIComponent(args.origin);
+      const destination = encodeURIComponent(args.destination);
+      const googleMapsUrl = `https://www.google.com/maps/dir/${origin}/${destination}`;
+      return {
+        toolResult: { type: "directions", data: { origin: args.origin, destination: args.destination, googleMapsUrl } },
+        textForMistral: `Itinéraire affiché : de ${args.origin} à ${args.destination}. Un bouton Google Maps est visible pour l'utilisateur avec le trajet pré-rempli. L'utilisateur peut cliquer pour voir l'itinéraire complet (transports en commun, voiture, marche).`,
       };
     }
 
@@ -887,6 +913,9 @@ serve(async (req) => {
           break;
         case "search_emergency":
           execResult = executeSearchEmergency(args as { query: string });
+          break;
+        case "get_directions":
+          execResult = executeGetDirections(args as { origin: string; destination: string });
           break;
         case "open_webpage":
           execResult = executeOpenWebpage(args as { url: string; title: string });

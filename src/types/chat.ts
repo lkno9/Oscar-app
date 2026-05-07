@@ -49,6 +49,12 @@ export interface DemarcheCardData {
   status: "brouillon" | "copie" | "ouvert_email" | "sauvegarde";
 }
 
+export interface DirectionsData {
+  origin: string;
+  destination: string;
+  googleMapsUrl: string;
+}
+
 export interface FamilyMessageForwardData {
   messageText: string;
   contactName?: string;
@@ -58,6 +64,7 @@ export type RichCard =
   | { type: "weather"; data: WeatherData }
   | { type: "translation"; data: TranslationData }
   | { type: "map"; data: MapData }
+  | { type: "directions"; data: DirectionsData }
   | { type: "emergency"; data: EmergencyData }
   | { type: "webview"; data: WebViewData }
   | { type: "link_preview"; data: LinkPreviewData }

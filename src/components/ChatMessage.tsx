@@ -22,8 +22,24 @@ const URL_SPLIT_REGEX = /(https?:\/\/[^\s)<>,;"']+)/g;
 // Regex for testing if a string is a URL (no /g flag to avoid lastIndex issues)
 const URL_TEST_REGEX = /^https?:\/\/[^\s)<>,;"']+$/;
 
+/** Strip markdown bold/italic markers that the model sometimes leaks */
+function stripMarkdown(text: string): string {
+  // Remove bold (**text** or __text__) → keep inner text
+  let cleaned = text.replace(/\*\*(.+?)\*\*/g, "$1");
+  cleaned = cleaned.replace(/__(.+?)__/g, "$1");
+  // Remove italic (*text* or _text_) → keep inner text
+  cleaned = cleaned.replace(/\*(.+?)\*/g, "$1");
+  cleaned = cleaned.replace(/_(.+?)_/g, "$1");
+  // Remove heading markers
+  cleaned = cleaned.replace(/^#{1,6}\s+/gm, "");
+  // Remove bullet markers (- or *)
+  cleaned = cleaned.replace(/^[\-\*]\s+/gm, "• ");
+  return cleaned;
+}
+
 function TextWithLinks({ text, isUser }: { text: string; isUser: boolean }) {
-  const parts = text.split(URL_SPLIT_REGEX);
+  const cleanedText = stripMarkdown(text);
+  const parts = cleanedText.split(URL_SPLIT_REGEX);
 
   return (
     <span className="whitespace-pre-wrap">

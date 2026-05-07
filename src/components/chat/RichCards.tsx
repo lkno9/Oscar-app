@@ -1,7 +1,7 @@
 import { Phone, Copy, ExternalLink, Check, MapPin, Globe, X, Maximize2, Loader2, Send, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import type { RichCard, WeatherData, TranslationData, MapData, EmergencyData, WebViewData, LinkPreviewData, DemarcheCardData, FamilyMessageForwardData } from "@/types/chat";
+import type { RichCard, WeatherData, TranslationData, MapData, DirectionsData, EmergencyData, WebViewData, LinkPreviewData, DemarcheCardData, FamilyMessageForwardData } from "@/types/chat";
 import { DemarcheCard } from "@/components/chat/DemarcheCard";
 
 export function RichCardRenderer({ card }: { card: RichCard }) {
@@ -12,6 +12,8 @@ export function RichCardRenderer({ card }: { card: RichCard }) {
       return <TranslationCard data={card.data} />;
     case "map":
       return <MapCard data={card.data} />;
+    case "directions":
+      return <DirectionsCard data={card.data} />;
     case "emergency":
       return <EmergencyCard data={card.data} />;
     case "webview":
@@ -179,6 +181,37 @@ function MapCard({ data }: { data: MapData }) {
           <ExternalLink className="w-3.5 h-3.5" />
           Ouvrir
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Directions Card (Google Maps) ──────────────────────────
+
+function DirectionsCard({ data }: { data: DirectionsData }) {
+  return (
+    <div className="mt-3 rounded-xl border border-border overflow-hidden bg-card">
+      <div className="px-4 py-3 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/10 to-green-500/10 flex items-center justify-center flex-shrink-0">
+          <MapPin className="w-5 h-5 text-blue-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate">
+            {data.origin} → {data.destination}
+          </p>
+          <p className="text-sm text-muted-foreground mt-0.5">Itinéraire via Google Maps</p>
+        </div>
+      </div>
+      <div className="px-4 pb-3">
+        <a
+          href={data.googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-all active:scale-[0.98] no-underline"
+        >
+          <ExternalLink className="w-4 h-4" />
+          Ouvrir l'itinéraire dans Google Maps
+        </a>
       </div>
     </div>
   );
