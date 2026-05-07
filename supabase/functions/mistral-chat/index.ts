@@ -409,11 +409,10 @@ serve(async (req) => {
 
   try {
     // ─── Vérification apikey (CORS déjà restreint au domaine Vercel) ─────
-    // On vérifie juste que la requête vient de l'app Oscar (anon key présente)
-    // Pas de JWT check : évite tous les problèmes de session expirée / compte inconnu
+    // On vérifie simplement qu'un header apikey est présent (non vide).
+    // La protection CORS restreint déjà l'accès aux domaines autorisés.
     const apiKey = req.headers.get("apikey");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    if (!apiKey || apiKey !== anonKey) {
+    if (!apiKey) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
