@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const ALLOWED_ORIGINS = [
   "https://oscarappmvp.vercel.app",
   "https://oscar-ia-mvp.vercel.app",
+  "https://oscars-gentle-guide.vercel.app",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
@@ -986,14 +987,22 @@ serve(async (req) => {
     return new Response(body, {
       headers: { ...getCorsHeaders(req), "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
     });
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("Mistral chat error:", e);
+    const message =
+      e instanceof Error
+        ? e.message
+        : typeof e === "object" && e !== null && "message" in e
+          ? (e as { message: string }).message
+          : "Erreur inconnue";
+    const status =
+      typeof e === "object" && e !== null && "status" in e
+        ? (e as { status: number }).status
+        : 500;
     return new Response(
-      JSON.stringify({
-        error: e instanceof Error ? e.message : "Erreur inconnue",
-      }),
+      JSON.stringify({ error: message }),
       {
-        status: 500,
+        status,
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
