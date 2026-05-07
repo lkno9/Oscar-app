@@ -20,7 +20,7 @@ import { useFamilyMessages } from "@/hooks/useFamilyMessages";
 import { usePageAnnounce } from "@/hooks/usePageAnnounce";
 
 const PRIMARY_SERVICES = [
-  { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda",       sublabel: "Rendez-vous, rappels",    path: "/services/agenda",         color: "#3B82F6", bgColor: "rgba(59,130,246,0.12)" },
+  { icon: <CalendarDays className="w-6 h-6" />, label: "Mon agenda",       sublabel: "Rendez-vous, rappels",    path: "/services/agenda",         color: "#F97316", bgColor: "rgba(249,115,22,0.12)" },
   { icon: <Heart className="w-6 h-6" />,        label: "Ma santé",          sublabel: "Médicaments, médecin",   path: "/services/health",         color: "#EC4899", bgColor: "rgba(236,72,153,0.12)" },
   { icon: <Image className="w-6 h-6" />,         label: "Photos & souvenirs",sublabel: "Souvenirs, famille",    path: "/services/photos",         color: "#A855F7", bgColor: "rgba(168,85,247,0.12)" },
   { icon: <MessageCircle className="w-6 h-6" />, label: "Appeler ou écrire", sublabel: "Messages, appels",      path: "/services/communication",  color: "#22C55E", bgColor: "rgba(34,197,94,0.12)"  },
