@@ -405,25 +405,7 @@ export function SettingsPage() {
                     Ouvrir WhatsApp
                   </a>
                 </div>
-                {/* Row 3 — SMS récapitulatif */}
-                <div className="flex items-center gap-4 p-4 min-h-[64px]">
-                  <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground">Recevoir ces infos par SMS</p>
-                    <p className="text-sm text-muted-foreground">Envoyé sur votre numéro</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      // CONNECT_TO_BREVO_SMS — envoyer un SMS récapitulatif à l'utilisateur via Brevo
-                      toast.success("SMS envoyé !");
-                    }}
-                    className="px-4 py-2 rounded-xl text-sm font-semibold flex-shrink-0 border border-primary text-primary hover:bg-primary/5 transition-colors"
-                  >
-                    Envoyer
-                  </button>
-                </div>
+
               </div>
             </section>
 
