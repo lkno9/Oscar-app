@@ -3,7 +3,6 @@ import { Phone, Settings, Send, Mic, Square, Paperclip, X, FileText as FileTextI
 import { useNavigate } from "react-router-dom";
 import { ChatMessage, TypingIndicator } from "@/components/ChatMessage";
 import { OscarAvatar } from "@/components/OscarAvatar";
-import { CallScreen } from "@/components/CallScreen";
 import { useMistralChat } from "@/hooks/useMistralChat";
 import { useDemarcheChat } from "@/hooks/useDemarcheChat";
 import { supabase } from "@/integrations/supabase/client";
@@ -161,7 +160,6 @@ export function HomePage() {
   const [isTyping, setIsTyping] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [isSpeakingState, setIsSpeakingState] = useState(false);
-  const [isCallOpen, setIsCallOpen] = useState(false);
   // Call always starts audio-only; user can toggle video during the call
   const [isRecording, setIsRecording] = useState(false);
   const [input, setInput] = useState("");
@@ -734,8 +732,18 @@ export function HomePage() {
               <span style={{ position: "absolute", top: 8, right: 8, width: 7, height: 7, borderRadius: "50%", background: "#2DD4BF", border: "1.5px solid white" }} />
             )}
           </button>
+          {/* TODO: remplacer VITE_OSCAR_PHONE_NUMBER par le vrai numéro Twilio
+              associé à l'agent ElevenLabs une fois disponible.
+              La mécanique d'appel est prête. */}
           <button
-            onClick={() => setIsCallOpen(true)}
+            onClick={() => {
+              const number = import.meta.env.VITE_OSCAR_PHONE_NUMBER;
+              if (!number || number === "PENDING") {
+                toast.info("Le numéro d'Oscar n'est pas encore configuré.");
+                return;
+              }
+              window.location.href = `tel:${number}`;
+            }}
             style={{ width: 44, height: 44, borderRadius: 99, border: "none", background: "rgba(45,212,191,0.08)", color: "#2DD4BF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
             aria-label="Appeler Oscar"
           >
@@ -913,12 +921,6 @@ export function HomePage() {
           </p>
         )}
       </div>
-
-      {/* Call Screen */}
-      <CallScreen
-        isOpen={isCallOpen}
-        onClose={() => setIsCallOpen(false)}
-      />
 
       {/* History Panel — slides up from bottom */}
       {showHistory && (
