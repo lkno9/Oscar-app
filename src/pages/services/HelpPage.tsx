@@ -238,7 +238,7 @@ export function HelpPage() {
               <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </a>
             <a
-              href="mailto:support@oscaria.co"
+              href="mailto:contact@oscaria.co"
               className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors border-b border-border"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -246,7 +246,7 @@ export function HelpPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">Envoyer un e-mail</p>
-                <p className="text-sm text-muted-foreground">support@oscaria.co</p>
+                <p className="text-sm text-muted-foreground">contact@oscaria.co</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </a>
