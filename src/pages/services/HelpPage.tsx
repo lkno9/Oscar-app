@@ -225,7 +225,7 @@ export function HelpPage() {
               </p>
             </div>
             <a
-              href="tel:+33187210510"
+              href="tel:+33176634185"
               className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors border-b border-border"
             >
               <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
@@ -233,7 +233,7 @@ export function HelpPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">Appeler Oscar</p>
-                <p className="text-sm text-muted-foreground">01 87 21 05 10 — Support vocal 24h/24</p>
+                <p className="text-sm text-muted-foreground">01 76 63 41 85 — Support vocal 24h/24</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </a>
