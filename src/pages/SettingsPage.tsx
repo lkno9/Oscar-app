@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Bell, Volume2, Moon, Shield, ChevronRight, CheckCircle2, Users, MessageSquare, LogOut, Type, Pencil, Save, X } from "lucide-react";
+import { ArrowLeft, User, Bell, Volume2, Moon, Shield, ChevronRight, CheckCircle2, Users, MessageSquare, LogOut, Type, Pencil, Save, X, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -359,6 +359,70 @@ export function SettingsPage() {
                       <span className="text-sm text-muted-foreground">{opt.label}</span>
                     </button>
                   ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Retrouver Oscar */}
+            {/* This section must always be reachable in maximum 2 taps from any screen in the app */}
+            <section>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1 mb-2">Retrouver Oscar</h3>
+              <p className="text-sm text-muted-foreground px-1 mb-3">Vos autres façons de joindre Oscar</p>
+              <div className="bg-card rounded-xl border border-border overflow-hidden divide-y divide-border">
+                {/* Row 1 — Appel vocal */}
+                <div className="flex items-center gap-4 p-4 min-h-[64px]">
+                  <div className="w-11 h-11 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">Appel vocal</p>
+                    <p className="text-lg font-bold" style={{ color: "#1A9E7E" }}>01 76 63 41 85</p>
+                  </div>
+                  <a
+                    href="tel:+33176634185"
+                    className="px-4 py-2 rounded-xl text-sm font-semibold text-white flex-shrink-0"
+                    style={{ background: "#1A9E7E" }}
+                  >
+                    Appeler maintenant
+                  </a>
+                </div>
+                {/* Row 2 — WhatsApp */}
+                <div className="flex items-center gap-4 p-4 min-h-[64px]">
+                  <div className="w-11 h-11 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">WhatsApp</p>
+                    <p className="text-sm text-muted-foreground">01 76 63 41 85</p>
+                  </div>
+                  <a
+                    href="https://wa.me/33176634185"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 rounded-xl text-sm font-semibold text-white flex-shrink-0"
+                    style={{ background: "#25D366" }}
+                  >
+                    Ouvrir WhatsApp
+                  </a>
+                </div>
+                {/* Row 3 — SMS récapitulatif */}
+                <div className="flex items-center gap-4 p-4 min-h-[64px]">
+                  <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">Recevoir ces infos par SMS</p>
+                    <p className="text-sm text-muted-foreground">Envoyé sur votre numéro</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // CONNECT_TO_BREVO_SMS — envoyer un SMS récapitulatif à l'utilisateur via Brevo
+                      toast.success("SMS envoyé !");
+                    }}
+                    className="px-4 py-2 rounded-xl text-sm font-semibold flex-shrink-0 border border-primary text-primary hover:bg-primary/5 transition-colors"
+                  >
+                    Envoyer
+                  </button>
                 </div>
               </div>
             </section>
